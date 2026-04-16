@@ -28,7 +28,7 @@ export default function Navbar() {
                 to="/dashboard"
                 className="text-sm text-stone-600 hover:text-stone-900 transition-colors"
               >
-                {user.name}
+                {user.user_metadata?.full_name ?? user.email}
               </Link>
               <button
                 onClick={handleLogout}
