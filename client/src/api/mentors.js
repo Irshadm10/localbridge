@@ -4,7 +4,6 @@ function escapeIlike(value) {
   return value.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
 }
 
-/** PostgREST `or()` splits on commas; quote values that may contain them. */
 function quotedIlikePattern(rawSearch) {
   const pattern = `%${escapeIlike(rawSearch)}%`;
   return `"${pattern.replace(/"/g, '""')}"`;
@@ -33,43 +32,96 @@ function normalizeMentor(row) {
   };
 }
 
+const DEFAULT_PAGE_SIZE = 12;
+
 /**
- * @param {{ search?: string, industry?: string }} filters
+ * @param {{
+ *   industry?: string,
+ *   search?: string,
+ *   sortBy?: 'rating' | 'experience' | 'sessions',
+ *   page?: number,
+ *   pageSize?: number
+ * }} params
  */
-export async function getAllMentors(filters = {}) {
-  const industry = (filters.industry ?? '').trim();
-  const search = (filters.search ?? '').trim();
+export async function getAllMentors({
+  industry,
+  search,
+  sortBy = 'rating',
+  page = 0,
+  pageSize = DEFAULT_PAGE_SIZE,
+} = {}) {
+  const orderColumn =
+    sortBy === 'experience' ? 'years_experience' : sortBy === 'sessions' ? 'total_sessions' : 'rating';
 
-  let query = supabase.from('mentor_profiles').select('*');
+  let query = supabase.from('mentor_profiles').select('*', { count: 'exact' });
 
-  if (industry) {
-    query = query.eq('industry', industry);
+  if (industry?.trim()) {
+    query = query.eq('industry', industry.trim());
   }
 
-  if (search) {
-    const p = quotedIlikePattern(search);
-    query = query.or(
-      `name.ilike.${p},company.ilike.${p},title.ilike.${p},bio.ilike.${p},expertise_search.ilike.${p}`,
-    );
+  if (search?.trim()) {
+    const p = quotedIlikePattern(search.trim());
+    query = query.or(`name.ilike.${p},title.ilike.${p},company.ilike.${p},bio.ilike.${p}`);
   }
 
-  const { data, error } = await query.order('rating', { ascending: false });
+  const from = page * pageSize;
+  const to = from + pageSize - 1;
+
+  query = query.order(orderColumn, { ascending: false }).range(from, to);
+
+  const { data, error, count } = await query;
 
   if (error) {
-    return { data: null, error };
+    return { data: null, error, totalCount: 0 };
   }
 
-  return { data: data.map(normalizeMentor), error: null };
+  return {
+    data: (data ?? []).map(normalizeMentor),
+    error: null,
+    totalCount: count ?? 0,
+  };
 }
 
 export async function getMentorById(id) {
-  const { data, error } = await supabase.from('mentor_profiles').select('*').eq('id', id).maybeSingle();
+  const { data: mentor, error: mErr } = await supabase
+    .from('mentor_profiles')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
 
-  if (error) {
-    return { data: null, error };
+  if (mErr) {
+    return { data: null, error: mErr };
+  }
+  if (!mentor) {
+    return { data: null, error: null };
   }
 
-  return { data: data ? normalizeMentor(data) : null, error: null };
+  const { data: ratingRows, error: rErr } = await supabase
+    .from('reviews')
+    .select('rating')
+    .eq('mentor_id', id);
+
+  if (rErr) {
+    return { data: null, error: rErr };
+  }
+
+  const list = ratingRows ?? [];
+  const reviewCount = list.length;
+  const reviewAverage =
+    reviewCount > 0
+      ? list.reduce((sum, r) => sum + Number(r.rating), 0) / reviewCount
+      : null;
+
+  return {
+    data: {
+      mentor: normalizeMentor(mentor),
+      reviews: {
+        count: reviewCount,
+        average: reviewAverage,
+      },
+    },
+    error: null,
+  };
 }
 
 export async function getFeaturedMentors() {
