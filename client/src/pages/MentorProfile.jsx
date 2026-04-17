@@ -75,7 +75,7 @@ function BookingModal({ mentor, onClose }) {
                         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-4xl shadow-lg shadow-amber-900/20">
                             ✓
                         </div>
-                        <h2 className="font-display text-2xl font-medium text-stone-900 sm:text-3xl">You&apos;re booked</h2>
+                        <h2 className="font-serif text-2xl font-semibold text-stone-900 sm:text-3xl">You&apos;re booked</h2>
                         <p className="mt-3 max-w-sm text-stone-600 leading-relaxed">{result.message}</p>
                         <p className="mt-2 text-sm text-stone-500">We&apos;ll email you when {mentorFirst} responds.</p>
                         <button
@@ -96,7 +96,7 @@ function BookingModal({ mentor, onClose }) {
                                     <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-200/90">Book a session</p>
                                     <h2
                                         id="booking-modal-title"
-                                        className="mt-2 font-display text-2xl font-medium tracking-tight text-white sm:text-3xl"
+                                        className="mt-2 font-serif text-2xl font-semibold tracking-tight text-white sm:text-3xl"
                                     >
                                         Meet with {mentor.name}
                                     </h2>
@@ -230,12 +230,12 @@ function BookingModal({ mentor, onClose }) {
 
 function avatarColor(name = '') {
     const palette = [
-        'from-stone-700 via-stone-800 to-stone-900',
-        'from-amber-900 via-stone-800 to-stone-900',
-        'from-teal-900 via-stone-800 to-stone-950',
-        'from-neutral-700 via-stone-800 to-neutral-900',
-        'from-amber-800 via-orange-900 to-stone-900',
-        'from-slate-700 via-slate-800 to-slate-900',
+        'from-amber-400 to-orange-500',
+        'from-rose-400 to-pink-500',
+        'from-violet-400 to-purple-600',
+        'from-teal-400 to-emerald-600',
+        'from-sky-400 to-indigo-500',
+        'from-fuchsia-400 to-rose-500',
     ];
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -277,8 +277,8 @@ function StarRow({ rating, size = 'md' }) {
                     <svg key={i} className={dim} viewBox="0 0 20 20">
                         <defs>
                             <linearGradient id={gid}>
-                                <stop offset={`${fill}%`} stopColor="#78350f" />
-                                <stop offset={`${fill}%`} stopColor="#d6d3d1" />
+                                <stop offset={`${fill}%`} stopColor="#d97706" />
+                                <stop offset={`${fill}%`} stopColor="#e7e5e4" />
                             </linearGradient>
                         </defs>
                         <polygon
@@ -294,44 +294,27 @@ function StarRow({ rating, size = 'md' }) {
 
 function ProfileSkeleton() {
     return (
-        <div className="min-h-screen bg-[#f2efe9] font-sans">
-            <div
-                className="pointer-events-none fixed inset-0 opacity-[0.35]"
-                style={{
-                    backgroundImage:
-                        'radial-gradient(circle at 1px 1px, rgb(120 113 108 / 0.11) 1px, transparent 0)',
-                    backgroundSize: '28px 28px',
-                }}
-            />
-            <main className="relative mx-auto max-w-6xl animate-pulse px-4 pb-20 pt-6 sm:px-6 sm:pt-10 lg:px-8">
-                <div className="mb-10 h-3 w-48 rounded-sm bg-stone-200/80" />
-                <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
-                    <div className="lg:col-span-5">
-                        <div className="mx-auto aspect-[3/4] max-w-[280px] rounded-sm bg-stone-200/70 lg:mx-0" />
-                    </div>
-                    <div className="space-y-6 lg:col-span-7">
-                        <div className="h-4 w-24 rounded-sm bg-stone-200/70" />
-                        <div className="h-12 max-w-lg rounded-sm bg-stone-300/60" />
-                        <div className="h-6 max-w-md rounded-sm bg-stone-200/60" />
-                        <div className="flex gap-8 border-y border-stone-200/50 py-6">
-                            <div className="h-14 w-20 rounded-sm bg-stone-100" />
-                            <div className="h-14 w-20 rounded-sm bg-stone-100" />
-                            <div className="h-14 w-20 rounded-sm bg-stone-100" />
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 animate-pulse">
+            <div className="h-4 w-32 bg-stone-200 rounded mb-8" />
+            <div className="rounded-3xl bg-white/80 border border-stone-200 p-8 sm:p-10 mb-8">
+                <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="w-36 h-36 rounded-3xl bg-stone-200 shrink-0 mx-auto lg:mx-0" />
+                    <div className="flex-1 space-y-4">
+                        <div className="h-10 bg-stone-200 rounded-lg w-2/3 max-w-md mx-auto lg:mx-0" />
+                        <div className="h-5 bg-stone-100 rounded w-1/2 max-w-sm mx-auto lg:mx-0" />
+                        <div className="grid grid-cols-3 gap-3 pt-4">
+                            <div className="h-20 bg-stone-100 rounded-2xl" />
+                            <div className="h-20 bg-stone-100 rounded-2xl" />
+                            <div className="h-20 bg-stone-100 rounded-2xl" />
                         </div>
                     </div>
                 </div>
-                <div className="mt-14 grid gap-10 lg:grid-cols-12 lg:gap-12">
-                    <div className="space-y-4 lg:col-span-8">
-                        <div className="h-8 w-40 rounded-sm bg-stone-200/70" />
-                        <div className="h-24 max-w-prose rounded-sm bg-stone-100/90" />
-                        <div className="h-24 max-w-prose rounded-sm bg-stone-100/90" />
-                    </div>
-                    <div className="lg:col-span-4">
-                        <div className="h-80 rounded-lg border border-stone-200/50 bg-white/50" />
-                    </div>
-                </div>
-            </main>
-        </div>
+            </div>
+            <div className="grid lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 h-64 bg-stone-100 rounded-3xl" />
+                <div className="h-72 bg-stone-100 rounded-3xl" />
+            </div>
+        </main>
     );
 }
 
@@ -410,35 +393,23 @@ export default function MentorProfile() {
 
     if (loadError) {
         return (
-            <div className="min-h-screen bg-[#f2efe9] font-sans px-4 py-20">
-                <main className="mx-auto max-w-md rounded-lg border border-stone-200/80 bg-white px-8 py-12 text-center shadow-[0_24px_48px_-12px_rgba(28,25,23,0.12)]">
-                    <p className="font-display text-lg font-medium text-stone-900">Something went wrong</p>
-                    <p className="mt-3 text-sm leading-relaxed text-stone-600">{loadError}</p>
-                    <Link
-                        to="/mentors"
-                        className="mt-8 inline-flex items-center justify-center rounded-md border border-stone-300 bg-white px-5 py-2.5 text-sm font-semibold text-stone-800 transition hover:border-stone-400 hover:bg-stone-50"
-                    >
-                        Back to directory
-                    </Link>
-                </main>
-            </div>
+            <main className="max-w-2xl mx-auto px-6 py-16 text-center">
+                <p className="text-stone-600 mb-6">{loadError}</p>
+                <Link to="/mentors" className="text-amber-800 font-medium hover:underline">
+                    ← Back to mentors
+                </Link>
+            </main>
         );
     }
 
     if (!profile?.mentor) {
         return (
-            <div className="min-h-screen bg-[#f2efe9] font-sans px-4 py-20">
-                <main className="mx-auto max-w-md rounded-lg border border-stone-200/80 bg-white px-8 py-12 text-center shadow-[0_24px_48px_-12px_rgba(28,25,23,0.12)]">
-                    <p className="font-display text-lg font-medium text-stone-900">Profile unavailable</p>
-                    <p className="mt-3 text-sm text-stone-600">That mentor may have been removed or the link is incorrect.</p>
-                    <Link
-                        to="/mentors"
-                        className="mt-8 inline-flex items-center justify-center rounded-md bg-stone-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-stone-800"
-                    >
-                        Browse mentors
-                    </Link>
-                </main>
-            </div>
+            <main className="max-w-2xl mx-auto px-6 py-16 text-center">
+                <p className="text-stone-500 text-lg mb-6">We couldn&apos;t find that mentor.</p>
+                <Link to="/mentors" className="inline-flex items-center gap-2 text-amber-800 font-medium hover:underline">
+                    ← Browse all mentors
+                </Link>
+            </main>
         );
     }
 
@@ -450,266 +421,270 @@ export default function MentorProfile() {
 
     return (
         <>
-            <div className="min-h-screen bg-[#f2efe9] font-sans text-stone-900 selection:bg-amber-900/12 selection:text-stone-950">
+            <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/40 to-stone-100 relative overflow-hidden">
                 <div
-                    className="pointer-events-none fixed inset-0 opacity-[0.35]"
+                    className="pointer-events-none absolute inset-0 opacity-[0.35]"
                     style={{
-                        backgroundImage:
-                            'radial-gradient(circle at 1px 1px, rgb(120 113 108 / 0.11) 1px, transparent 0)',
-                        backgroundSize: '28px 28px',
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d97706' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
                     }}
                 />
+                <div className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full bg-amber-200/30 blur-3xl" />
+                <div className="pointer-events-none absolute top-1/3 -left-32 w-80 h-80 rounded-full bg-orange-200/25 blur-3xl" />
 
-                <main className="relative mx-auto max-w-6xl px-4 pb-24 pt-6 sm:px-6 sm:pt-10 lg:px-8">
-                    <nav
-                        className="mb-10 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-400"
-                        aria-label="Breadcrumb"
+                <main className="relative max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+                    <Link
+                        to="/mentors"
+                        className="inline-flex items-center gap-2 text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors mb-8 group"
                     >
-                        <Link to="/mentors" className="transition-colors hover:text-stone-800">
-                            Directory
-                        </Link>
-                        <span className="text-stone-300" aria-hidden="true">
-                            /
-                        </span>
-                        <span className="max-w-[min(100%,220px)] truncate text-stone-600">{mentor.name}</span>
-                    </nav>
+                        <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
+                        Back to mentors
+                    </Link>
 
-                    <header className="mb-14 grid gap-12 lg:grid-cols-12 lg:items-start lg:gap-14">
-                        <div className="lg:col-span-5 xl:col-span-4">
-                            <div className="relative mx-auto max-w-[300px] lg:mx-0">
-                                <div
-                                    className="pointer-events-none absolute -inset-px rounded-sm border border-stone-300/60"
-                                    aria-hidden="true"
-                                />
-                                {mentor.image_url ? (
-                                    <img
-                                        src={mentor.image_url}
-                                        alt={`${mentor.name} — portrait`}
-                                        className="relative aspect-[3/4] w-full rounded-sm object-cover shadow-[0_28px_56px_-12px_rgba(28,25,23,0.25)] ring-1 ring-black/5"
-                                    />
-                                ) : (
-                                    <div
-                                        className={`relative flex aspect-[3/4] w-full items-center justify-center rounded-sm bg-gradient-to-br ${grad} font-display text-5xl font-medium tracking-tight text-white shadow-[0_28px_56px_-12px_rgba(28,25,23,0.3)]`}
-                                        aria-hidden="true"
-                                    >
-                                        {mentorInitials}
+                    {/* Hero */}
+                    <section className="relative rounded-3xl bg-white/90 backdrop-blur-md border border-stone-200/80 shadow-xl shadow-stone-900/5 overflow-hidden mb-8">
+                        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-r from-amber-100/90 via-orange-50/80 to-amber-50/50" />
+                        <div className="relative p-8 sm:p-10 lg:p-12">
+                            <div className="flex flex-col lg:flex-row lg:items-end gap-8 lg:gap-12">
+                                {/* Photo / avatar */}
+                                <div className="flex justify-center lg:justify-start shrink-0">
+                                    {mentor.image_url ? (
+                                        <div className="relative">
+                                            <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${grad} opacity-20 blur-xl scale-110`} />
+                                            <img
+                                                src={mentor.image_url}
+                                                alt={`${mentor.name} — profile`}
+                                                className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-3xl object-cover ring-4 ring-white shadow-2xl shadow-stone-900/15"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div
+                                            className={`relative w-36 h-36 sm:w-44 sm:h-44 rounded-3xl bg-gradient-to-br ${grad} flex items-center justify-center text-white text-4xl sm:text-5xl font-bold shadow-2xl shadow-stone-900/20 ring-4 ring-white`}
+                                            aria-hidden="true"
+                                        >
+                                            {mentorInitials}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex-1 min-w-0 text-center lg:text-left pb-2">
+                                    <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 mb-3">
+                                        {industryLabel && (
+                                            <span className="px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase bg-amber-100/90 text-amber-900 border border-amber-200/80">
+                                                {industryLabel}
+                                            </span>
+                                        )}
+                                        {mentor.available && (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-semibold">
+                                                <span className="relative flex h-2 w-2">
+                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                                                </span>
+                                                Accepting sessions
+                                            </span>
+                                        )}
                                     </div>
-                                )}
+
+                                    <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-semibold text-stone-900 tracking-tight leading-[1.1] mb-3">
+                                        {mentor.name}
+                                    </h1>
+
+                                    {mentor.title && (
+                                        <p className="text-lg sm:text-xl text-stone-700 font-medium max-w-2xl mx-auto lg:mx-0">
+                                            {mentor.title}
+                                            {mentor.company ? (
+                                                <span className="text-stone-500 font-normal">
+                                                    {' '}
+                                                    <span className="text-stone-400">·</span> {mentor.company}
+                                                </span>
+                                            ) : null}
+                                        </p>
+                                    )}
+
+                                    <div className="mt-6 flex flex-wrap items-center justify-center lg:justify-start gap-4">
+                                        <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-stone-900 text-amber-50 shadow-lg shadow-stone-900/20">
+                                            <StarRow rating={displayRating} size="lg" />
+                                            <span className="font-semibold tabular-nums">
+                                                {displayRating > 0 ? displayRating.toFixed(1) : '—'}
+                                            </span>
+                                            {reviewMeta?.count > 0 && (
+                                                <span className="text-amber-200/90 text-sm font-normal">
+                                                    ({reviewMeta.count} review{reviewMeta.count === 1 ? '' : 's'})
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Stat strip */}
+                            <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-100/80 p-5 flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-white/80 border border-amber-100 flex items-center justify-center text-xl shadow-sm">
+                                        ⭐
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Rating</p>
+                                        <p className="text-2xl font-bold text-stone-900 tabular-nums">
+                                            {displayRating > 0 ? displayRating.toFixed(1) : '—'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="rounded-2xl bg-gradient-to-br from-stone-50 to-amber-50/30 border border-stone-200/80 p-5 flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-white/80 border border-stone-200 flex items-center justify-center text-xl shadow-sm">
+                                        📈
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Experience</p>
+                                        <p className="text-2xl font-bold text-stone-900 tabular-nums">
+                                            {mentor.years_experience != null ? `${mentor.years_experience} yrs` : '—'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="rounded-2xl bg-gradient-to-br from-orange-50/50 to-amber-50 border border-orange-100/60 p-5 flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-xl bg-white/80 border border-orange-100 flex items-center justify-center text-xl shadow-sm">
+                                        ✓
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Sessions</p>
+                                        <p className="text-2xl font-bold text-stone-900 tabular-nums">
+                                            {mentor.total_sessions != null ? mentor.total_sessions : '—'}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </section>
 
-                        <div className="lg:col-span-7 xl:col-span-8">
-                            <div className="flex flex-wrap items-center gap-2">
-                                {industryLabel && (
-                                    <span className="border border-stone-300/70 bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-600">
-                                        {industryLabel}
-                                    </span>
-                                )}
-                                {mentor.available && (
-                                    <span className="inline-flex items-center gap-2 border border-emerald-200/80 bg-emerald-50/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-emerald-900">
-                                        <span className="relative flex h-1.5 w-1.5">
-                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                                        </span>
-                                        Accepting
-                                    </span>
-                                )}
-                            </div>
-
-                            <h1 className="font-display mt-6 text-[2.75rem] font-medium leading-[1.05] tracking-[-0.02em] text-stone-900 sm:text-5xl lg:text-[3.35rem]">
-                                {mentor.name}
-                            </h1>
-
-                            {(mentor.title || mentor.company) && (
-                                <p className="mt-5 max-w-2xl text-lg leading-snug text-stone-600 sm:text-xl">
-                                    {mentor.title && <span className="font-medium text-stone-900">{mentor.title}</span>}
-                                    {mentor.title && mentor.company && <span className="text-stone-400"> · </span>}
-                                    {mentor.company && <span>{mentor.company}</span>}
-                                </p>
-                            )}
-
-                            <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-b border-stone-200/80 py-8 sm:grid-cols-4">
-                                <div>
-                                    <dt className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-400">Rating</dt>
-                                    <dd className="mt-2 flex flex-col gap-1">
-                                        <span className="font-display text-2xl tabular-nums tracking-tight text-stone-900">
-                                            {displayRating > 0 ? displayRating.toFixed(1) : '—'}
-                                        </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <StarRow rating={displayRating} size="md" />
-                                        </span>
-                                        {reviewMeta?.count > 0 && (
-                                            <span className="text-xs text-stone-500">{reviewMeta.count} reviews</span>
-                                        )}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-400">Experience</dt>
-                                    <dd className="font-display mt-2 text-2xl tabular-nums text-stone-900">
-                                        {mentor.years_experience != null ? `${mentor.years_experience}` : '—'}
-                                        {mentor.years_experience != null && (
-                                            <span className="ml-1 font-sans text-sm font-normal text-stone-500">yrs</span>
-                                        )}
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt className="text-[10px] font-semibold uppercase tracking-[0.2em] text-stone-400">Sessions</dt>
-                                    <dd className="font-display mt-2 text-2xl tabular-nums text-stone-900">
-                                        {mentor.total_sessions != null ? mentor.total_sessions : '—'}
-                                    </dd>
-                                </div>
-                                <div className="col-span-2 flex items-end sm:col-span-1">
-                                    <p className="text-sm leading-relaxed text-stone-500">
-                                        Figures aggregate peer feedback and completed sessions on Bridge.
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                        {/* Main column */}
+                        <div className="lg:col-span-8 flex flex-col gap-8">
+                            <section className="rounded-3xl bg-white/90 backdrop-blur border border-stone-200/80 shadow-lg shadow-stone-900/5 p-8 sm:p-10">
+                                <h2 className="font-serif text-2xl font-semibold text-stone-900 mb-6 flex items-center gap-3">
+                                    <span className="w-1 h-8 rounded-full bg-gradient-to-b from-amber-500 to-orange-400" />
+                                    About
+                                </h2>
+                                <div className="relative pl-4 border-l-2 border-amber-200/80">
+                                    <p className="text-stone-700 text-lg leading-relaxed whitespace-pre-line">
+                                        {mentor.bio?.trim() || 'This mentor hasn’t added a bio yet — book a session to connect and learn more about their background.'}
                                     </p>
                                 </div>
-                            </dl>
-                        </div>
-                    </header>
-
-                    <div className="grid gap-14 lg:grid-cols-12 lg:gap-12">
-                        <div className="space-y-16 lg:col-span-8">
-                            <section className="scroll-mt-24">
-                                <div className="flex items-baseline justify-between gap-4 border-b border-stone-200/80 pb-4">
-                                    <h2 className="font-display text-2xl font-medium tracking-tight text-stone-900 sm:text-[1.75rem]">
-                                        Overview
-                                    </h2>
-                                </div>
-                                <p className="mt-8 max-w-prose text-[1.0625rem] leading-[1.85] text-stone-600">
-                                    {mentor.bio?.trim() ||
-                                        'This mentor has not published a full biography yet. Booking a session is the fastest way to learn how they work and whether the fit is right for your goals.'}
-                                </p>
                             </section>
 
-                            <section>
-                                <div className="flex items-baseline justify-between gap-4 border-b border-stone-200/80 pb-4">
-                                    <h2 className="font-display text-2xl font-medium tracking-tight text-stone-900 sm:text-[1.75rem]">
-                                        Practice areas
-                                    </h2>
-                                </div>
+                            <section className="rounded-3xl bg-white/90 backdrop-blur border border-stone-200/80 shadow-lg shadow-stone-900/5 p-8 sm:p-10">
+                                <h2 className="font-serif text-2xl font-semibold text-stone-900 mb-6">Expertise</h2>
                                 {mentor.expertise?.length > 0 ? (
-                                    <ul className="mt-8 flex flex-wrap gap-2">
+                                    <div className="flex flex-wrap gap-2.5">
                                         {mentor.expertise.map((tag) => (
-                                            <li key={tag}>
-                                                <span className="inline-flex border border-stone-300/80 bg-white px-3 py-1.5 text-sm font-medium text-stone-800 shadow-sm transition hover:border-stone-400 hover:shadow-md">
-                                                    {tag}
-                                                </span>
-                                            </li>
+                                            <span
+                                                key={tag}
+                                                className="px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 text-amber-950 text-sm font-medium shadow-sm hover:border-amber-300/80 hover:shadow transition-all"
+                                            >
+                                                {tag}
+                                            </span>
                                         ))}
-                                    </ul>
+                                    </div>
                                 ) : (
-                                    <p className="mt-8 text-stone-500">Focus areas will appear here once added.</p>
+                                    <p className="text-stone-500">No focus areas listed yet.</p>
                                 )}
                             </section>
 
-                            <section>
-                                <div className="flex flex-col gap-2 border-b border-stone-200/80 pb-4 sm:flex-row sm:items-end sm:justify-between">
-                                    <h2 className="font-display text-2xl font-medium tracking-tight text-stone-900 sm:text-[1.75rem]">
-                                        Client perspectives
-                                    </h2>
-                                    <p className="text-sm text-stone-500">From verified sessions</p>
-                                </div>
+                            <section className="rounded-3xl bg-white/90 backdrop-blur border border-stone-200/80 shadow-lg shadow-stone-900/5 p-8 sm:p-10">
+                                <h2 className="font-serif text-2xl font-semibold text-stone-900 mb-2">What mentees say</h2>
+                                <p className="text-stone-500 text-sm mb-8">Honest feedback from completed sessions.</p>
 
                                 {mentorReviews.length > 0 ? (
-                                    <ul className="mt-10 space-y-10">
+                                    <ul className="space-y-5">
                                         {mentorReviews.map((rev) => (
-                                            <li key={rev.id} className="relative pl-8 sm:pl-10">
-                                                <svg
-                                                    className="absolute left-0 top-0 h-6 w-6 text-stone-200"
-                                                    viewBox="0 0 24 24"
-                                                    fill="currentColor"
-                                                    aria-hidden="true"
-                                                >
-                                                    <path d="M7.17 6c-2.4 0-4.47 1.93-4.47 4.53 0 2.2 1.53 4.07 3.6 4.6L4 20h4.67l1.47-4.4c.13-.4.2-.83.2-1.27C10.33 11.33 8.6 9.33 6.33 8.2 6.8 6.93 7.87 6 7.17 6zm10 0c-2.4 0-4.47 1.93-4.47 4.53 0 2.2 1.53 4.07 3.6 4.6L14 20h4.67l1.47-4.4c.13-.4.2-.83.2-1.27C20.33 11.33 18.6 9.33 16.33 8.2 16.8 6.93 17.87 6 17.17 6z" />
-                                                </svg>
-                                                <div className="flex flex-wrap items-center gap-3">
-                                                    <StarRow rating={rev.rating} />
-                                                    <span className="text-xs font-medium uppercase tracking-wider text-stone-400">
-                                                        {formatReviewDate(rev.created_at)}
-                                                    </span>
+                                            <li
+                                                key={rev.id}
+                                                className="rounded-2xl border border-stone-100 bg-stone-50/50 p-5 hover:bg-amber-50/20 hover:border-amber-100/60 transition-colors"
+                                            >
+                                                <div className="flex items-start gap-4">
+                                                    <div
+                                                        className={`w-11 h-11 rounded-2xl bg-gradient-to-br ${grad} flex items-center justify-center text-white text-sm font-bold shrink-0 opacity-90`}
+                                                    >
+                                                        M
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                            <span className="font-medium text-stone-900">Mentee</span>
+                                                            <StarRow rating={rev.rating} />
+                                                            <span className="text-xs text-stone-400">{formatReviewDate(rev.created_at)}</span>
+                                                        </div>
+                                                        {rev.comment?.trim() ? (
+                                                            <p className="text-stone-700 leading-relaxed">{rev.comment.trim()}</p>
+                                                        ) : (
+                                                            <p className="text-stone-400 text-sm italic">Left a rating without a written review.</p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                {rev.comment?.trim() ? (
-                                                    <blockquote className="mt-4 font-display text-lg italic leading-relaxed text-stone-800 sm:text-xl">
-                                                        {rev.comment.trim()}
-                                                    </blockquote>
-                                                ) : (
-                                                    <p className="mt-4 text-sm italic text-stone-400">Rated without a written comment.</p>
-                                                )}
-                                                <p className="mt-3 text-xs font-medium text-stone-500">— Verified mentee</p>
                                             </li>
                                         ))}
                                     </ul>
                                 ) : (
-                                    <div className="mt-10 rounded-lg border border-dashed border-stone-300/80 bg-white/50 px-6 py-16 text-center">
-                                        <p className="font-display text-lg font-medium text-stone-800">No public reviews yet</p>
-                                        <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-stone-500">
-                                            After your first session, you can help future mentees by leaving candid feedback.
+                                    <div className="rounded-2xl border border-dashed border-stone-200 bg-stone-50/30 px-8 py-14 text-center">
+                                        <p className="text-4xl mb-3">💬</p>
+                                        <p className="font-medium text-stone-700">No reviews yet</p>
+                                        <p className="text-sm text-stone-500 mt-1 max-w-sm mx-auto">
+                                            Be the first to book a session — reviews show up here after you meet.
                                         </p>
                                     </div>
                                 )}
                             </section>
                         </div>
 
-                        <aside className="lg:col-span-4">
-                            <div className="space-y-6 lg:sticky lg:top-24">
-                                <div className="rounded-lg border border-stone-200/90 bg-white p-8 shadow-[0_24px_48px_-12px_rgba(28,25,23,0.14)]">
-                                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-stone-400">Private advisory</p>
-                                    <h3 className="font-display mt-4 text-[1.65rem] font-medium leading-snug tracking-tight text-stone-900">
-                                        Request time with {mentor.name.split(/\s+/)[0] ?? 'this mentor'}
-                                    </h3>
-                                    <p className="mt-3 text-sm leading-relaxed text-stone-600">
-                                        You choose the session format. Share context so your mentor can prepare meaningfully.
-                                    </p>
-                                    <ul className="mt-8 space-y-3 border-t border-stone-100 pt-6">
-                                        {SESSION_TYPES.map((type) => (
-                                            <li
-                                                key={type.key}
-                                                className="flex items-baseline justify-between gap-3 border-b border-stone-100/90 pb-3 text-sm last:border-0 last:pb-0"
-                                            >
-                                                <span className="font-medium text-stone-900">
-                                                    <span className="mr-2" aria-hidden="true">
-                                                        {type.icon}
-                                                    </span>
-                                                    {type.name}
-                                                </span>
-                                                <span className="shrink-0 tabular-nums text-stone-400">{type.duration}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <button
-                                        type="button"
-                                        onClick={handleBookClick}
-                                        className="mt-8 w-full rounded-md bg-stone-900 py-3.5 text-sm font-semibold text-white shadow-[0_8px_20px_-6px_rgba(28,25,23,0.45)] transition hover:bg-stone-800 hover:shadow-lg"
-                                    >
-                                        Schedule a session
-                                    </button>
-                                    <p className="mt-4 text-center text-[11px] leading-relaxed text-stone-400">
-                                        Fair cancellation and Pro plan terms may apply.
-                                    </p>
-                                </div>
+                        {/* Sticky sidebar */}
+                        <aside className="lg:col-span-4 lg:sticky lg:top-6 space-y-6">
+                            <div className="rounded-3xl bg-stone-900 text-amber-50 p-8 shadow-2xl shadow-stone-900/30 ring-1 ring-stone-700/50">
+                                <p className="text-amber-200/90 text-xs font-semibold uppercase tracking-widest mb-2">1:1 mentorship</p>
+                                <h3 className="font-serif text-2xl font-semibold mb-4 leading-snug">Book time with {mentor.name.split(' ')[0]}</h3>
+                                <p className="text-amber-100/80 text-sm leading-relaxed mb-6">
+                                    Pick a session type, suggest a time, and send a short note. Your mentor will confirm or propose another slot.
+                                </p>
+                                <ul className="space-y-3 mb-8">
+                                    {SESSION_TYPES.map((type) => (
+                                        <li key={type.key} className="flex items-start gap-3 text-sm text-amber-50/95">
+                                            <span className="text-lg shrink-0">{type.icon}</span>
+                                            <span>
+                                                <span className="font-medium">{type.name}</span>
+                                                <span className="text-amber-200/70"> · {type.duration}</span>
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <button
+                                    onClick={handleBookClick}
+                                    className="w-full py-4 rounded-2xl bg-amber-400 text-stone-900 font-semibold hover:bg-amber-300 transition-colors shadow-lg shadow-amber-900/20"
+                                >
+                                    Book a session
+                                </button>
+                                <p className="text-xs text-amber-200/60 text-center mt-4 leading-relaxed">
+                                    Pro plan may apply for unlimited sessions.
+                                </p>
+                            </div>
 
-                                <div className="rounded-lg border border-stone-200/80 bg-white/80 px-6 py-5 text-sm text-stone-600">
-                                    <p className="text-xs font-semibold uppercase tracking-wider text-stone-400">Why Bridge</p>
-                                    <ul className="mt-4 space-y-3">
-                                        <li className="flex gap-3">
-                                            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-800" aria-hidden="true" />
-                                            Structured formats—not open-ended cold calls.
-                                        </li>
-                                        <li className="flex gap-3">
-                                            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-800" aria-hidden="true" />
-                                            Profiles and histories you can evaluate upfront.
-                                        </li>
-                                        <li className="flex gap-3">
-                                            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-800" aria-hidden="true" />
-                                            Secure booking and session records.
-                                        </li>
-                                    </ul>
-                                </div>
+                            <div className="rounded-3xl bg-white/90 border border-stone-200/80 p-6 text-sm text-stone-600">
+                                <p className="font-semibold text-stone-900 mb-2">Why Bridge?</p>
+                                <ul className="space-y-2 list-none">
+                                    <li className="flex gap-2 py-1">
+                                        <span className="text-amber-600">✓</span>
+                                        Vetted mentor profiles
+                                    </li>
+                                    <li className="flex gap-2 py-1">
+                                        <span className="text-amber-600">✓</span>
+                                        Structured session types
+                                    </li>
+                                    <li className="flex gap-2 py-1">
+                                        <span className="text-amber-600">✓</span>
+                                        Secure booking flow
+                                    </li>
+                                </ul>
                             </div>
                         </aside>
                     </div>
                 </main>
             </div>
+
             {showModal && <BookingModal mentor={mentor} onClose={() => setShowModal(false)} />}
         </>
     );
