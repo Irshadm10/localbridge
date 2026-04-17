@@ -60,3 +60,48 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Landing page motion (honors reduced-motion above) */
+@keyframes landing-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-landing-marquee {
+  animation: landing-marquee 40s linear infinite;
+}
+
+/* Pause marquee on hover (readability / less motion) */
+.landing-marquee-hover-pause:hover .animate-landing-marquee {
+  animation-play-state: paused;
+}
+
+@keyframes landing-float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@utility animate-landing-float {
+  animation: landing-float-soft 7s ease-in-out infinite;
+}
+
+@utility animate-landing-float-delayed {
+  animation: landing-float-soft 7s ease-in-out infinite;
+  animation-delay: -3.5s;
+}
+
+@utility bg-bridge-hero-mesh {
+  background-image:
+    radial-gradient(ellipse 120% 100% at 50% -30%, rgb(255 237 213 / 0.9), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 20%, rgb(254 215 170 / 0.45), transparent 50%),
+    radial-gradient(ellipse 45% 35% at 0% 80%, rgb(253 230 138 / 0.4), transparent 45%);
+}
