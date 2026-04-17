@@ -104,16 +104,17 @@ function MentorGridSkeleton() {
   );
 }
 
-function HeartButton({ filled, onClick, label }) {
+function HeartButton({ filled, onClick, label, disabled }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
         onClick();
       }}
-      className="rounded-full p-2 text-stone-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+      className="rounded-full p-2 text-stone-400 hover:text-rose-500 hover:bg-rose-50 transition-colors disabled:opacity-40 disabled:pointer-events-none"
       aria-label={label}
     >
       {filled ? (
@@ -129,7 +130,7 @@ function HeartButton({ filled, onClick, label }) {
   );
 }
 
-function MentorCard({ mentor, isFavorite, onToggleFavorite, user, navigate }) {
+function MentorCard({ mentor, isFavorite, onToggleFavorite, user, navigate, favoriteBusy }) {
   const avatarColor = getAvatarColor(mentor.name);
   const filled = isFavorite;
 
@@ -146,6 +147,7 @@ function MentorCard({ mentor, isFavorite, onToggleFavorite, user, navigate }) {
       <div className="absolute top-4 right-4">
         <HeartButton
           filled={filled}
+          disabled={Boolean(favoriteBusy)}
           onClick={handleHeart}
           label={filled ? 'Remove from favorites' : 'Add to favorites'}
         />
@@ -240,6 +242,8 @@ export default function Mentors() {
   const [error, setError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [favoriteIds, setFavoriteIds] = useState(() => new Set());
+  const [favoriteBusyId, setFavoriteBusyId] = useState(null);
+  const [favoriteMessage, setFavoriteMessage] = useState(null);
   const [, setRecentBump] = useState(0);
 
   const recent = getRecentlyViewedMentors();
@@ -258,7 +262,18 @@ export default function Mentors() {
       setFavoriteIds(new Set());
       return;
     }
-    void getMyFavorites().then(({ data }) => {
+    void getMyFavorites().then(({ data, error: favErr }) => {
+      if (favErr) {
+        const msg = favErr.message || String(favErr);
+        if (msg.includes('favorites') || msg.includes('schema cache') || msg.includes('does not exist')) {
+          setFavoriteMessage(
+            'Favorites need the favorites table in Supabase. Run the latest bridge_schema.sql (or ask your admin).',
+          );
+        }
+        setFavoriteIds(new Set());
+        return;
+      }
+      setFavoriteMessage(null);
       setFavoriteIds(new Set(data ?? []));
     });
   }, [user]);
@@ -301,15 +316,31 @@ export default function Mentors() {
     setReloadKey((k) => k + 1);
   }, []);
 
-  const onToggleFavorite = useCallback(
-    async (mentorId) => {
-      const { error: err } = await toggleFavorite(mentorId);
-      if (err) return;
-      const { data } = await getMyFavorites();
-      setFavoriteIds(new Set(data ?? []));
-    },
-    [],
-  );
+  const norm = (id) => (id == null ? '' : String(id).toLowerCase());
+
+  const onToggleFavorite = useCallback(async (mentorId) => {
+    const key = norm(mentorId);
+    setFavoriteBusyId(key);
+    setFavoriteMessage(null);
+
+    const { error: err } = await toggleFavorite(mentorId);
+
+    if (err) {
+      const msg = err.message || String(err);
+      setFavoriteMessage(
+        msg.includes('favorites') || msg.includes('does not exist') || msg.includes('schema cache')
+          ? 'Could not save favorite — add the favorites table in Supabase (see bridge_schema.sql).'
+          : msg,
+      );
+    }
+
+    const { data, error: reloadErr } = await getMyFavorites();
+    if (!reloadErr && data) {
+      setFavoriteIds(new Set(data));
+    }
+
+    setFavoriteBusyId(null);
+  }, []);
 
   const startIdx = totalCount === 0 ? 0 : page * PAGE_SIZE + 1;
   const endIdx = Math.min((page + 1) * PAGE_SIZE, totalCount);
@@ -340,6 +371,15 @@ export default function Mentors() {
             ))}
           </div>
         </section>
+      ) : null}
+
+      {favoriteMessage ? (
+        <div
+          className="rounded-xl border border-amber-200 bg-amber-50 text-amber-950 px-4 py-3 text-sm mb-6"
+          role="status"
+        >
+          {favoriteMessage}
+        </div>
       ) : null}
 
       {error ? <FetchErrorBanner message={error} onRetry={loadMentors} /> : null}
@@ -448,10 +488,11 @@ export default function Mentors() {
             <MentorCard
               key={mentor.id}
               mentor={mentor}
-              isFavorite={favoriteIds.has(mentor.id)}
+              isFavorite={favoriteIds.has(norm(mentor.id))}
               onToggleFavorite={onToggleFavorite}
               user={user}
               navigate={navigate}
+              favoriteBusy={favoriteBusyId === norm(mentor.id)}
             />
           ))}
         </div>
