@@ -134,12 +134,39 @@ function BookingModal({ mentor, onClose }) {
     );
 }
 
+function avatarColor(name = '') {
+    const palette = [
+        'bg-amber-400',
+        'bg-orange-400',
+        'bg-rose-400',
+        'bg-pink-400',
+        'bg-violet-400',
+        'bg-indigo-400',
+        'bg-teal-400',
+        'bg-emerald-400',
+        'bg-cyan-400',
+        'bg-sky-400',
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return palette[Math.abs(hash) % palette.length];
+}
+
+function initials(name = '') {
+    return name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w) => w[0].toUpperCase())
+        .join('');
+}
+
 export default function MentorProfile() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    const [mentor, setMentor] = useState(null);
+    const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
 
@@ -148,7 +175,7 @@ export default function MentorProfile() {
         setLoading(true);
         getMentorById(id).then(({ data }) => {
             if (!cancelled) {
-                setMentor(data);
+                setProfile(data);
                 setLoading(false);
             }
         });
@@ -165,81 +192,176 @@ export default function MentorProfile() {
 
     if (loading) {
         return (
-            <main className="max-w-3xl mx-auto px-6 py-12">
+            <main className="max-w-5xl mx-auto px-6 py-12">
                 <LoadingSpinner label="Loading mentor profile…" />
             </main>
         );
     }
 
+    if (!profile?.mentor) {
+        return (
+            <main className="max-w-5xl mx-auto px-6 py-12 text-center">
+                <p className="text-stone-500 text-lg">Mentor not found.</p>
+                <Link to="/mentors" className="mt-4 inline-block text-amber-700 hover:underline">
+                    ← Back to Mentors
+                </Link>
+            </main>
+        );
+    }
+
+    const mentor = profile.mentor;
+    const reviews = profile.reviews;
+
+    const avatarBg = avatarColor(mentor.name);
+    const mentorInitials = initials(mentor.name);
+
     return (
         <>
-            <main className="max-w-4xl mx-auto px-6 py-12">
-                <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8">
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
-                        {/* Left Side */}
-                        <div className="flex-1">
-                            <h1 className="text-3xl font-semibold text-stone-900 mb-2">
-                                {mentor.name}
-                            </h1>
+            <main className="max-w-5xl mx-auto px-6 py-10">
 
-                            <p className="text-lg text-stone-700 mb-1">
-                                {mentor.title}
-                            </p>
+                {/* Back link */}
+                <Link
+                    to="/mentors"
+                    className="inline-flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 transition-colors mb-8"
+                >
+                    ← Back to Mentors
+                </Link>
 
-                            <p className="text-stone-500 mb-4">
-                                {mentor.company}
-                            </p>
+                {/* Hero */}
+                <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8 mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+                        {/* Avatar */}
+                        <div
+                            className={`w-20 h-20 rounded-full flex-shrink-0 flex items-center justify-center text-white text-2xl font-bold ${avatarBg}`}
+                            aria-hidden="true"
+                        >
+                            {mentorInitials}
+                        </div>
 
-                            <div className="flex flex-wrap gap-2 mb-6">
-                                {mentor.expertise?.map((tag) => (
-                                    <span
-                                        key={tag}
-                                        className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-sm font-medium"
-                                    >
-                                        {tag}
+                        {/* Name / title / availability */}
+                        <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-3 mb-1">
+                                <h1 className="text-3xl font-bold text-stone-900 leading-tight">
+                                    {mentor.name}
+                                </h1>
+                                {mentor.available && (
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                        Available for sessions
                                     </span>
-                                ))}
+                                )}
                             </div>
+                            {mentor.title && (
+                                <p className="text-lg text-stone-700 font-medium">
+                                    {mentor.title}
+                                </p>
+                            )}
+                            {mentor.company && (
+                                <p className="text-stone-500 mt-0.5">
+                                    {mentor.company}
+                                </p>
+                            )}
+                        </div>
+                    </div>
 
-                            <p className="text-stone-700 leading-relaxed mb-6">
-                                {mentor.bio}
+                    {/* Stats row */}
+                    <div className="mt-8 grid grid-cols-3 gap-4">
+                        <div className="rounded-xl bg-amber-50 border border-amber-100 px-5 py-4">
+                            <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Rating</p>
+                            <p className="text-xl font-bold text-stone-900">
+                                {mentor.rating != null ? `⭐ ${mentor.rating}` : '—'}
                             </p>
+                        </div>
+                        <div className="rounded-xl bg-amber-50 border border-amber-100 px-5 py-4">
+                            <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Experience</p>
+                            <p className="text-xl font-bold text-stone-900">
+                                {mentor.years_experience != null ? `${mentor.years_experience} years` : '—'}
+                            </p>
+                        </div>
+                        <div className="rounded-xl bg-amber-50 border border-amber-100 px-5 py-4">
+                            <p className="text-xs text-stone-500 font-medium uppercase tracking-wide mb-1">Total Sessions</p>
+                            <p className="text-xl font-bold text-stone-900">
+                                {mentor.total_sessions != null ? `${mentor.total_sessions} sessions` : '—'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
-                                    <p className="text-sm text-stone-500">Rating</p>
-                                    <p className="text-lg font-semibold text-stone-900">
-                                        ⭐ {mentor.rating}
-                                    </p>
-                                </div>
+                {/* Two-column body */}
+                <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-                                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
-                                    <p className="text-sm text-stone-500">Experience</p>
-                                    <p className="text-lg font-semibold text-stone-900">
-                                        {mentor.years_experience} years
-                                    </p>
-                                </div>
+                    {/* Left: bio + expertise */}
+                    <div className="flex-1 min-w-0 flex flex-col gap-6">
 
-                                <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
-                                    <p className="text-sm text-stone-500">Sessions</p>
-                                    <p className="text-lg font-semibold text-stone-900">
-                                        1:1 Mentorship
-                                    </p>
+                        {/* About */}
+                        <section className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8">
+                            <h2 className="text-lg font-semibold text-stone-900 mb-4">About</h2>
+                            <p className="text-stone-700 leading-relaxed">
+                                {mentor.bio || 'No bio available.'}
+                            </p>
+                        </section>
+
+                        {/* Expertise */}
+                        <section className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8">
+                            <h2 className="text-lg font-semibold text-stone-900 mb-4">Areas of Expertise</h2>
+                            {mentor.expertise?.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {mentor.expertise.map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="px-3 py-1.5 rounded-full bg-amber-100 text-amber-800 text-sm font-medium"
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
                                 </div>
+                            ) : (
+                                <p className="text-stone-400 text-sm">No expertise tags listed.</p>
+                            )}
+                        </section>
+
+                        {/* Reviews placeholder */}
+                        <section className="bg-white rounded-2xl border border-stone-200 shadow-sm p-8">
+                            <h2 className="text-lg font-semibold text-stone-900 mb-4">Reviews</h2>
+                            <div className="flex flex-col items-center py-8 text-center text-stone-400">
+                                <span className="text-4xl mb-3">💬</span>
+                                <p className="font-medium text-stone-500">Reviews coming soon</p>
+                                <p className="text-sm mt-1">Be the first to leave a review after your session.</p>
                             </div>
+                        </section>
+                    </div>
+
+                    {/* Right: sticky booking card */}
+                    <aside className="w-full lg:w-80 flex-shrink-0 lg:sticky lg:top-6">
+                        <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 flex flex-col gap-5">
+                            <div>
+                                <h2 className="text-lg font-semibold text-stone-900 mb-1">Book a Session</h2>
+                                <p className="text-sm text-stone-500">Choose a session type when booking</p>
+                            </div>
+
+                            {/* Session type list */}
+                            <ul className="flex flex-col gap-2">
+                                {SESSION_TYPES.map((type) => (
+                                    <li key={type.key} className="flex items-center gap-3 text-sm text-stone-700">
+                                        <span className="text-base">{type.icon}</span>
+                                        <span className="flex-1">{type.name}</span>
+                                        <span className="text-xs text-stone-400">{type.duration}</span>
+                                    </li>
+                                ))}
+                            </ul>
 
                             <button
                                 onClick={handleBookClick}
-                                className="px-6 py-3 rounded-full bg-stone-900 text-amber-50 hover:bg-stone-700 transition-colors"
+                                className="w-full py-3 rounded-full bg-stone-900 text-amber-50 font-medium hover:bg-stone-700 transition-colors"
                             >
                                 Book a Session
                             </button>
 
-                            <p className="mt-2 text-sm text-stone-500">
+                            <p className="text-xs text-stone-400 text-center leading-relaxed">
                                 Pro plan required for unlimited sessions.
                             </p>
                         </div>
-                    </div>
+                    </aside>
                 </div>
             </main>
 
