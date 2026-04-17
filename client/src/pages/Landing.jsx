@@ -406,6 +406,30 @@ export default function Landing() {
       <Testimonials />
       <PricingTeaser />
       <FinalCTA />
+      <section className="max-w-5xl mx-auto px-6 py-12">
+        <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-orange-500 mb-2">
+              Affordable access
+            </p>
+            <h2 className="text-2xl md:text-3xl font-bold text-stone-900">
+              Plans starting at $0
+            </h2>
+            <p className="mt-2 text-stone-600">
+              Start free, explore mentors, and upgrade when you're ready for more sessions and support.
+            </p>
+          </div>
+
+          <a
+              href="/pricing"
+              className="px-6 py-3 rounded-full bg-stone-900 text-amber-50 hover:bg-stone-700 transition-colors"
+          >
+            View Pricing
+          </a>
+        </div>
+      </section>
     </>
+
   );
+
 }
