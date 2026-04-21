@@ -1,19 +1,18 @@
-import { useState, useEffect } from 'react';
-import supabase from '../api/supabase';
-import { AuthContext } from './auth-context';
+import { createContext, useContext, useEffect, useState } from "react";
+import supabase from "../api/supabase";
+
+export const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Hydrate session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Keep state in sync with Supabase auth events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -24,22 +23,31 @@ export function AuthProvider({ children }) {
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    return data;
+    setUser(data.user);
+    return data.user;
   }
 
-  async function register(email, password, userMetadata = {}) {
+  async function register(email, password, meta) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: userMetadata },
+      options: {
+        data: {
+          full_name: meta.full_name,
+          first_name: meta.full_name.split(" ")[0] ?? "",
+          last_name: meta.full_name.split(" ").slice(1).join(" ") ?? "",
+          role: meta.role,
+        },
+      },
     });
     if (error) throw error;
-    return data;
+    setUser(data.user);
+    return data.user;
   }
 
   async function logout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    await supabase.auth.signOut();
+    setUser(null);
   }
 
   return (
@@ -47,4 +55,10 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
+  return ctx;
 }
