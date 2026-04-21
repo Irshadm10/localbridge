@@ -33,7 +33,7 @@ cd ../server && npm install
 ### Configure environment
 
 ```bash
-cp server/.env.example server/.env
+cp server/.env server/.env
 # Fill in the values in server/.env
 ```
 
