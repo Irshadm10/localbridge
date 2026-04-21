@@ -20,6 +20,7 @@ import Community from './pages/footer/Community.jsx';
 import Privacy from './pages/footer/Privacy.jsx';
 import Terms from './pages/footer/Terms.jsx';
 import Cookies from './pages/footer/Cookies.jsx';
+import FeedbackFAB from './components/FeedbackFAB';
 
 export default function App() {
   return (
@@ -32,7 +33,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/mentors" element={<Mentors />} />
-            <Route path="/mentors/:id" element={<MentorProfile />} />
+            <Route path="/mentorAdd global feedback modal and floating feedback buttons/:id" element={<MentorProfile />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/cookies" element={<Cookies />} />
           </Routes>
+          <FeedbackFAB />
           <Footer/>
         </div>
       </BrowserRouter>

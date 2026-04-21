@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Facebook, X, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import FeedbackModal from './FeedbackModal';
 
 export default function Footer() {
     return (
