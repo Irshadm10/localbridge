@@ -54,7 +54,7 @@ export default function About() {
             </section>
 
             <section className="border-y border-stone-200/70 bg-gradient-to-b from-white via-amber-50/40 to-white px-4 py-20 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-6xl">
+                <div className="mx-auto max-w-7xl">
                     <Reveal className="mb-10 max-w-2xl">
                         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">What we believe</p>
                         <h2 className="mt-3 font-display text-3xl font-semibold text-stone-900 sm:text-4xl">Values we actually use.</h2>
@@ -73,7 +73,7 @@ export default function About() {
             </section>
 
             <section className="px-4 py-20 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-6xl">
+                <div className="mx-auto max-w-7xl">
                     <Reveal className="mb-10 max-w-2xl">
                         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Leadership</p>
                         <h2 className="mt-3 font-display text-3xl font-semibold text-stone-900 sm:text-4xl">The people behind Bridge.</h2>

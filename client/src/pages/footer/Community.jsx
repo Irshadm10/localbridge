@@ -29,7 +29,7 @@ export default function Community() {
 
     return (
         <main className="relative min-h-screen bg-gradient-to-b from-[#fffaf3] via-[#fff4e3] to-[#fffaf3] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-            <div className="mx-auto max-w-6xl">
+            <div className="mx-auto max-w-7xl">
                 <Reveal className="mb-12 max-w-3xl">
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Community</p>
                     <h1 className="mt-3 font-display text-4xl font-semibold leading-tight text-stone-900 sm:text-5xl">More than a directory. A <span className="italic text-gradient-bridge">place</span>.</h1>

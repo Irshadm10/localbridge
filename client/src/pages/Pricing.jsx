@@ -286,7 +286,7 @@ export default function Pricing() {
         <PricingBackdrop />
 
         <header className="relative z-[2] border-b border-stone-300/40 bg-[#fdf7f0]/80 backdrop-blur-md">
-          <div className="relative mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+          <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
             <nav aria-label="Breadcrumb" className="mb-4">
               <ol className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
                 <li>

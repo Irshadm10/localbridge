@@ -116,17 +116,36 @@ function MentorGridSkeleton() {
         {Array.from({ length: 6 }).map((_, i) => (
             <div
                 key={i}
-                className="space-y-4 animate-pulse rounded-[1.75rem] border border-stone-200/80 bg-white/90 p-6 shadow-bridge-card"
+                className="flex flex-col h-[320px] animate-pulse rounded-[1.75rem] border border-stone-200/80 bg-white/90 p-6 shadow-bridge-card"
             >
               <div className="flex gap-4">
                 <div className="h-14 w-14 shrink-0 rounded-2xl bg-stone-200" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-stone-200" />
-                  <div className="h-3 w-1/2 rounded bg-stone-100" />
+                <div className="flex-1 space-y-2 pt-0.5">
+                  <div className="h-4 w-3/4 rounded-full bg-stone-200" />
+                  <div className="h-3 w-1/2 rounded-full bg-stone-100" />
+                  <div className="h-3 w-1/3 rounded-full bg-amber-100/50" />
                 </div>
               </div>
-              <div className="h-12 rounded bg-stone-100" />
-              <div className="h-8 w-2/3 rounded bg-stone-100" />
+              <div className="mt-4 flex items-center justify-between">
+                <div className="h-3 w-20 rounded-full bg-stone-100" />
+                <div className="h-4 w-24 rounded-full bg-stone-100" />
+              </div>
+              <div className="mt-4 space-y-2">
+                <div className="h-3 w-full rounded-full bg-stone-100" />
+                <div className="h-3 w-5/6 rounded-full bg-stone-100" />
+              </div>
+              <div className="mt-4 flex gap-1.5">
+                <div className="h-6 w-16 rounded-full bg-orange-50" />
+                <div className="h-6 w-16 rounded-full bg-orange-50" />
+                <div className="h-6 w-16 rounded-full bg-orange-50" />
+              </div>
+              <div className="mt-auto flex items-center justify-between border-t border-stone-100/90 pt-4">
+                <div className="space-y-1.5">
+                  <div className="h-3 w-16 rounded-full bg-stone-100" />
+                  <div className="h-3 w-20 rounded-full bg-stone-200" />
+                </div>
+                <div className="h-9 w-28 rounded-full bg-stone-200" />
+              </div>
             </div>
         ))}
       </div>
@@ -172,7 +191,7 @@ function MentorCard({ mentor, isFavorite, onToggleFavorite, user, navigate, favo
 
   return (
       <div className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-[1.75rem] border border-stone-200/80 bg-white/95 p-6 shadow-bridge-card transition duration-300 hover:-translate-y-1 hover:border-orange-200/55 hover:shadow-bridge-glow">
-        <div className="absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-orange-400/70 to-transparent opacity-0 transition group-hover:opacity-100" />
+        <div className="absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-orange-400/70 to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
         <div className="absolute right-4 top-5">
           <HeartButton
               filled={isFavorite}
@@ -401,8 +420,14 @@ export default function Mentors() {
   }, []);
 
   function changePage(nextPage) {
+    setLoading(true); // Immediate loading state for better feedback
     setPage(nextPage);
-    gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Only scroll back to the top of the grid if the top is currently off-screen (e.g. user is at the bottom pagination)
+    const rect = gridRef.current?.getBoundingClientRect();
+    if (rect && rect.top < 0) {
+      gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   function resetFilters() {
@@ -448,7 +473,7 @@ export default function Mentors() {
               aria-hidden
               className="pointer-events-none absolute -right-20 -top-10 h-64 w-64 rounded-full bg-gradient-to-br from-amber-300/25 via-orange-200/15 to-transparent blur-3xl"
           />
-          <div className="relative mx-auto max-w-6xl">
+          <div className="relative mx-auto max-w-7xl">
             <nav aria-label="Breadcrumb" className="mb-4">
               <ol className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
                 <li>
@@ -738,7 +763,7 @@ export default function Mentors() {
         </section>
 
         {/* Mentors grid — now directly under the strip */}
-        <div ref={gridRef} className="relative mx-auto max-w-6xl scroll-mt-4 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8">
+        <div ref={gridRef} className="relative mx-auto max-w-7xl scroll-mt-24 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8">
           {favoriteMessage ? (
               <div
                   className="mb-6 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/95 to-orange-50/40 px-5 py-4 text-sm text-amber-950 shadow-sm backdrop-blur-sm"
@@ -788,10 +813,10 @@ export default function Mentors() {
           {loading ? (
               <MentorGridSkeleton />
           ) : visibleMentors.length > 0 ? (
-              <>
+              <div className="animate-in fade-in duration-500">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {visibleMentors.map((mentor, i) => (
-                      <Reveal key={mentor.id} delay={Math.min(i * 40, 240)} className="h-full">
+                      <Reveal key={mentor.id} delay={Math.min(i * 30, 150)} className="h-full">
                         <MentorCard
                             mentor={mentor}
                             isFavorite={favoriteIds.has(normalizeMentorId(mentor.id))}
@@ -828,7 +853,7 @@ export default function Mentors() {
                       </button>
                     </div>
                 ) : null}
-              </>
+              </div>
           ) : !error ? (
               <div className="relative flex flex-col items-center justify-center overflow-hidden rounded-[1.75rem] border border-dashed border-stone-200/90 bg-gradient-to-b from-stone-50/90 to-orange-50/30 px-6 py-20 text-center shadow-sm backdrop-blur-sm sm:py-24">
                 <div

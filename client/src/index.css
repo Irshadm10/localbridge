@@ -105,3 +105,20 @@ body {
     radial-gradient(ellipse 50% 40% at 100% 20%, rgb(254 215 170 / 0.45), transparent 50%),
     radial-gradient(ellipse 45% 35% at 0% 80%, rgb(253 230 138 / 0.4), transparent 45%);
 }
+
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e7e5e4;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: #d6d3d1;
+  }
+}

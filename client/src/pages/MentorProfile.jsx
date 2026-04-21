@@ -383,7 +383,7 @@ function ConfirmModal({ mentor, confirmation, onClose, onConfirmed }) {
 
 function ProfileSkeleton() {
     return (
-        <main className="relative mx-auto min-h-screen max-w-6xl overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
+        <main className="relative mx-auto min-h-screen max-w-7xl overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
             <PageGutterAtmosphere />
             <div className="animate-pulse space-y-8">
                 <div className="h-4 w-56 rounded-full bg-stone-200/90" />
@@ -453,7 +453,6 @@ export default function MentorProfile() {
 
     function handlePickType(type) {
         setSelectedType(type);
-        setTimeout(() => { bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 80);
     }
 
     if (loading) return <ProfileSkeleton />;
@@ -497,7 +496,7 @@ export default function MentorProfile() {
 
                 <section className="relative border-b border-stone-200/50 bg-gradient-to-b from-white/60 via-orange-50/25 to-transparent px-4 pt-6 sm:px-6 lg:px-8">
                     <div aria-hidden className="pointer-events-none absolute -right-20 -top-8 h-56 w-56 rounded-full bg-amber-200/25 blur-3xl" />
-                    <div className="relative mx-auto max-w-6xl pb-5">
+                    <div className="relative mx-auto max-w-7xl pb-5">
                         <nav aria-label="Breadcrumb">
                             <ol className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
                                 <li><Link to="/" className={`rounded-md font-medium text-stone-600 transition hover:text-orange-800 ${focusRing}`}>Home</Link></li>
@@ -510,7 +509,7 @@ export default function MentorProfile() {
                     </div>
                 </section>
 
-                <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-6 sm:px-6 sm:pt-8 lg:px-8">
+                <div className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 sm:pt-8 lg:px-8">
                     <section aria-labelledby="profile-heading" className="relative mb-8 overflow-hidden rounded-[1.75rem] border border-stone-200/90 bg-white/95 shadow-bridge-card backdrop-blur-md">
                         <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
                         <div className="relative grid grid-cols-1 gap-6 p-6 sm:p-8 lg:grid-cols-12 lg:items-center lg:gap-8">
@@ -577,7 +576,7 @@ export default function MentorProfile() {
                         </div>
                     </section>
 
-                    <div ref={bookingRef} className="mb-10 scroll-mt-4">
+                    <div ref={bookingRef} className="mb-10 scroll-mt-24">
                         {!selectedType ? (
                             <section className="relative overflow-hidden rounded-[1.75rem] border border-stone-900/90 bg-gradient-to-br from-stone-900 via-stone-900 to-orange-950 p-7 text-amber-50 shadow-2xl ring-1 ring-white/10 sm:p-8">
                                 <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-orange-500/20 blur-3xl" />
