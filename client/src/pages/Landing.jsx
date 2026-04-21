@@ -899,6 +899,7 @@ function FinalCTA() {
   );
 }
 
+
 export default function Landing() {
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -925,14 +926,14 @@ export default function Landing() {
   }, [featured]);
 
   return (
-      <main id="main-content" aria-label="Bridge — home" className="overflow-x-hidden">
-        <Hero />
-        <FeaturedMentor mentor={spotlightMentor} loading={loading} />
-        <HowItWorks />
-        <WhyBridge />
-        <Outcomes />
-        <PricingBlock />
-        <FinalCTA />
-      </main>
+    <main id="main-content" aria-label="Bridge — home" className="overflow-x-hidden">
+      <Hero />
+      <FeaturedMentor mentor={spotlightMentor} loading={loading} />
+      <HowItWorks />
+      <WhyBridge />
+      <Outcomes />
+      <PricingBlock />
+      <FinalCTA />
+    </main>
   );
 }
