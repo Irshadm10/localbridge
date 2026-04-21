@@ -1,6 +1,9 @@
 # Bridge
 
-A mentorship platform connecting mentors and mentees to foster meaningful professional growth.
+Bridge is a mentorship platform built to connect job seekers and recent graduates with established professionals for one-on-one career support. Users can browse mentors, book sessions for services like career advice, interview prep, resume reviews, and networking guidance, then leave reviews based on their experience.
+
+The platform was built with React, Vite, and Tailwind CSS on the frontend, with Supabase handling authentication and the Postgres database. The app is deployed on Vercel, with automatic deployment from the main branch.
+
 
 ## Project Structure
 
