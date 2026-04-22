@@ -10,6 +10,7 @@ import Dashboard from './pages/dashboard/Dashboard.jsx';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';
+import ResumeReview from './pages/ResumeReview';
 import Footer from './components/Footer';
 import About from './pages/About';
 import Careers from './pages/footer/Careers.jsx';
@@ -43,6 +44,7 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/resume" element={<ResumeReview />} />
           <Route path="/about" element={<About />} />
           <Route path="/careers" element={<Careers />} />
           <Route path="/blog" element={<Blog />} />

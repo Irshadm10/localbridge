@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useId, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { getAllMentors } from '../api/mentors';
 import { getMyFavorites, toggleFavorite } from '../api/favorites';
 import { useAuth } from '../context/useAuth';
@@ -7,6 +7,8 @@ import { isMentorAccount } from '../utils/accountRole';
 import PageGutterAtmosphere from '../components/PageGutterAtmosphere';
 import Reveal from '../components/Reveal';
 import { focusRing } from '../ui';
+import MentorMatchWizard from '../components/MentorMatchWizard';
+import { getAIMatchedMentors, saveMenteeAssessment, loadMenteeAssessment } from '../api/aiMatching';
 
 const PAGE_SIZE = 12;
 const focusRingDarkChip =
@@ -290,9 +292,137 @@ function FetchErrorBanner({ message, onRetry }) {
   );
 }
 
+function MatchLabelChip({ label }) {
+  const colors =
+    label === 'Strong Match'
+      ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80'
+      : label === 'Good Match'
+      ? 'bg-sky-50 text-sky-800 border-sky-200/80'
+      : 'bg-amber-50 text-amber-800 border-amber-200/80';
+  return (
+    <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${colors}`}>
+      {label}
+    </span>
+  );
+}
+
+function AiMatchCard({ mentor, match, navigate }) {
+  const [expanded, setExpanded] = useState(false);
+  const avatarColor = getAvatarColor(mentor.name);
+
+  return (
+    <div className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-[1.75rem] border border-orange-200/50 bg-white/95 p-6 shadow-bridge-card transition duration-300 hover:-translate-y-1 hover:border-orange-300/60 hover:shadow-bridge-glow">
+      <div className="absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-orange-400/60 to-transparent opacity-0 transition duration-500 group-hover:opacity-100" />
+
+      {/* Match score badge */}
+      <div className="absolute right-4 top-4 flex flex-col items-end gap-1">
+        <span className="rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-2.5 py-0.5 text-xs font-bold text-white shadow-sm">
+          {match.match_score}% Match
+        </span>
+        <MatchLabelChip label={match.match_label} />
+      </div>
+
+      <div className="flex items-start gap-4 pr-24">
+        {mentor.image_url ? (
+          <img src={mentor.image_url} alt="" className="h-14 w-14 shrink-0 rounded-2xl object-cover ring-2 ring-white shadow-md" />
+        ) : (
+          <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-sm font-bold shadow-md ring-2 ring-white ${avatarColor}`}>
+            {getInitials(mentor.name)}
+          </div>
+        )}
+        <div className="min-w-0 pt-0.5">
+          <h3 className="truncate font-semibold text-stone-900">{mentor.name}</h3>
+          <p className="truncate text-sm text-stone-500">{mentor.title}</p>
+          <p className="truncate text-sm font-medium text-amber-800">{mentor.company}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <StarRating rating={mentor.rating} />
+        {mentor.tier ? (
+          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${tierBadgeClasses(mentor.tier)}`}>
+            {mentor.tier.charAt(0).toUpperCase() + mentor.tier.slice(1)}
+          </span>
+        ) : null}
+      </div>
+
+      <p className="line-clamp-2 text-sm leading-relaxed text-stone-600">{mentor.bio}</p>
+
+      {/* "Why this mentor?" expandable */}
+      <div className="rounded-xl border border-amber-100 bg-amber-50/40">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className={`flex w-full items-center justify-between px-4 py-3 text-left text-xs font-semibold text-amber-800 transition hover:text-amber-900 ${focusRing}`}
+        >
+          Why this mentor?
+          <svg
+            className={`h-3.5 w-3.5 shrink-0 transition-transform duration-150 ${expanded ? 'rotate-180' : ''}`}
+            fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          </svg>
+        </button>
+        {expanded && (
+          <ul className="border-t border-amber-100 px-4 pb-3 pt-2 space-y-1.5">
+            {match.reasons.map((r, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-stone-700">
+                <span className="mt-0.5 shrink-0 text-amber-500">•</span>
+                {r}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="mt-auto flex items-center justify-between border-t border-stone-100/90 pt-4">
+        <span className="text-xs text-stone-400">{mentor.total_sessions} sessions</span>
+        <Link
+          to={`/mentors/${mentor.id}`}
+          className={`rounded-full bg-gradient-to-r from-stone-900 to-stone-800 px-4 py-2 text-sm font-semibold text-amber-50 shadow-md transition hover:from-stone-800 hover:to-stone-700 ${focusRing}`}
+        >
+          Open profile
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function AiHonorableCard({ mentor, match }) {
+  const avatarColor = getAvatarColor(mentor.name);
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border border-stone-200/80 bg-white/95 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200/60 hover:shadow-md">
+      {mentor.image_url ? (
+        <img src={mentor.image_url} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover ring-2 ring-white shadow" />
+      ) : (
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-bold shadow ring-2 ring-white ${avatarColor}`}>
+          {getInitials(mentor.name)}
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <h4 className="truncate text-sm font-semibold text-stone-900">{mentor.name}</h4>
+          <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+            {match.match_score}%
+          </span>
+        </div>
+        <p className="truncate text-xs text-stone-500">{mentor.title} · {mentor.company}</p>
+        <p className="mt-1 line-clamp-2 text-xs text-stone-600">{match.reason}</p>
+      </div>
+      <Link
+        to={`/mentors/${mentor.id}`}
+        className={`shrink-0 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-700 shadow-sm transition hover:border-orange-300/70 ${focusRing}`}
+      >
+        View
+      </Link>
+    </div>
+  );
+}
+
 export default function Mentors() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const asMentor = user ? isMentorAccount(user) : false;
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -315,6 +445,17 @@ export default function Mentors() {
   const [availableOnly, setAvailableOnly] = useState(false);
   const gridRef = useRef(null);
   const sortRef = useRef(null);
+
+  // ── AI Match state ──────────────────────────────────────────────────────────
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [aiMode, setAiMode] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(null);
+  const [aiResults, setAiResults] = useState(null); // { top_matches, honorable_mentions }
+  const [allMentorsForAi, setAllMentorsForAi] = useState([]);
+  const [savedMenteeProfile, setSavedMenteeProfile] = useState(null);
+  const [prefillData, setPrefillData] = useState(null);
+  const didAutoOpenRef = useRef(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 350);
@@ -396,6 +537,79 @@ export default function Mentors() {
     setError(null);
     setReloadKey((k) => k + 1);
   }, []);
+
+  async function handleAiMatchClick() {
+    if (!user) {
+      navigate('/login', { state: { message: 'Please log in to use AI mentor matching' } });
+      return;
+    }
+    const { data: existing } = await loadMenteeAssessment(user.id);
+    setPrefillData(existing ?? null);
+    setWizardOpen(true);
+  }
+
+  // Auto-open wizard when navigated here from Resume Review page
+  useEffect(() => {
+    if (didAutoOpenRef.current) return;
+    if (location.state?.openAIMatch && user) {
+      didAutoOpenRef.current = true;
+      navigate(location.pathname, { replace: true, state: {} });
+      handleAiMatchClick();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, location.state?.openAIMatch]);
+
+  async function handleWizardComplete(formData) {
+    setWizardOpen(false);
+    setAiLoading(true);
+    setAiError(null);
+    setAiMode(true);
+
+    try {
+      const profilePayload = {
+        current_position: formData.currentPosition,
+        target_role: formData.targetRole,
+        target_industry: formData.targetIndustry,
+        years_experience: formData.yearsExperience,
+        top_goals: formData.topGoals,
+        session_types_needed: formData.sessionTypesNeeded,
+        availability: formData.availability,
+        bio_summary: formData.bioSummary,
+        resume_uploaded: Boolean(formData.resumeBase64),
+        assessment_completed_at: new Date().toISOString(),
+      };
+
+      const { data: savedProfile } = await saveMenteeAssessment(user.id, profilePayload);
+      setSavedMenteeProfile(savedProfile ?? profilePayload);
+
+      const { data: mentorData } = await getAllMentors({ pageSize: 200 });
+      const fetchedMentors = mentorData ?? [];
+      setAllMentorsForAi(fetchedMentors);
+
+      const results = await getAIMatchedMentors({
+        menteeProfile: savedProfile ?? profilePayload,
+        mentors: fetchedMentors,
+        resumeText: formData.resumeBase64 ?? null,
+      });
+
+      setAiResults(results);
+    } catch (e) {
+      setAiError(e.message || 'Something went wrong. Please try again.');
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  function exitAiMode() {
+    setAiMode(false);
+    setAiResults(null);
+    setAiError(null);
+    setAllMentorsForAi([]);
+  }
+
+  function getMentorById(id) {
+    return allMentorsForAi.find((m) => m.id === id) ?? mentors.find((m) => m.id === id) ?? null;
+  }
 
   const onToggleFavorite = useCallback(async (mentorId) => {
     const key = normalizeMentorId(mentorId);
@@ -535,7 +749,7 @@ export default function Mentors() {
               </div>
 
               {/* Inline control cluster — search + sort + filter toggle */}
-              <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+              <div className={`flex flex-col gap-2.5 sm:flex-row sm:items-center ${aiMode ? 'opacity-50 pointer-events-none' : ''}`}>
                 <div className="relative flex-1 sm:w-72 sm:flex-initial">
                   <svg
                       className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400"
@@ -567,6 +781,19 @@ export default function Mentors() {
                       </button>
                   ) : null}
                 </div>
+
+                {!asMentor ? (
+                  <button
+                    type="button"
+                    onClick={handleAiMatchClick}
+                    className={`inline-flex items-center gap-2 rounded-full border border-transparent bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-orange-500/25 transition hover:from-orange-500 hover:to-amber-400 ${focusRing}`}
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                    </svg>
+                    AI Match
+                  </button>
+                ) : null}
 
                 <div className="flex gap-2.5">
                   {/* Custom sort dropdown */}
@@ -780,8 +1007,137 @@ export default function Mentors() {
           </div>
         </section>
 
+        {/* ── AI Match Mode ──────────────────────────────────────────────── */}
+        {aiMode ? (
+          <div className="relative mx-auto max-w-bridge scroll-mt-24 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8">
+
+            {/* Loading state */}
+            {aiLoading && (
+              <div className="flex flex-col items-center justify-center rounded-[1.75rem] border border-orange-200/60 bg-gradient-to-b from-orange-50/40 to-amber-50/20 py-24 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-bridge-card ring-1 ring-orange-200/60">
+                  <svg className="h-8 w-8 animate-spin text-orange-500" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                </div>
+                <p className="mt-6 font-display text-xl font-semibold text-stone-900">Finding your best mentors…</p>
+                <p className="mt-2 text-sm text-stone-500">Our AI is reviewing all profiles for you.</p>
+              </div>
+            )}
+
+            {/* Error state */}
+            {!aiLoading && aiError && (
+              <div className="rounded-[1.75rem] border border-red-200/90 bg-red-50/95 px-6 py-8 text-center shadow-sm">
+                <p className="font-semibold text-red-900">Something went wrong finding your matches.</p>
+                <p className="mt-1 text-sm text-red-800/80">Please try again.</p>
+                <p className="mt-2 font-mono text-xs text-red-800/60">{aiError}</p>
+                <div className="mt-6 flex items-center justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { setAiError(null); handleAiMatchClick(); }}
+                    className={`rounded-full bg-red-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-800 ${focusRing}`}
+                  >
+                    Retry
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exitAiMode}
+                    className={`rounded-full border border-stone-200 bg-white px-5 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 ${focusRing}`}
+                  >
+                    Back to Browse
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Results */}
+            {!aiLoading && !aiError && aiResults && (
+              <>
+                {/* Header */}
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-orange-200/60 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" />
+                      </svg>
+                      AI-Powered Matches
+                    </div>
+                    <h2 className="font-display text-2xl font-semibold text-stone-900 sm:text-3xl">
+                      Your Top Mentor Matches
+                    </h2>
+                    {savedMenteeProfile && (
+                      <p className="mt-1.5 text-sm text-stone-500">
+                        Based on your goal to become a{' '}
+                        <span className="font-semibold text-stone-700">{savedMenteeProfile.target_role ?? 'your target role'}</span>
+                        {savedMenteeProfile.target_industry ? (
+                          <> in <span className="font-semibold text-stone-700">{savedMenteeProfile.target_industry}</span></>
+                        ) : null}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex shrink-0 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={handleAiMatchClick}
+                      className={`rounded-full border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50 ${focusRing}`}
+                    >
+                      Retake Assessment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={exitAiMode}
+                      className={`rounded-full border border-stone-200 bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50 ${focusRing}`}
+                    >
+                      ← Back to Browse
+                    </button>
+                  </div>
+                </div>
+
+                {/* Top 3 matches */}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {aiResults.top_matches.map((match) => {
+                    const mentor = getMentorById(match.mentor_id);
+                    if (!mentor) return null;
+                    return (
+                      <AiMatchCard
+                        key={match.mentor_id}
+                        mentor={mentor}
+                        match={match}
+                        navigate={navigate}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Honorable mentions */}
+                {aiResults.honorable_mentions.length > 0 && (
+                  <div className="mt-12">
+                    <h3 className="mb-5 font-display text-lg font-semibold text-stone-700">
+                      Honorable Mentions
+                    </h3>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      {aiResults.honorable_mentions.map((match) => {
+                        const mentor = getMentorById(match.mentor_id);
+                        if (!mentor) return null;
+                        return (
+                          <AiHonorableCard
+                            key={match.mentor_id}
+                            mentor={mentor}
+                            match={match}
+                            navigate={navigate}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ) : null}
+
         {/* Mentors grid — now directly under the strip */}
-        <div ref={gridRef} className="relative mx-auto max-w-bridge scroll-mt-24 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8">
+        <div ref={gridRef} className={`relative mx-auto max-w-bridge scroll-mt-24 px-4 pb-24 pt-8 sm:px-6 sm:pt-10 lg:px-8 ${aiMode ? 'hidden' : ''}`}>
           {favoriteMessage ? (
               <div
                   className="mb-6 rounded-2xl border border-amber-200/80 bg-gradient-to-br from-amber-50/95 to-orange-50/40 px-5 py-4 text-sm text-amber-950 shadow-sm backdrop-blur-sm"
@@ -904,6 +1260,13 @@ export default function Mentors() {
               </div>
           ) : null}
         </div>
+        {wizardOpen && (
+          <MentorMatchWizard
+            prefill={prefillData}
+            onComplete={handleWizardComplete}
+            onClose={() => setWizardOpen(false)}
+          />
+        )}
       </main>
   );
 }

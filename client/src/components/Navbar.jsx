@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { isMentorAccount } from '../utils/accountRole';
-import { Bell, LogOut, User, Settings, Sparkles } from 'lucide-react';
+import { Bell, LogOut, User, Settings, Sparkles, FileText } from 'lucide-react';
 
 function getInitials(name = '') {
   return name
@@ -58,9 +58,14 @@ export default function Navbar() {
                   Mentors
                 </Link>
                 {user ? (
+                  <>
                     <Link to="/dashboard" className={navLinkClass}>
                       Dashboard
                     </Link>
+                    <Link to="/resume" className={`${navLinkClass} whitespace-nowrap`}>
+                      Resume Review
+                    </Link>
+                  </>
                 ) : null}
               </>
           )}
@@ -144,14 +149,24 @@ export default function Navbar() {
                     </Link>
 
                     {!asMentor ? (
-                      <Link
-                          to="/mentors"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-white/5"
-                      >
-                        <Sparkles className="h-4 w-4 text-stone-400 dark:text-stone-500" />
-                        Find a mentor
-                      </Link>
+                      <>
+                        <Link
+                            to="/mentors"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-white/5"
+                        >
+                          <Sparkles className="h-4 w-4 text-stone-400 dark:text-stone-500" />
+                          Find a mentor
+                        </Link>
+                        <Link
+                            to="/resume"
+                            onClick={() => setMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-white/5"
+                        >
+                          <FileText className="h-4 w-4 text-stone-400 dark:text-stone-500" />
+                          Resume Review
+                        </Link>
+                      </>
                     ) : null}
 
                     <div className="border-t border-stone-100 dark:border-white/10">
