@@ -22,6 +22,7 @@ create table public.mentor_profiles (
   total_sessions int not null default 0,
   available boolean not null default true,
   image_url text,
+  availability_schedule jsonb,
   created_at timestamptz not null default now(),
   expertise_search text generated always as (lower(expertise::text)) stored
 );

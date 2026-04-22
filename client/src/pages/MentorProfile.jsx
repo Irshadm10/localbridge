@@ -7,13 +7,16 @@ import { useAuth } from '../context/useAuth';
 import { isMentorAccount } from '../utils/accountRole';
 import { SESSION_TYPES } from '../constants/sessionTypes';
 import { addRecentlyViewedMentor } from '../utils/recentlyViewed';
+import {
+  buildAvailabilityCalendar,
+  getSlotsForDate,
+  normalizeAvailabilitySchedule,
+} from '../utils/mentorAvailability';
 import PageGutterAtmosphere from '../components/PageGutterAtmosphere';
 import Reveal from '../components/Reveal';
 import { focusRing } from '../ui';
 const focusRingDark = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
 const focusRingWhite = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
-
-const DEFAULT_TIME_SLOTS = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
 function tierBadgeClasses(tier) {
     switch (tier) {
@@ -86,48 +89,24 @@ function StarRow({ rating, size = 'md' }) {
     );
 }
 
-function useAvailability(mentorId) {
-    return useMemo(() => {
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        let seed = 0;
-        const idStr = String(mentorId ?? '');
-        for (let i = 0; i < idStr.length; i++) seed = idStr.charCodeAt(i) + ((seed << 5) - seed);
-        const out = [];
-        for (let i = 0; i < 14; i++) {
-            const d = new Date(now);
-            d.setDate(now.getDate() + i);
-            const dow = d.getDay();
-            const pseudo = ((seed + i * 31) * 9301 + 49297) % 233280;
-            const rand = pseudo / 233280;
-            let status = 'free';
-            if (dow === 0 || dow === 6) status = rand > 0.6 ? 'limited' : rand > 0.3 ? 'booked' : 'free';
-            else status = rand > 0.7 ? 'booked' : rand > 0.35 ? 'limited' : 'free';
-            out.push({ date: d, status });
-        }
-        return out;
-    }, [mentorId]);
-}
-
-function useSlotsForDate(date, mentorId) {
-    return useMemo(() => {
-        if (!date) return [];
-        let seed = 0;
-        const key = `${mentorId ?? ''}-${date.toISOString().slice(0, 10)}`;
-        for (let i = 0; i < key.length; i++) seed = key.charCodeAt(i) + ((seed << 5) - seed);
-        return DEFAULT_TIME_SLOTS.map((slot, i) => {
-            const pseudo = ((seed + i * 53) * 9301 + 49297) % 233280;
-            const rand = pseudo / 233280;
-            return { time: slot, available: rand > 0.3 };
-        });
-    }, [date, mentorId]);
-}
-
 function BookingFlow({ mentor, sessionType, onReset, onRequestConfirm, user, navigate, mentorId }) {
     const [pickedDate, setPickedDate] = useState(null);
     const [pickedTime, setPickedTime] = useState(null);
-    const availability = useAvailability(mentor.id);
-    const slots = useSlotsForDate(pickedDate, mentor.id);
+    const scheduleNorm = useMemo(() => normalizeAvailabilitySchedule(mentor.availability_schedule), [mentor.availability_schedule]);
+    const acceptingBookings = mentor.available !== false;
+    const availability = useMemo(
+        () => buildAvailabilityCalendar(scheduleNorm, acceptingBookings, 14),
+        [scheduleNorm, acceptingBookings],
+    );
+    const slots = useMemo(
+        () => getSlotsForDate(scheduleNorm, pickedDate, acceptingBookings),
+        [scheduleNorm, pickedDate, acceptingBookings],
+    );
+
+    const hasAnyWeeklySlots = useMemo(
+        () => Object.values(scheduleNorm.weekly).some((a) => Array.isArray(a) && a.length > 0),
+        [scheduleNorm],
+    );
 
     useEffect(() => { setPickedTime(null); }, [pickedDate]);
 
@@ -209,6 +188,16 @@ function BookingFlow({ mentor, sessionType, onReset, onRequestConfirm, user, nav
                             </div>
                             <p className="text-xs text-stone-500">Next 14 days</p>
                         </div>
+
+                        {!acceptingBookings ? (
+                            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                                This mentor is not accepting new session requests right now.
+                            </div>
+                        ) : !hasAnyWeeklySlots ? (
+                            <div className="mb-4 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-700">
+                                This mentor has not published open hours yet. Check back later.
+                            </div>
+                        ) : null}
 
                         <div className="mb-3 flex items-center gap-3 text-[11px] text-stone-500">
                             <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Open</span>

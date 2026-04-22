@@ -9,13 +9,14 @@
  * - Pass `mentorProfile` for mentee rows so avatars and titles resolve from `mentorMap`.
  */
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Calendar,
   ChevronRight,
   Clock,
   CalendarDays,
   ArrowUpRight,
+  Video,
 } from 'lucide-react';
 import { focusRing } from '../../ui';
 import { SESSION_TYPE_MAP, getAvatarColor, getInitials, formatSessionDate } from './dashboardUtils';
@@ -97,6 +98,7 @@ export function EmptyState({ message, cta, href, icon: Icon = CalendarDays }) {
  * - Mentee + otherwise: “View Profile” link to `/mentors/:mentor_id`.
  */
 export function SessionCard({ session, isMentor = false, mentorProfile, onAccept, onDecline, onCancel, actionLoading }) {
+  const navigate = useNavigate();
   const type = SESSION_TYPE_MAP[session.session_type];
   const name = isMentor
       ? (session.mentee_name ?? 'Unknown mentee')
@@ -117,6 +119,7 @@ export function SessionCard({ session, isMentor = false, mentorProfile, onAccept
 
   const showMentorActions = canAct && isMentor && session.status === 'pending' && (onAccept || onDecline);
   const showCancelButton = canAct && !isMentor && (session.status === 'pending' || session.status === 'accepted') && onCancel;
+  const showJoinCall = session.status === 'accepted' && !isPast && session.video_room_url;
 
   return (
       <div className="group relative flex flex-col gap-4 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-4 shadow-sm transition-all duration-300 hover:border-orange-200/50 hover:shadow-md sm:flex-row sm:items-center sm:gap-5">
@@ -191,6 +194,16 @@ export function SessionCard({ session, isMentor = false, mentorProfile, onAccept
                 </button>
               </div>
           )}
+          {showJoinCall && (
+              <button
+                  type="button"
+                  onClick={() => navigate(`/session/${session.id}/video`)}
+                  className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-700 sm:w-auto"
+              >
+                <Video className="h-3.5 w-3.5" />
+                Join Call
+              </button>
+          )}
           {showCancelButton && (
               <button
                   type="button"
@@ -201,7 +214,7 @@ export function SessionCard({ session, isMentor = false, mentorProfile, onAccept
                 {actionLoading === session.id ? 'Cancelling…' : 'Cancel'}
               </button>
           )}
-          {!showMentorActions && !showCancelButton && !isMentor && (
+          {!showMentorActions && !showCancelButton && !showJoinCall && !isMentor && (
               <Link
                   to={`/mentors/${session.mentor_id}`}
                   className="flex items-center gap-1 text-xs font-bold text-orange-600 transition hover:text-orange-700"

@@ -1,0 +1,11 @@
+---
+description: Supabase is the source of truth; no hard-coded DB assumptions; user runs SQL
+alwaysApply: true
+---
+
+# Supabase / database
+
+- **Database**: Supabase (Postgres). Schema lives in repo migrations / `supabase/*.sql`; the live project is the user’s.
+- **Do not hard-code** Supabase project refs, org IDs, hostnames, or anon keys in code or in agent automation. Use env vars (`VITE_*`, etc.) and existing client config.
+- **DDL / fixes**: Do **not** apply migrations or execute SQL on the user’s Supabase project via MCP or CLI unless they explicitly ask you to run it on their behalf.
+- **When schema changes or fixes are needed**: Give the user **copy-paste SQL** (or point to the exact migration file path) and short instructions to run it in the Supabase SQL Editor or their migration workflow.

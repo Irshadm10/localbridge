@@ -30,3 +30,15 @@ export async function updateSessionStatus(sessionId, status) {
   if (error) throw error;
   return data;
 }
+
+export async function acceptSession(sessionId) {
+  const videoRoomUrl = `https://meet.jit.si/bridge-${sessionId.replace(/-/g, '')}`;
+  const { data, error } = await supabase
+    .from("sessions")
+    .update({ status: "accepted", video_room_url: videoRoomUrl })
+    .eq("id", sessionId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}

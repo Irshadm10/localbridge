@@ -100,9 +100,9 @@ export default function Dashboard() {
 
           <Reveal>
             {isMentor ? (
-                <MentorDashboardContent dash={dash} activeTab={activeTab} setActiveTab={setActiveTab} logout={logout} />
+                <MentorDashboardContent dash={dash} activeTab={activeTab} setActiveTab={setActiveTab} logout={logout} user={user} />
             ) : (
-                <MenteeDashboardContent dash={dash} activeTab={activeTab} setActiveTab={setActiveTab} logout={logout} />
+                <MenteeDashboardContent dash={dash} activeTab={activeTab} setActiveTab={setActiveTab} logout={logout} user={user} />
             )}
           </Reveal>
         </main>

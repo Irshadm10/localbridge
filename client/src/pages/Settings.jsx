@@ -21,11 +21,22 @@ import {
 } from 'lucide-react';
 import supabase from '../api/supabase';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { removeAllResumesForUser } from '../api/resumeStorage';
+import { toJsonbSafe } from '../utils/jsonbSafe';
 import {
   applyAppearance,
   applyThemePreference,
   getStoredAppearanceOverlay,
 } from '../utils/appearance';
+
+/** Never persist password fields to JSONB. */
+function settingsForPersistence(s) {
+  const account = { ...s.account };
+  delete account.current_password;
+  delete account.new_password;
+  delete account.confirm_password;
+  return { ...s, account };
+}
 
 /** PostgREST: table missing from API schema (migration not applied on this project). */
 function isUserSettingsTableMissingError(error) {
@@ -181,13 +192,26 @@ export default function Settings() {
     try {
       applyAppearance(settings.appearance);
 
-      const { error } = await supabase
-          .from('user_settings')
-          .upsert({
-            user_id: user.id,
-            settings: settings,
-            updated_at: new Date().toISOString()
-          });
+      // Persist full_name to auth metadata so other parts of the app see the updated name
+      const currentName = user.user_metadata?.full_name ?? '';
+      if (settings.account.full_name && settings.account.full_name !== currentName) {
+        await supabase.auth.updateUser({ data: { full_name: settings.account.full_name } });
+      }
+
+      const persisted = toJsonbSafe(settingsForPersistence(settings));
+      let { error } = await supabase.from('user_settings').upsert(
+        {
+          user_id: user.id,
+          settings: persisted,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      );
+      if (error && !isUserSettingsTableMissingError(error)) {
+        const { data: row } = await supabase.from('user_settings').select('id').eq('user_id', user.id).maybeSingle();
+        if (row?.id) ({ error } = await supabase.from('user_settings').update({ settings: persisted, updated_at: new Date().toISOString() }).eq('user_id', user.id));
+        else ({ error } = await supabase.from('user_settings').insert({ user_id: user.id, settings: persisted, updated_at: new Date().toISOString() }));
+      }
 
       if (error) {
         if (isUserSettingsTableMissingError(error)) {
@@ -205,7 +229,10 @@ export default function Settings() {
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
     } catch (err) {
       console.error('Error saving settings:', err);
-      setMessage({ type: 'error', text: 'Error saving settings. Please try again.' });
+      setMessage({
+        type: 'error',
+        text: err.message ? `${err.message} (run supabase/BRIDGE_PUBLISH.sql if tables are missing)` : 'Error saving settings.',
+      });
     } finally {
       setSaving(false);
     }
@@ -261,18 +288,34 @@ export default function Settings() {
 
   const handleDeleteAccount = async () => {
     try {
+      await removeAllResumesForUser(user.id).catch(() => {});
+
+      if (asMentor) {
+        const { error: mentorDelErr } = await supabase.from('mentor_profiles').delete().eq('user_id', user.id);
+        if (mentorDelErr) {
+          const msg = String(mentorDelErr.message || '');
+          if (mentorDelErr.code === '23503' || msg.toLowerCase().includes('foreign key')) {
+            setMessage({
+              type: 'error',
+              text: 'You still have sessions linked to your mentor profile. Complete or cancel them on the dashboard, then try again.',
+            });
+            setShowDeleteConfirm(false);
+            return;
+          }
+          throw mentorDelErr;
+        }
+      }
+
       await supabase.from('user_profiles').delete().eq('user_id', user.id);
       const { error: delSettingsErr } = await supabase.from('user_settings').delete().eq('user_id', user.id);
       if (delSettingsErr && !isUserSettingsTableMissingError(delSettingsErr)) throw delSettingsErr;
 
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
-      if (error) throw error;
-
       await logout();
+      setShowDeleteConfirm(false);
       navigate('/');
     } catch (err) {
       console.error('Error deleting account:', err);
-      setMessage({ type: 'error', text: 'Error deleting account. Please contact support.' });
+      setMessage({ type: 'error', text: 'Could not finish account cleanup. Try again or contact support.' });
     }
   };
 
