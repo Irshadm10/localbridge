@@ -1,0 +1,8 @@
+{
+  "name": "bridge",
+  "private": true,
+  "description": "Monorepo: install/build run from the client app",
+  "scripts": {
+    "build": "npm run build --prefix client"
+  }
+}
