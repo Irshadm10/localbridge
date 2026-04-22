@@ -19,28 +19,36 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let cancelled = false;
+
+    void (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled) return;
       const next = session?.user ?? null;
       setUser(next);
-      if (next) void syncMentorProfile(next);
-      setLoading(false);
-    });
+      if (next) await syncMentorProfile(next);
+      if (!cancelled) setLoading(false);
+    })();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const next = session?.user ?? null;
       setUser(next);
       if (next && (event === "SIGNED_IN" || event === "USER_UPDATED")) {
-        void syncMentorProfile(next);
+        await syncMentorProfile(next);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function login(email, password) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     setUser(data.user);
+    await syncMentorProfile(data.user);
     return data.user;
   }
 
@@ -59,6 +67,7 @@ export function AuthProvider({ children }) {
     });
     if (error) throw error;
     setUser(data.user);
+    await syncMentorProfile(data.user);
     return data.user;
   }
 

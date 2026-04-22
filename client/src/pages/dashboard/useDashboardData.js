@@ -68,12 +68,18 @@ export function useDashboardData(user, authLoading) {
     void (async () => {
       try {
         if (isMentor) {
+          // maybeSingle: 0 rows is valid if onboarding insert failed (e.g. schema drift) or race before ensureMentorProfile finishes.
           const { data: profileData, error: profileErr } = await supabase
               .from('mentor_profiles')
               .select('id')
               .eq('user_id', user.id)
-              .single();
+              .maybeSingle();
           if (profileErr) throw profileErr;
+          if (!profileData?.id) {
+            setMentorProfileId(null);
+            setSessions([]);
+            return;
+          }
           const mpId = profileData.id;
           setMentorProfileId(mpId);
 
