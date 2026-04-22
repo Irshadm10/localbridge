@@ -11,6 +11,28 @@
       rel="stylesheet"
     />
     <title>Bridge — skip the cold DM</title>
+    <!-- Apply stored theme before first paint (avoids light flash; matches utils/appearance.js) -->
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('bridge-appearance');
+          if (!raw) return;
+          var o = JSON.parse(raw);
+          var pref = o && o.theme;
+          var resolved = 'light';
+          if (pref === 'dark') resolved = 'dark';
+          else if (pref === 'system')
+            resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          var el = document.documentElement;
+          el.classList.remove('theme-light', 'theme-dark');
+          el.classList.add('theme-' + resolved);
+          if (resolved === 'dark') el.classList.add('dark');
+          else el.classList.remove('dark');
+          if (o.high_contrast) el.classList.add('high-contrast');
+          else el.classList.remove('high-contrast');
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

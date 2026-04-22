@@ -65,7 +65,7 @@ const DEFAULT_SETTINGS = {
 };
 
 export default function Settings() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const asMentor = user ? isMentorAccount(user) : false;
   const [loading, setLoading] = useState(true);
@@ -84,13 +84,14 @@ export default function Settings() {
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate('/login');
       return;
     }
     loadSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, navigate]);
+  }, [user, navigate, authLoading]);
 
   // After server load: sync DOM + localStorage. Skip while loading so defaults never overwrite a stored theme.
   useEffect(() => {
@@ -269,6 +270,10 @@ export default function Settings() {
       setMessage({ type: 'error', text: 'Error exporting data.' });
     }
   };
+
+  if (authLoading) {
+    return <LoadingSpinner label="Checking your session…" className="min-h-screen" />;
+  }
 
   if (loading) {
     return <LoadingSpinner />;

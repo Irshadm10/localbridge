@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Mentors from './pages/Mentors';
 import MentorProfile from './pages/MentorProfile';
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/dashboard/Dashboard.jsx';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';

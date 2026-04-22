@@ -25,7 +25,7 @@ import supabase from '../api/supabase';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,12 +51,13 @@ export default function Profile() {
   });
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate('/login');
       return;
     }
     loadProfileData();
-  }, [user, navigate]);
+  }, [user, navigate, authLoading]);
 
   const loadProfileData = async () => {
     try {
@@ -237,6 +238,10 @@ export default function Profile() {
       achievements: prev.achievements.filter(ach => ach.id !== id)
     }));
   };
+
+  if (authLoading) {
+    return <LoadingSpinner label="Checking your session…" className="min-h-screen" />;
+  }
 
   if (loading) {
     return <LoadingSpinner />;

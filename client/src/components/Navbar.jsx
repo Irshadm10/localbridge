@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { isMentorAccount } from '../utils/accountRole';
-import { Bell, LogOut, LayoutDashboard, User, Settings, Sparkles } from 'lucide-react';
+import { Bell, LogOut, User, Settings, Sparkles } from 'lucide-react';
 
 function getInitials(name = '') {
   return name
@@ -46,16 +46,23 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Center — nav links (mentors: hub-first; mentees: discover mentors) */}
+        {/* Center — mentors: dashboard hub; mentees: mentors + dashboard when signed in */}
         <div className="flex min-w-0 items-center justify-center gap-0.5 sm:gap-1">
           {asMentor ? (
-            <Link to="/dashboard" className={navLinkClass}>
-              Dashboard
-            </Link>
+              <Link to="/dashboard" className={navLinkClass}>
+                Dashboard
+              </Link>
           ) : (
-            <Link to="/mentors" className={navLinkClass}>
-              Mentors
-            </Link>
+              <>
+                <Link to="/mentors" className={navLinkClass}>
+                  Mentors
+                </Link>
+                {user ? (
+                    <Link to="/dashboard" className={navLinkClass}>
+                      Dashboard
+                    </Link>
+                ) : null}
+              </>
           )}
           <Link to="/about" className={navLinkClass}>
             About
@@ -134,15 +141,6 @@ export default function Navbar() {
                     >
                       <Settings className="h-4 w-4 text-stone-400 dark:text-stone-500" />
                       Settings
-                    </Link>
-
-                    <Link
-                      to="/dashboard"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 dark:text-stone-200 dark:hover:bg-white/5"
-                    >
-                      <LayoutDashboard className="h-4 w-4 text-stone-400 dark:text-stone-500" />
-                      {asMentor ? 'Mentor dashboard' : 'Dashboard'}
                     </Link>
 
                     {!asMentor ? (

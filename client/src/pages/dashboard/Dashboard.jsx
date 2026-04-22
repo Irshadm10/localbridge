@@ -1,57 +1,27 @@
-/**
- * Dashboard (route: `/dashboard` — see `App.jsx`)
- *
- * Architecture
- * ------------
- * This file is the **shell only**: auth gates, sticky header + tabs, error banner, and which
- * role-specific tree to render. All session data and Supabase fetching live in
- * `dashboard/useDashboardData.js`. Shared formatting/helpers: `dashboard/dashboardUtils.js`.
- * Reusable UI pieces (cards, badges): `dashboard/dashboardShared.jsx`.
- *
- * Role split (same URL, different components)
- * -------------------------------------------
- * - `isMentorAccount(user)` from `utils/accountRole.js` (reads Supabase user metadata / role).
- * - **Mentor** → `dashboard/MentorDashboardContent.jsx` (mentee names, accept/decline, mentee grid).
- * - **Mentee** → `dashboard/MenteeDashboardContent.jsx` (mentor profiles, cancel session, MentorCard links).
- *
- * Data flow
- * ---------
- *   useAuth() ──user, authLoading──► useDashboardData(user, authLoading) ──returns `dash`──►
- *   MentorDashboardContent | MenteeDashboardContent (props: dash, activeTab, setActiveTab, logout)
- *
- * Related (outside this folder)
- * ------------------------------
- * - `components/OnboardingModal.jsx` — mounted here for post-signup mentor flow.
- * - `api/sessions.js` — `getMySession`, `updateSessionStatus` used inside the hook.
- */
-
 import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { LayoutDashboard, CalendarDays, Users, Settings, Plus, X } from 'lucide-react';
-import { useAuth } from '../context/useAuth';
-import { isMentorAccount } from '../utils/accountRole';
-import LoadingSpinner from '../components/LoadingSpinner';
-import PageGutterAtmosphere from '../components/PageGutterAtmosphere';
-import Reveal from '../components/Reveal';
-import OnboardingModal from '../components/OnboardingModal';
-import { useDashboardData } from './dashboard/useDashboardData';
-import { getFirstName, getTimeGreeting, getTodayLabel } from './dashboard/dashboardUtils';
-import { MentorDashboardContent } from './dashboard/MentorDashboardContent';
-import { MenteeDashboardContent } from './dashboard/MenteeDashboardContent';
+import { useAuth } from '../../context/useAuth.js';
+import { isMentorAccount } from '../../utils/accountRole.js';
+import LoadingSpinner from '../../components/LoadingSpinner.jsx';
+import PageGutterAtmosphere from '../../components/PageGutterAtmosphere.jsx';
+import Reveal from '../../components/Reveal.jsx';
+import OnboardingModal from '../../components/OnboardingModal.jsx';
+import { useDashboardData } from './useDashboardData.js';
+import { getFirstName, getTimeGreeting, getTodayLabel } from './dashboardUtils.js';
+import { MentorDashboardContent } from './MentorDashboardContent.jsx';
+import { MenteeDashboardContent } from './MenteeDashboardContent.jsx';
 
 export default function Dashboard() {
   const { user, loading: authLoading, logout } = useAuth();
   const isMentor = isMentorAccount(user);
 
-  // Tab id strings must match switches inside MentorDashboardContent / MenteeDashboardContent.
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Single source of truth for sessions + derived lists; see hook file for field meanings.
   const dash = useDashboardData(user, authLoading);
 
   if (authLoading) return <LoadingSpinner label="Loading…" className="min-h-screen" />;
   if (!user) return <Navigate to="/login" replace />;
-  // Hook sets dataLoading false only after mentor/mentee fetch completes (or errors).
   if (dash.dataLoading) return <LoadingSpinner label="Loading your dashboard…" className="min-h-[calc(100vh-4rem)]" />;
 
   const firstName = getFirstName(user);
@@ -114,7 +84,6 @@ export default function Dashboard() {
         </div>
 
         <main className="mx-auto max-w-bridge px-4 py-8 sm:px-6 lg:px-8">
-          {/* Set by useDashboardData on fetch/update failures; cleared by dismiss or next successful action */}
           {dash.error && (
               <div className="mb-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
                 <p className="flex-1 text-sm text-red-700">{dash.error}</p>
@@ -130,7 +99,6 @@ export default function Dashboard() {
           )}
 
           <Reveal>
-            {/* Only one branch ships in the bundle path per user; shared `dash` shape documented in useDashboardData */}
             {isMentor ? (
                 <MentorDashboardContent dash={dash} activeTab={activeTab} setActiveTab={setActiveTab} logout={logout} />
             ) : (
