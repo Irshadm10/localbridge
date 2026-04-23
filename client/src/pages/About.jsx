@@ -72,9 +72,9 @@ export default function About() {
                 <span aria-hidden className="absolute inline-flex h-full w-full rounded-full bg-orange-400/70 animate-pulse-soft" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500" />
               </span>
-              <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)]">About Bridge</span>
+              <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)]">About Bridge</span>
             </div>
-            <h1 className="font-display text-balance text-[2.75rem] font-semibold leading-[0.98] tracking-[-0.014em] text-[var(--bridge-text)] sm:text-[3.75rem] sm:leading-[0.95] lg:text-[4.75rem]">
+            <h1 className="font-display text-balance text-[2.75rem] font-bold leading-[1.04] tracking-[-0.014em] text-[var(--bridge-text)] sm:text-[3.75rem] sm:leading-[1.04] lg:text-[4.75rem]">
               Careers change in{' '}
               <span className="relative inline-block">
                 <span className="relative z-10 italic text-gradient-bridge">conversation</span>
@@ -95,7 +95,7 @@ export default function About() {
                   key={s.l}
                   className="group rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-4 text-center shadow-bridge-tile backdrop-blur-md transition hover:-translate-y-0.5 hover:shadow-bridge-card"
                 >
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-muted)]">{s.l}</dt>
+                  <dt className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-muted)]">{s.l}</dt>
                   <dd className="mt-2 font-display text-2xl font-semibold tabular-nums text-[var(--bridge-text)] sm:text-3xl">{s.v}</dd>
                 </div>
               ))}
@@ -110,8 +110,8 @@ export default function About() {
           <Reveal className="lg:col-span-3">
             <article className="group relative h-full overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-8 shadow-bridge-card sm:p-10">
               <div aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-gradient-to-br from-orange-400/25 to-amber-300/10 blur-3xl" />
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Our mission</p>
-              <h2 className="mt-3 font-display text-3xl font-semibold text-[var(--bridge-text)] sm:text-4xl">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Our mission</p>
+              <h2 className="mt-3 font-display text-3xl font-bold text-[var(--bridge-text)] sm:text-4xl">
                 Democratize access to <span className="italic text-gradient-bridge">the right conversation</span>.
               </h2>
               <p className="mt-5 text-base leading-relaxed text-[var(--bridge-text-secondary)] sm:text-lg">
@@ -133,7 +133,7 @@ export default function About() {
             <article className="relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-orange-300/30 bg-gradient-to-br from-stone-900 via-stone-900 to-orange-950 p-8 text-amber-50 shadow-bridge-float sm:p-9">
               <div aria-hidden className="pointer-events-none absolute -left-10 bottom-0 h-40 w-40 rounded-full bg-amber-400/15 blur-3xl" />
               <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-orange-500/25 blur-3xl" />
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-amber-200/90">Our story</p>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-amber-200/90">Our story</p>
               <h2 className="mt-3 font-display text-2xl font-semibold text-white sm:text-3xl">Started in 2026 with a simple observation.</h2>
               <p className="relative mt-5 border-l-2 border-amber-400/40 pl-5 text-base leading-relaxed text-stone-200">
                 Cold DMs go unanswered. Coaching packages cost thousands. The people with real answers weren't reachable —
@@ -149,8 +149,8 @@ export default function About() {
       <section className="relative border-y border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-4 py-24 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-bridge">
           <Reveal className="mb-14 max-w-2xl">
-            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">What we believe</p>
-            <h2 className="mt-3 font-display text-4xl font-semibold text-[var(--bridge-text)] sm:text-5xl">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">What we believe</p>
+            <h2 className="mt-3 font-display text-4xl font-bold text-[var(--bridge-text)] sm:text-5xl">
               Values we <span className="italic text-gradient-bridge">actually</span> use.
             </h2>
           </Reveal>
@@ -177,8 +177,8 @@ export default function About() {
         <div className="mx-auto max-w-bridge">
           <Reveal className="mb-14 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="max-w-2xl">
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Leadership</p>
-              <h2 className="mt-3 font-display text-4xl font-semibold text-[var(--bridge-text)] sm:text-5xl">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Leadership</p>
+              <h2 className="mt-3 font-display text-4xl font-bold text-[var(--bridge-text)] sm:text-5xl">
                 The people <span className="italic text-gradient-bridge">behind</span> Bridge.
               </h2>
             </div>
@@ -195,7 +195,7 @@ export default function About() {
                   <div className={`relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gradient-to-br ${m.hue}`}>
                     <div aria-hidden className="absolute inset-0 bg-bridge-noise opacity-[0.25] mix-blend-overlay" />
                     <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-                    <span className="absolute left-3 top-3 rounded-full border border-white/30 bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                    <span className="absolute left-3 top-3 rounded-full border border-white/30 bg-white/20 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.18em] text-white backdrop-blur-md">
                       {m.tag}
                     </span>
                     <div className="absolute bottom-3 left-3 right-3 flex items-center gap-1.5">
@@ -240,7 +240,7 @@ export default function About() {
             <div aria-hidden className="pointer-events-none absolute inset-0 bg-bridge-noise opacity-[0.14] mix-blend-overlay" />
             <div aria-hidden className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
             <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-300/25 blur-2xl" />
-            <h2 className="relative font-display text-balance text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-[2.6rem]">
+            <h2 className="relative font-display text-balance text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-[2.6rem]">
               Ready to find your person?
             </h2>
             <p className="relative mx-auto mt-4 max-w-xl text-lg text-orange-50/95">

@@ -200,7 +200,7 @@ export default function Navbar() {
                         {user.email}
                       </p>
                       <p
-                        className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                        className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.12em] ${
                           asMentor
                             ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-amber-900 ring-1 ring-amber-300/60 dark:from-amber-500/20 dark:to-orange-500/20 dark:text-amber-200 dark:ring-amber-400/30'
                             : 'bg-stone-100 text-stone-600 ring-1 ring-stone-200 dark:bg-white/[0.06] dark:text-stone-300 dark:ring-white/10'

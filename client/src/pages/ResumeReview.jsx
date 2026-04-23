@@ -382,7 +382,7 @@ export default function ResumeReview() {
                 </svg>
                 AI-Powered
               </div>
-              <h1 className="font-display text-3xl font-semibold leading-tight tracking-tight text-stone-900 sm:text-[2.25rem]">
+              <h1 className="font-display text-3xl font-bold leading-tight tracking-tight text-stone-900 sm:text-[2.25rem]">
                 AI Resume Review
               </h1>
               <p className="mt-2 text-base leading-relaxed text-stone-600">
@@ -544,7 +544,7 @@ export default function ResumeReview() {
                     <span className={`font-display text-5xl font-bold ${scoreColors(review.numeric_score).text}`}>
                       {review.letter_grade}
                     </span>
-                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${scoreColors(review.numeric_score).badge}`}>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-xs font-bold ${scoreColors(review.numeric_score).badge}`}>
                       {review.numeric_score}/100
                     </span>
                   </div>

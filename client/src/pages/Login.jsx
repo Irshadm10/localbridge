@@ -26,7 +26,7 @@ function LoginAside() {
         <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-orange-500/25 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-20 left-1/4 h-40 w-40 rounded-full bg-amber-400/15 blur-3xl" />
 
-        <p className="relative text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">Welcome back</p>
+        <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-amber-200/90">Welcome back</p>
         <p className="relative mt-3 font-display text-xl font-medium leading-snug text-white sm:text-2xl">
           Same Bridge — bios you can skim, hearts for later, and session types so nobody&apos;s guessing what the hour is for.
         </p>
@@ -90,7 +90,7 @@ function LoginAlreadySignedIn({ user }) {
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]" />
                 Signed in
               </div>
-              <h1 id="login-heading" className="font-display text-3xl font-semibold tracking-tight text-[var(--bridge-text)] sm:text-4xl">
+              <h1 id="login-heading" className="font-display text-3xl font-bold tracking-tight text-[var(--bridge-text)] sm:text-4xl">
                 You&apos;re already in
               </h1>
               <p className="mt-4 text-base leading-relaxed text-[var(--bridge-text-secondary)]">
@@ -202,11 +202,11 @@ export default function Login() {
                   <span aria-hidden className="absolute inline-flex h-full w-full rounded-full bg-emerald-400/70 animate-pulse-soft" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]" />
                 </span>
-                <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)]">Secure session</span>
+                <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)]">Secure session</span>
               </div>
               <h1
                 id="login-heading"
-                className="mt-5 font-display text-[2.25rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[2.85rem] sm:leading-[1.02] lg:text-[3.2rem]"
+                className="mt-5 font-display text-[2.25rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[2.85rem] sm:leading-[1.08] lg:text-[3.2rem]"
               >
                 Hey again —{' '}
                 <span className="italic text-gradient-bridge">pick up where you left off</span>.
@@ -243,8 +243,8 @@ export default function Login() {
               <div className="relative p-7 sm:p-10 lg:p-12">
                 <div className="flex flex-col gap-2 border-b border-[var(--bridge-border)] pb-7 sm:flex-row sm:items-end sm:justify-between sm:pb-8">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Log in</p>
-                    <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-[var(--bridge-text)] sm:text-[2rem] lg:text-[2.15rem]">
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Log in</p>
+                    <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-[var(--bridge-text)] sm:text-[2rem] lg:text-[2.15rem]">
                       Sign in to Bridge
                     </h2>
                   </div>

@@ -51,9 +51,9 @@ export default function FAQ() {
                 <Reveal className="mb-12 text-center">
                     <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3.5 py-1.5 shadow-sm backdrop-blur-md">
                         <HelpCircle className="h-3.5 w-3.5 text-orange-500" />
-                        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)]">Help center</span>
+                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)]">Help center</span>
                     </div>
-                    <h1 className="font-display text-[2.5rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem] lg:text-[3.75rem]">
+                    <h1 className="font-display text-[2.5rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem] lg:text-[3.75rem]">
                         Questions,{' '}
                         <span className="italic text-gradient-bridge">answered</span>.
                     </h1>
@@ -124,7 +124,7 @@ export default function FAQ() {
                                         className={`relative flex w-full items-center justify-between gap-4 p-5 text-left ${focusRing}`}
                                     >
                                         <div>
-                                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">{faq.cat}</p>
+                                            <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">{faq.cat}</p>
                                             <p className="mt-1 font-display text-base font-semibold text-[var(--bridge-text)] sm:text-lg">{faq.q}</p>
                                         </div>
                                         <span

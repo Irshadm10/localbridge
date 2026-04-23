@@ -45,9 +45,9 @@ export default function Cookies() {
         <Reveal className="mb-14">
           <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3.5 py-1.5 shadow-sm backdrop-blur-md">
             <Cookie className="h-3.5 w-3.5 text-orange-500" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)]">Legal</span>
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)]">Legal</span>
           </div>
-          <h1 className="font-display text-[2.75rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem]">
+          <h1 className="font-display text-[2.75rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem]">
             Cookie <span className="italic text-gradient-bridge">policy</span>
           </h1>
           <p className="mt-4 text-sm font-medium text-[var(--bridge-text-muted)]">Last updated: April 21, 2026</p>

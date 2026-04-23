@@ -104,7 +104,7 @@ export default function FeedbackModal({ open, onClose }) {
             <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 shadow-[0_18px_48px_-8px_rgba(16,185,129,0.55)]">
               <CheckCircle2 className="h-10 w-10 text-white" />
             </div>
-            <h2 className="font-display text-3xl font-semibold text-[var(--bridge-text)]">Thanks for the feedback</h2>
+            <h2 className="font-display text-3xl font-bold text-[var(--bridge-text)]">Thanks for the feedback</h2>
             <p className="mt-3 max-w-sm leading-relaxed text-[var(--bridge-text-secondary)]">
               Every piece of feedback gets read. If you left your email, we&apos;ll follow up when relevant.
             </p>
@@ -124,7 +124,7 @@ export default function FeedbackModal({ open, onClose }) {
               <div aria-hidden className="pointer-events-none absolute -left-16 bottom-0 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
               <div className="relative flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200/90">
                     Share feedback · Step {step} of 3
                   </p>
                   <h2 id="feedback-title" className="mt-1.5 font-display text-2xl font-semibold text-white">

@@ -7,27 +7,58 @@
   --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Fraunces: editorial display type with optical sizing. Bumped axes + relaxed
-   tracking for on-screen readability; tighter tracking only where a page opts in. */
+/* Fraunces: editorial display type with automatic optical sizing.
+   Opsz is NOT pinned so small sizes render with solid text-opsz glyphs
+   (not thin display-opsz glyphs). SOFT axis adds a little extra ink to the
+   stems for better on-screen readability on warm-cream and dark surfaces. */
 @utility font-display {
   font-family: "Fraunces", Georgia, "Times New Roman", serif;
   font-optical-sizing: auto;
-  font-variation-settings: "opsz" 144, "SOFT" 35, "WONK" 0;
-  letter-spacing: -0.008em;
+  font-variation-settings: "SOFT" 60, "WONK" 0;
+  letter-spacing: -0.004em;
   font-feature-settings: "ss01", "ss02";
 }
 
-/* Italic Fraunces at weight 500 reads thin on screens — pin it at 600 minimum
-   for the gradient accent spans (used in nearly every hero headline). */
+/* Gradient accent spans are the most visually delicate text in the app.
+   Pin to 700 and a softer axis so italic variants never look anorexic. */
 html .text-gradient-bridge {
-  font-weight: 600;
+  font-weight: 700;
+  font-variation-settings: "SOFT" 80;
 }
 html .text-gradient-bridge.italic,
 html i.text-gradient-bridge,
 html em.text-gradient-bridge {
-  font-weight: 600;
+  font-weight: 700;
   font-style: italic;
-  font-variation-settings: "opsz" 144, "SOFT" 40;
+  font-variation-settings: "SOFT" 100;
+}
+
+/* Body: Outfit at 500 reads much better than 400 on warm cream/dark surfaces. */
+body {
+  font-weight: 500;
+  letter-spacing: -0.003em;
+}
+
+/* Paragraphs and list items default to 500 weight for better contrast. */
+p,
+li {
+  font-weight: 500;
+}
+
+/* Button text should feel confident, not thin. */
+button,
+[role="button"],
+a.btn,
+input[type="submit"],
+input[type="button"] {
+  font-weight: 600;
+}
+
+/* Inputs get a heavier value weight so filled text reads clearly. */
+input,
+select,
+textarea {
+  font-weight: 500;
 }
 
 /* Slightly wider than 7xl (1280px) for nav + page alignment on large monitors; still capped for readability */

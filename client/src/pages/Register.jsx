@@ -52,7 +52,7 @@ function RoleCard({ value, role, onRoleChange, title, description, Icon, accent 
         <span className="flex items-center gap-2">
           <span className="block text-base font-semibold text-[var(--bridge-text)]">{title}</span>
           {selected ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-white shadow">
+            <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white shadow">
               <span aria-hidden>✓</span> Selected
             </span>
           ) : null}
@@ -110,7 +110,7 @@ function RegisterSignupAside({ mentorIntent }) {
         <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-orange-500/25 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-20 left-1/4 h-40 w-40 rounded-full bg-amber-400/15 blur-3xl" />
 
-        <p className="relative text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">
+        <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-amber-200/90">
           {mentorIntent ? 'For mentors' : 'Why people stay'}
         </p>
         <p className="relative mt-3 font-display text-xl font-medium leading-snug text-white sm:text-2xl">
@@ -172,8 +172,8 @@ function RegisterAlreadySignedIn({ user, mentorIntent }) {
           <Reveal>
             <div className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-8 shadow-bridge-float sm:p-10">
               <div aria-hidden className="absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Already signed in</p>
-              <h1 id="register-heading" className="mt-3 font-display text-3xl font-semibold tracking-tight text-[var(--bridge-text)] sm:text-4xl">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">Already signed in</p>
+              <h1 id="register-heading" className="mt-3 font-display text-3xl font-bold tracking-tight text-[var(--bridge-text)] sm:text-4xl">
                 {mentorIntent ? "You don't need to sign up again" : "You're already on Bridge"}
               </h1>
               <p className="mt-4 text-base leading-relaxed text-[var(--bridge-text-secondary)]">
@@ -305,7 +305,7 @@ export default function Register() {
 
               <h1
                 id="register-heading"
-                className="mt-5 font-display text-[2.25rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[2.85rem] sm:leading-[1.02] lg:text-[3.2rem]"
+                className="mt-5 font-display text-[2.25rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[2.85rem] sm:leading-[1.08] lg:text-[3.2rem]"
               >
                 {mentorIntent ? (
                   <>
@@ -356,8 +356,8 @@ export default function Register() {
               <div className="relative p-7 sm:p-10 lg:p-12">
                 <div className="flex flex-col gap-2 border-b border-[var(--bridge-border)] pb-7 sm:flex-row sm:items-end sm:justify-between sm:pb-8">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Sign up</p>
-                    <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight text-[var(--bridge-text)] sm:text-[2rem] lg:text-[2.15rem]">
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Sign up</p>
+                    <h2 className="mt-2 font-display text-3xl font-bold tracking-tight text-[var(--bridge-text)] sm:text-[2rem] lg:text-[2.15rem]">
                       Create your account
                     </h2>
                   </div>

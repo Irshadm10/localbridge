@@ -42,9 +42,9 @@ export default function Community() {
                 <Reveal className="mb-14 max-w-3xl">
                     <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3.5 py-1.5 shadow-sm backdrop-blur-md">
                         <Users className="h-3.5 w-3.5 text-orange-500" />
-                        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)]">Community</span>
+                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)]">Community</span>
                     </div>
-                    <h1 className="font-display text-[2.75rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.5rem] lg:text-[4rem]">
+                    <h1 className="font-display text-[2.75rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.5rem] lg:text-[4rem]">
                         More than a directory. A{' '}
                         <span className="italic text-gradient-bridge">place</span>.
                     </h1>
@@ -58,7 +58,7 @@ export default function Community() {
                         <Reveal key={s.label} delay={i * 70}>
                             <div className="group relative overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-5 text-center shadow-bridge-tile transition-all duration-500 hover:-translate-y-0.5 hover:shadow-bridge-card">
                                 <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br from-orange-400/15 to-transparent opacity-0 blur-2xl transition group-hover:opacity-100" />
-                                <p className="relative font-display text-3xl font-semibold text-gradient-bridge">{s.n}</p>
+                                <p className="relative font-display text-3xl font-bold text-gradient-bridge">{s.n}</p>
                                 <p className="relative mt-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--bridge-text-muted)]">{s.label}</p>
                             </div>
                         </Reveal>
@@ -69,8 +69,8 @@ export default function Community() {
                     <div className="mb-16">
                         <div className="mb-7 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                             <div>
-                                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Upcoming events</p>
-                                <h2 className="mt-2 font-display text-3xl font-semibold text-[var(--bridge-text)] sm:text-4xl">
+                                <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Upcoming events</p>
+                                <h2 className="mt-2 font-display text-3xl font-bold text-[var(--bridge-text)] sm:text-4xl">
                                     Meet the community <span className="italic text-gradient-bridge">in person</span>.
                                 </h2>
                             </div>
@@ -89,7 +89,7 @@ export default function Community() {
                                             <div className="flex gap-4">
                                                 <div className="relative flex h-20 w-20 shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl border border-orange-200/70 bg-gradient-to-b from-orange-50 to-amber-50 dark:border-orange-400/25 dark:from-orange-500/15 dark:to-amber-500/5">
                                                     <Calendar className="absolute right-2 top-2 h-3 w-3 text-orange-500" />
-                                                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-orange-800 dark:text-orange-200">{e.date.split(',')[0].split(' ')[0]}</p>
+                                                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-orange-800 dark:text-orange-200">{e.date.split(',')[0].split(' ')[0]}</p>
                                                     <p className="font-display text-2xl font-semibold text-[var(--bridge-text)]">{e.date.split(' ')[1].replace(',', '')}</p>
                                                 </div>
                                                 <div className="min-w-0">
@@ -136,7 +136,7 @@ export default function Community() {
                             <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-500 shadow-[0_10px_28px_-4px_rgba(99,102,241,0.55)]">
                                 <MessageCircle className="h-5 w-5 text-white" />
                             </div>
-                            <p className="relative mt-6 text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200/90">Discord</p>
+                            <p className="relative mt-6 text-xs font-bold uppercase tracking-[0.2em] text-amber-200/90">Discord</p>
                             <h3 className="relative mt-2 font-display text-2xl font-semibold text-white sm:text-3xl">
                                 Real-time conversations.
                             </h3>
@@ -159,7 +159,7 @@ export default function Community() {
                             <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-[0_10px_28px_-4px_rgba(234,88,12,0.5)]">
                                 <Mail className="h-5 w-5" />
                             </div>
-                            <p className="relative mt-6 text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Newsletter</p>
+                            <p className="relative mt-6 text-xs font-bold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">Newsletter</p>
                             <h3 className="relative mt-2 font-display text-2xl font-semibold text-[var(--bridge-text)] sm:text-3xl">
                                 Weekly, <span className="italic text-gradient-bridge">actually useful</span>.
                             </h3>

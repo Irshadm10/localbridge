@@ -66,11 +66,11 @@ export default function Dashboard() {
         <div className="mx-auto max-w-bridge px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between gap-4 pb-3 pt-6">
             <div>
-              <div className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)] shadow-sm">
+              <div className="mb-1 inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-2.5 py-0.5 text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)] shadow-sm">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.55)]" />
                 {isMentor ? 'Mentor dashboard' : 'Mentee dashboard'}
               </div>
-              <h1 className="font-display text-[1.75rem] font-semibold leading-tight text-[var(--bridge-text)] sm:text-3xl">
+              <h1 className="font-display text-[2rem] font-bold leading-[1.1] text-[var(--bridge-text)] sm:text-[2.5rem]">
                 Good {greeting},{' '}
                 <span className="italic text-gradient-bridge">{firstName}</span>
               </h1>

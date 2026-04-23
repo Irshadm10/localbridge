@@ -41,9 +41,9 @@ export default function Careers() {
                 <Reveal className="mb-14 max-w-3xl">
                     <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3.5 py-1.5 shadow-sm backdrop-blur-md">
                         <Briefcase className="h-3.5 w-3.5 text-orange-500" />
-                        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)]">Careers at Bridge</span>
+                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)]">Careers at Bridge</span>
                     </div>
-                    <h1 className="font-display text-[2.75rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.5rem] lg:text-[4rem]">
+                    <h1 className="font-display text-[2.75rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.5rem] lg:text-[4rem]">
                         Build the platform careers are{' '}
                         <span className="italic text-gradient-bridge">actually</span> built on.
                     </h1>
@@ -78,7 +78,7 @@ export default function Careers() {
                                 <div aria-hidden className="absolute inset-y-0 left-0 w-[3px] bg-gradient-to-b from-orange-400 to-amber-300 opacity-0 transition group-hover:opacity-100" />
                                 <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="min-w-0">
-                                        <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--bridge-text-secondary)]">
+                                        <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--bridge-text-secondary)]">
                                             {job.team}
                                         </div>
                                         <p className="mt-2 font-display text-xl font-semibold text-[var(--bridge-text)]">{job.title}</p>
@@ -114,8 +114,8 @@ export default function Careers() {
                 <Reveal>
                     <div className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-8 shadow-bridge-card sm:p-10">
                         <div aria-hidden className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-gradient-to-br from-orange-400/20 to-amber-300/10 blur-3xl" />
-                        <p className="relative text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Why work here</p>
-                        <h2 className="relative mt-2 font-display text-3xl font-semibold text-[var(--bridge-text)] sm:text-4xl">
+                        <p className="relative text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Why work here</p>
+                        <h2 className="relative mt-2 font-display text-3xl font-bold text-[var(--bridge-text)] sm:text-4xl">
                             Perks we <span className="italic text-gradient-bridge">actually</span> invest in.
                         </h2>
                         <div className="relative mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -112,8 +112,8 @@ export default function OnboardingModal() {
                 <Sparkles className="h-9 w-9 text-white" />
                 <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[1.5rem] bg-gradient-to-br from-white/25 to-transparent" />
               </div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Welcome aboard</p>
-              <h2 className="mt-3 font-display text-3xl font-semibold text-[var(--bridge-text)] sm:text-4xl">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Welcome aboard</p>
+              <h2 className="mt-3 font-display text-3xl font-bold text-[var(--bridge-text)] sm:text-4xl">
                 Hey {firstName}! <span className="italic text-gradient-bridge">Let&apos;s get you set up.</span>
               </h2>
               <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-[var(--bridge-text-secondary)]">
@@ -131,7 +131,7 @@ export default function OnboardingModal() {
 
           {step === 2 && (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Step 2 of 3</p>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Step 2 of 3</p>
               <h2 className="mt-2 font-display text-2xl font-semibold text-[var(--bridge-text)] sm:text-3xl">
                 {isMentor ? 'What do you want to help with?' : 'What are you looking for?'}
               </h2>
@@ -208,8 +208,8 @@ export default function OnboardingModal() {
                 <CheckCircle2 className="h-10 w-10 text-white" />
                 <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent" />
               </div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-700 dark:text-emerald-300">All set</p>
-              <h2 className="mt-3 font-display text-3xl font-semibold text-[var(--bridge-text)] sm:text-4xl">You&apos;re in.</h2>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-300">All set</p>
+              <h2 className="mt-3 font-display text-3xl font-bold text-[var(--bridge-text)] sm:text-4xl">You&apos;re in.</h2>
               <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-[var(--bridge-text-secondary)]">
                 {isMentor
                   ? "Your mentor profile is ready. Let's get you in front of mentees."
@@ -250,7 +250,7 @@ export default function OnboardingModal() {
               />
             ))}
           </div>
-          <p className="mt-2 text-center text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-muted)]">
+          <p className="mt-2 text-center text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-muted)]">
             Step {step} of 3
           </p>
         </div>

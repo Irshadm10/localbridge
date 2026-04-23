@@ -41,9 +41,9 @@ export default function Trust() {
                 <Reveal className="mb-14 max-w-3xl">
                     <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3.5 py-1.5 shadow-sm backdrop-blur-md">
                         <ShieldCheck className="h-3.5 w-3.5 text-orange-500" />
-                        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)]">Trust &amp; Safety</span>
+                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)]">Trust &amp; Safety</span>
                     </div>
-                    <h1 className="font-display text-[2.75rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.5rem] lg:text-[4rem]">
+                    <h1 className="font-display text-[2.75rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.5rem] lg:text-[4rem]">
                         Your safety isn&apos;t{' '}
                         <span className="italic text-gradient-bridge">optional</span>.
                     </h1>
@@ -79,8 +79,8 @@ export default function Trust() {
                 <Reveal>
                     <div className="relative mb-12 overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-8 shadow-bridge-card sm:p-10">
                         <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-orange-400/15 to-transparent blur-3xl" />
-                        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Community standards</p>
-                        <h2 className="mt-3 font-display text-3xl font-semibold text-[var(--bridge-text)] sm:text-4xl">
+                        <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Community standards</p>
+                        <h2 className="mt-3 font-display text-3xl font-bold text-[var(--bridge-text)] sm:text-4xl">
                             What we expect from <span className="italic text-gradient-bridge">everyone</span>.
                         </h2>
                         <ul className="relative mt-7 grid gap-3 sm:grid-cols-2">
@@ -104,8 +104,8 @@ export default function Trust() {
                                 <AlertTriangle className="h-5 w-5" />
                             </div>
                             <div>
-                                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">Report a concern</p>
-                                <h2 className="mt-2 font-display text-3xl font-semibold text-[var(--bridge-text)]">
+                                <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Report a concern</p>
+                                <h2 className="mt-2 font-display text-3xl font-bold text-[var(--bridge-text)]">
                                     Something off? <span className="italic text-gradient-bridge">Tell us</span>.
                                 </h2>
                                 <p className="mt-2 text-[var(--bridge-text-secondary)]">

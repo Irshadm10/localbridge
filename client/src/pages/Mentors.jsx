@@ -269,7 +269,7 @@ function MentorCard({ mentor, isFavorite, onToggleFavorite, user, navigate, favo
 
         <div className="relative mt-auto flex items-center justify-between border-t border-[var(--bridge-border)] pt-4">
           <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--bridge-text-muted)]">
+            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--bridge-text-muted)]">
               {mentor.total_sessions} sessions
             </span>
             {mentor.session_rate ? (
@@ -770,7 +770,7 @@ export default function Mentors() {
                 </div>
                 <h1
                     id="mentors-heading"
-                    className="font-display text-[2.25rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[2.75rem]"
+                    className="font-display text-[2.25rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[2.75rem]"
                 >
                   Browse <span className="italic text-gradient-bridge">mentors</span>
                 </h1>

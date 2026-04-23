@@ -51,8 +51,8 @@ export default function Help() {
                     >
                         <ArrowLeft className="h-3.5 w-3.5" /> Back to help center
                     </button>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300">{article.category}</p>
-                    <h1 className="mt-3 font-display text-[2.5rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem]">
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">{article.category}</p>
+                    <h1 className="mt-3 font-display text-[2.5rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem]">
                         {article.title}
                     </h1>
                     <div className="mt-8 space-y-5 text-lg leading-relaxed text-[var(--bridge-text-secondary)]">
@@ -96,9 +96,9 @@ export default function Help() {
                 <Reveal className="mb-12 text-center">
                     <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3.5 py-1.5 shadow-sm backdrop-blur-md">
                         <LifeBuoy className="h-3.5 w-3.5 text-orange-500" />
-                        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)]">Help center</span>
+                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)]">Help center</span>
                     </div>
-                    <h1 className="font-display text-[2.5rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem] lg:text-[3.75rem]">
+                    <h1 className="font-display text-[2.5rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem] lg:text-[3.75rem]">
                         How can we <span className="italic text-gradient-bridge">help</span>?
                     </h1>
                 </Reveal>
@@ -127,7 +127,7 @@ export default function Help() {
                                 className={`group flex w-full items-center gap-4 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-5 text-left shadow-bridge-tile transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-300/70 hover:shadow-bridge-card ${focusRing}`}
                             >
                                 <div className="min-w-0 flex-1">
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">{a.category}</p>
+                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">{a.category}</p>
                                     <p className="mt-1 font-display text-lg font-semibold text-[var(--bridge-text)]">{a.title}</p>
                                 </div>
                                 <ChevronRight className="h-4 w-4 text-[var(--bridge-text-faint)] transition group-hover:translate-x-0.5 group-hover:text-orange-500" />

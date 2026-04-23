@@ -27,7 +27,7 @@ export default function Blog() {
                         ← Back to blog
                     </button>
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">{active.category} · {active.readTime} read</p>
-                    <h1 className="mt-3 font-display text-4xl font-semibold leading-tight text-stone-900 sm:text-5xl">{active.title}</h1>
+                    <h1 className="mt-3 font-display text-4xl font-bold leading-tight text-stone-900 sm:text-5xl">{active.title}</h1>
                     <p className="mt-5 text-sm text-stone-500">By {active.author} · {active.date}</p>
                     <div className="mt-8 space-y-5 text-lg leading-relaxed text-stone-700">
                         {active.body.split('\n\n').map((p, i) => <p key={i}>{p}</p>)}
@@ -42,7 +42,7 @@ export default function Blog() {
             <div className="mx-auto max-w-5xl">
                 <Reveal className="mb-10 max-w-3xl">
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Blog</p>
-                    <h1 className="mt-3 font-display text-4xl font-semibold text-stone-900 sm:text-5xl">Essays on careers, craft, and mentorship.</h1>
+                    <h1 className="mt-3 font-display text-4xl font-bold text-stone-900 sm:text-5xl">Essays on careers, craft, and mentorship.</h1>
                 </Reveal>
 
                 <div className="mb-8 flex flex-wrap gap-2">

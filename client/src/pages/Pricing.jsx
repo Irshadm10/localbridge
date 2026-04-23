@@ -330,7 +330,7 @@ export default function Pricing() {
               <div>
                 <h1
                     id="pricing-heading"
-                    className="font-display text-balance text-3xl font-semibold leading-tight tracking-tight text-stone-900 sm:text-[2.5rem] sm:leading-[1.08]"
+                    className="font-display text-balance text-3xl font-bold leading-tight tracking-tight text-stone-900 sm:text-[2.5rem] sm:leading-[1.08]"
                 >
                   Simple <span className="text-gradient-bridge">pricing</span>, pick what fits
                 </h1>

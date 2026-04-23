@@ -35,9 +35,9 @@ export default function Contact() {
                 <Reveal className="mb-14 max-w-2xl">
                     <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3.5 py-1.5 shadow-sm backdrop-blur-md">
                         <Send className="h-3.5 w-3.5 text-orange-500" />
-                        <span className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-secondary)]">Contact support</span>
+                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-secondary)]">Contact support</span>
                     </div>
-                    <h1 className="font-display text-[2.5rem] font-semibold leading-[1.02] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem] lg:text-[3.75rem]">
+                    <h1 className="font-display text-[2.5rem] font-bold leading-[1.08] tracking-[-0.012em] text-[var(--bridge-text)] sm:text-[3.25rem] lg:text-[3.75rem]">
                         Reach the humans who can{' '}
                         <span className="italic text-gradient-bridge">actually help</span>.
                     </h1>
@@ -59,7 +59,7 @@ export default function Contact() {
                                         <Icon className="h-5 w-5" />
                                     </div>
                                     <div className="relative min-w-0">
-                                        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--bridge-text-muted)]">{eyebrow}</p>
+                                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-muted)]">{eyebrow}</p>
                                         <p className="mt-1 font-display text-lg font-semibold text-[var(--bridge-text)]">{primary}</p>
                                         <p className="mt-0.5 text-sm text-[var(--bridge-text-muted)]">{secondary}</p>
                                     </div>
@@ -71,7 +71,7 @@ export default function Contact() {
                                     <ShieldAlert className="h-5 w-5" />
                                 </div>
                                 <div className="min-w-0">
-                                    <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-red-800 dark:text-red-200">Urgent?</p>
+                                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-800 dark:text-red-200">Urgent?</p>
                                     <p className="mt-1.5 text-sm leading-relaxed text-red-900/95 dark:text-red-100/90">
                                         For Trust &amp; Safety issues, email{' '}
                                         <a href="mailto:trust@bridge.com" className="font-bold underline decoration-red-300 underline-offset-2 hover:text-red-950">
@@ -94,7 +94,7 @@ export default function Contact() {
                                         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 shadow-[0_16px_40px_-8px_rgba(16,185,129,0.55)]">
                                             <CheckCircle2 className="h-10 w-10 text-white" />
                                         </div>
-                                        <h2 className="mt-6 font-display text-3xl font-semibold text-[var(--bridge-text)]">Message sent</h2>
+                                        <h2 className="mt-6 font-display text-3xl font-bold text-[var(--bridge-text)]">Message sent</h2>
                                         <p className="mt-3 text-[var(--bridge-text-secondary)]">
                                             We&apos;ll be in touch at <span className="font-semibold text-[var(--bridge-text)]">{form.email}</span> shortly.
                                         </p>
@@ -111,8 +111,8 @@ export default function Contact() {
                                 ) : (
                                     <form onSubmit={handleSubmit} className="space-y-5">
                                         <div>
-                                            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700 dark:text-orange-300">Send us a message</p>
-                                            <h2 className="mt-2 font-display text-3xl font-semibold text-[var(--bridge-text)]">We read every one</h2>
+                                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300">Send us a message</p>
+                                            <h2 className="mt-2 font-display text-3xl font-bold text-[var(--bridge-text)]">We read every one</h2>
                                         </div>
                                         <div className="grid gap-5 sm:grid-cols-2">
                                             <div>
