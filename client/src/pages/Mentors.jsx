@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useId, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { getAllMentors } from '../api/mentors';
+import MentorAvatar from '../components/MentorAvatar';
 import { getMyFavorites, toggleFavorite } from '../api/favorites';
 import { useAuth } from '../context/useAuth';
 import { isMentorAccount } from '../utils/accountRole';
@@ -187,19 +188,11 @@ function MentorCard({ mentor, isFavorite, onToggleFavorite, user, navigate, favo
         ) : null}
 
         <div className={`relative flex items-start gap-4 ${favoritesEnabled ? 'pr-14' : ''}`}>
-          {mentor.image_url ? (
-              <img
-                  src={mentor.image_url}
-                  alt=""
-                  className="h-16 w-16 shrink-0 rounded-2xl object-cover ring-2 ring-[var(--bridge-canvas)] shadow-md transition group-hover:scale-[1.04]"
-              />
-          ) : (
-              <div
-                  className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-base font-bold shadow-md ring-2 ring-[var(--bridge-canvas)] transition group-hover:scale-[1.04] ${avatarColor}`}
-              >
-                {getInitials(mentor.name)}
-              </div>
-          )}
+          <MentorAvatar
+            name={mentor.name}
+            size="card"
+            className="shadow-md ring-2 ring-[var(--bridge-canvas)] transition group-hover:scale-[1.04]"
+          />
           <div className="min-w-0 pt-1">
             <h3 className="truncate font-display text-lg font-semibold text-[var(--bridge-text)] transition group-hover:text-orange-800 dark:group-hover:text-orange-200">
               {mentor.name}
@@ -314,7 +307,6 @@ function MatchLabelChip({ label }) {
 
 function AiMatchCard({ mentor, match, navigate }) {
   const [expanded, setExpanded] = useState(false);
-  const avatarColor = getAvatarColor(mentor.name);
 
   return (
     <div className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-[1.75rem] border border-transparent border-gradient-bridge animate-border-bridge bg-gradient-to-br from-[var(--bridge-surface)] via-[var(--bridge-surface)] to-orange-50/30 p-6 shadow-[0_20px_54px_-18px_rgba(234,88,12,0.35)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_28px_70px_-20px_rgba(234,88,12,0.5)] dark:to-orange-500/[0.06]">
@@ -332,13 +324,7 @@ function AiMatchCard({ mentor, match, navigate }) {
       </div>
 
       <div className="flex items-start gap-4 pr-24">
-        {mentor.image_url ? (
-          <img src={mentor.image_url} alt="" className="h-14 w-14 shrink-0 rounded-2xl object-cover ring-2 ring-white shadow-md" />
-        ) : (
-          <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-sm font-bold shadow-md ring-2 ring-white ${avatarColor}`}>
-            {getInitials(mentor.name)}
-          </div>
-        )}
+        <MentorAvatar name={mentor.name} size="md" className="ring-2 ring-white shadow-md" />
         <div className="min-w-0 pt-0.5">
           <h3 className="truncate font-semibold text-stone-900">{mentor.name}</h3>
           <p className="truncate text-sm text-stone-500">{mentor.title}</p>
@@ -398,16 +384,9 @@ function AiMatchCard({ mentor, match, navigate }) {
 }
 
 function AiHonorableCard({ mentor, match }) {
-  const avatarColor = getAvatarColor(mentor.name);
   return (
     <div className="flex items-center gap-4 rounded-2xl border border-stone-200/80 bg-white/95 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200/60 hover:shadow-md">
-      {mentor.image_url ? (
-        <img src={mentor.image_url} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover ring-2 ring-white shadow" />
-      ) : (
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-bold shadow ring-2 ring-white ${avatarColor}`}>
-          {getInitials(mentor.name)}
-        </div>
-      )}
+      <MentorAvatar name={mentor.name} size="sm" className="ring-2 ring-white shadow" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h4 className="truncate text-sm font-semibold text-stone-900">{mentor.name}</h4>

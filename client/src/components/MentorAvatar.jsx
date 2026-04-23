@@ -17,6 +17,7 @@ const SIZES = {
   xs: 'h-10 w-10 text-xs',
   sm: 'h-12 w-12 text-[11px]',
   md: 'h-14 w-14 text-sm',
+  card: 'h-16 w-16 text-sm',
   lg: 'h-20 w-20 text-lg',
   xl: 'h-24 w-24 text-2xl',
 };
