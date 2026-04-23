@@ -9,6 +9,7 @@ import { SESSION_TYPES } from '../constants/sessionTypes';
 import { addRecentlyViewedMentor } from '../utils/recentlyViewed';
 import PageGutterAtmosphere from '../components/PageGutterAtmosphere';
 import Reveal from '../components/Reveal';
+import MentorAvatar from '../components/MentorAvatar';
 import { focusRing } from '../ui';
 const focusRingDark = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
 const focusRingWhite = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
@@ -39,17 +40,6 @@ function SessionTypeIcon({ typeKey, className = 'h-5 w-5' }) {
         default:
             return <svg {...common}><path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>;
     }
-}
-
-function avatarColor(name = '') {
-    const palette = ['from-amber-400 to-orange-500', 'from-rose-400 to-pink-500', 'from-violet-400 to-purple-600', 'from-teal-400 to-emerald-600', 'from-sky-400 to-indigo-500', 'from-fuchsia-400 to-rose-500'];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return palette[Math.abs(hash) % palette.length];
-}
-
-function initials(name = '') {
-    return name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
 }
 
 function formatIndustry(industry) {
@@ -496,8 +486,6 @@ export default function MentorProfile() {
     );
     const bookingDisabledForMentor = viewerIsMentor && !isOwnMentorProfile;
     const industryLabel = formatIndustry(mentor.industry);
-    const grad = avatarColor(mentor.name);
-    const mentorInitials = initials(mentor.name);
 
     return (
         <>
@@ -525,11 +513,7 @@ export default function MentorProfile() {
                         <div className="relative grid grid-cols-1 gap-6 p-6 sm:p-8 lg:grid-cols-12 lg:items-center lg:gap-8">
                             <div className="flex flex-col gap-5 text-center sm:flex-row sm:items-center sm:gap-6 sm:text-left lg:col-span-7">
                                 <div className="flex justify-center sm:block">
-                                    {mentor.image_url ? (
-                                        <img src={mentor.image_url} alt={`${mentor.name} — profile photo`} className="h-24 w-24 shrink-0 rounded-2xl object-cover shadow-md ring-4 ring-[var(--bridge-canvas)] sm:h-28 sm:w-28" />
-                                    ) : (
-                                        <div className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${grad} text-2xl font-bold text-white shadow-md ring-4 ring-[var(--bridge-canvas)] sm:h-28 sm:w-28 sm:text-3xl`} aria-hidden>{mentorInitials}</div>
-                                    )}
+                                    <MentorAvatar name={mentor.name} size="xl" className="shadow-md ring-4 ring-[var(--bridge-canvas)] sm:h-28 sm:w-28 sm:text-3xl" />
                                 </div>
 
                                 <div className="min-w-0 flex-1">
@@ -552,10 +536,13 @@ export default function MentorProfile() {
                                             {mentor.company ? <><span className="text-stone-400"> · </span><span>{mentor.company}</span></> : null}
                                         </p>
                                     ) : null}
+                                    {mentor.location ? (
+                                        <p className="mt-1.5 text-sm text-stone-500">📍 {mentor.location}</p>
+                                    ) : null}
                                 </div>
                             </div>
 
-                            <dl className="grid grid-cols-4 gap-2 border-t border-stone-100 pt-5 sm:gap-3 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+                            <dl className="grid grid-cols-2 gap-2 border-t border-stone-100 pt-5 sm:grid-cols-4 sm:gap-3 lg:col-span-5 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
                                 <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
                                     <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">Rating</dt>
                                     <dd className="mt-1 flex items-baseline gap-1">
@@ -582,6 +569,18 @@ export default function MentorProfile() {
                     </span>
                                     </dd>
                                 </div>
+                                {mentor.booking_count != null ? (
+                                    <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+                                        <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">Bookings</dt>
+                                        <dd className="mt-1"><span className="font-display text-xl font-semibold tabular-nums text-stone-900 sm:text-2xl">{mentor.booking_count}</span></dd>
+                                    </div>
+                                ) : null}
+                                {mentor.languages?.length > 0 ? (
+                                    <div className="col-span-2 flex flex-col items-center text-center sm:col-span-1 lg:items-start lg:text-left">
+                                        <dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-stone-500">Languages</dt>
+                                        <dd className="mt-1 text-sm font-medium leading-snug text-stone-700">{mentor.languages.join(', ')}</dd>
+                                    </div>
+                                ) : null}
                             </dl>
                         </div>
                     </section>
@@ -667,66 +666,148 @@ export default function MentorProfile() {
                         )}
                     </div>
 
-                    <div className="grid grid-cols-1 gap-6">
-                        <Reveal>
-                            <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card sm:p-8">
-                                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">About</p>
-                                <h2 className="mt-1.5 font-display text-xl font-semibold text-stone-900 sm:text-2xl">Their story</h2>
-                                <div className="mt-4 border-l-[3px] border-orange-200/90 pl-5">
-                                    <p className="whitespace-pre-line text-base leading-relaxed text-stone-700 sm:text-lg">
-                                        {mentor.bio?.trim() || 'No bio yet — book a session and ask what you would normally read here.'}
-                                    </p>
-                                </div>
-                            </section>
-                        </Reveal>
-
-                        <Reveal delay={60}>
-                            <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card sm:p-8">
-                                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Focus areas</p>
-                                <h2 className="mt-1.5 font-display text-xl font-semibold text-stone-900 sm:text-2xl">Expertise</h2>
-                                {mentor.expertise?.length > 0 ? (
-                                    <div className="mt-4 flex flex-wrap gap-2">
-                                        {mentor.expertise.map((tag) => (
-                                            <span key={tag} className="rounded-full border border-orange-100 bg-orange-50/80 px-3 py-1.5 text-sm font-medium text-orange-900">{tag}</span>
-                                        ))}
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+                        {/* ── Main content column ── */}
+                        <div className="space-y-6 lg:col-span-2">
+                            <Reveal>
+                                <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card sm:p-8">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">About</p>
+                                    <h2 className="mt-1.5 font-display text-xl font-semibold text-stone-900 sm:text-2xl">Their story</h2>
+                                    <div className="mt-4 border-l-[3px] border-orange-200/90 pl-5">
+                                        <p className="whitespace-pre-line text-base leading-relaxed text-stone-700 sm:text-lg">
+                                            {mentor.bio?.trim() || 'No bio yet — book a session and ask what you would normally read here.'}
+                                        </p>
                                     </div>
-                                ) : (
-                                    <p className="mt-3 text-stone-500">No focus areas listed yet.</p>
-                                )}
-                            </section>
-                        </Reveal>
+                                </section>
+                            </Reveal>
 
-                        <Reveal delay={120}>
-                            <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card sm:p-8">
-                                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Reviews</p>
-                                <h2 className="mt-1.5 font-display text-xl font-semibold text-stone-900 sm:text-2xl">After sessions</h2>
+                            <Reveal delay={60}>
+                                <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card sm:p-8">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Focus areas</p>
+                                    <h2 className="mt-1.5 font-display text-xl font-semibold text-stone-900 sm:text-2xl">Expertise</h2>
+                                    {mentor.expertise?.length > 0 ? (
+                                        <div className="mt-4 flex flex-wrap gap-2">
+                                            {mentor.expertise.map((tag) => (
+                                                <span key={tag} className="rounded-full border border-orange-100 bg-orange-50/80 px-3 py-1.5 text-sm font-medium text-orange-900">{tag}</span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="mt-3 text-stone-500">No focus areas listed yet.</p>
+                                    )}
+                                </section>
+                            </Reveal>
 
-                                {mentorReviews.length > 0 ? (
-                                    <ul className="mt-5 space-y-3">
-                                        {mentorReviews.map((rev) => (
-                                            <li key={rev.id} className="rounded-2xl border border-stone-100/90 bg-stone-50/60 p-4 transition hover:border-orange-100/80 hover:bg-orange-50/25">
-                                                <figure>
-                                                    <figcaption className="mb-1.5 flex flex-wrap items-center gap-2">
-                                                        <StarRow rating={rev.rating} />
-                                                        <span className="text-xs text-stone-400">{formatReviewDate(rev.created_at)}</span>
-                                                    </figcaption>
-                                                    {rev.comment?.trim() ? (
-                                                        <blockquote><p className="text-pretty leading-relaxed text-stone-700">{rev.comment.trim()}</p></blockquote>
-                                                    ) : (
-                                                        <p className="text-sm italic text-stone-400">Rated the session but didn't leave a note.</p>
-                                                    )}
-                                                </figure>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <div className="mt-5 rounded-2xl border border-dashed border-stone-200/90 bg-stone-50/50 px-6 py-10 text-center">
-                                        <p className="font-medium text-stone-800">No reviews yet</p>
-                                        <p className="mt-1.5 text-sm text-stone-600">After you meet, they can leave feedback — it'll show up here.</p>
-                                    </div>
-                                )}
-                            </section>
-                        </Reveal>
+                            {(mentor.work_experience?.length > 0) ? (
+                                <Reveal delay={80}>
+                                    <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card sm:p-8">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Background</p>
+                                        <h2 className="mt-1.5 font-display text-xl font-semibold text-stone-900 sm:text-2xl">Work Experience</h2>
+                                        <div className="mt-5 space-y-6">
+                                            {[...(mentor.work_experience)].sort((a, b) => b.start_year - a.start_year).map((job, i) => (
+                                                <div key={i} className="relative border-l-2 border-orange-200/70 pl-5">
+                                                    <div className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-orange-400 ring-2 ring-[var(--bridge-surface)]" />
+                                                    <p className="font-semibold text-stone-900 sm:text-[1.05rem]">{job.title}</p>
+                                                    <p className="mt-0.5 text-sm font-medium text-stone-700">{job.company}</p>
+                                                    <p className="mt-0.5 text-xs text-stone-500">{job.start_year} – {job.end_year ?? 'Present'}</p>
+                                                    {job.description ? (
+                                                        <p className="mt-2 text-sm leading-relaxed text-stone-600">{job.description}</p>
+                                                    ) : null}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                </Reveal>
+                            ) : null}
+
+                            {(mentor.education?.length > 0) ? (
+                                <Reveal delay={100}>
+                                    <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card sm:p-8">
+                                        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Credentials</p>
+                                        <h2 className="mt-1.5 font-display text-xl font-semibold text-stone-900 sm:text-2xl">Education</h2>
+                                        <div className="mt-4 space-y-3">
+                                            {mentor.education.map((edu, i) => (
+                                                <div key={i} className="flex items-start justify-between gap-4 rounded-2xl border border-stone-100/90 bg-stone-50/60 p-4">
+                                                    <div className="min-w-0">
+                                                        <p className="font-semibold text-stone-900">{edu.school}</p>
+                                                        <p className="mt-0.5 text-sm text-stone-600">{edu.degree} in {edu.field}</p>
+                                                    </div>
+                                                    {edu.year_graduated ? (
+                                                        <span className="shrink-0 rounded-full bg-stone-100 px-2.5 py-0.5 text-xs font-semibold text-stone-600">{edu.year_graduated}</span>
+                                                    ) : null}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </section>
+                                </Reveal>
+                            ) : null}
+
+                            <Reveal delay={120}>
+                                <section className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card sm:p-8">
+                                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Reviews</p>
+                                    <h2 className="mt-1.5 font-display text-xl font-semibold text-stone-900 sm:text-2xl">After sessions</h2>
+
+                                    {mentorReviews.length > 0 ? (
+                                        <ul className="mt-5 space-y-3">
+                                            {mentorReviews.map((rev) => (
+                                                <li key={rev.id} className="rounded-2xl border border-stone-100/90 bg-stone-50/60 p-4 transition hover:border-orange-100/80 hover:bg-orange-50/25">
+                                                    <figure>
+                                                        <figcaption className="mb-1.5 flex flex-wrap items-center gap-2">
+                                                            <StarRow rating={rev.rating} />
+                                                            <span className="text-xs text-stone-400">{formatReviewDate(rev.created_at)}</span>
+                                                        </figcaption>
+                                                        {rev.comment?.trim() ? (
+                                                            <blockquote><p className="text-pretty leading-relaxed text-stone-700">{rev.comment.trim()}</p></blockquote>
+                                                        ) : (
+                                                            <p className="text-sm italic text-stone-400">Rated the session but didn't leave a note.</p>
+                                                        )}
+                                                    </figure>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <div className="mt-5 rounded-2xl border border-dashed border-stone-200/90 bg-stone-50/50 px-6 py-10 text-center">
+                                            <p className="font-medium text-stone-800">No reviews yet</p>
+                                            <p className="mt-1.5 text-sm text-stone-600">After you meet, they can leave feedback — it'll show up here.</p>
+                                        </div>
+                                    )}
+                                </section>
+                            </Reveal>
+                        </div>
+
+                        {/* ── Sticky sidebar ── */}
+                        <aside className="lg:col-span-1">
+                            <div className="sticky top-6 overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card">
+                                <p className="font-display text-3xl font-bold tabular-nums text-orange-600 sm:text-4xl">
+                                    {mentor.session_price != null ? `$${mentor.session_price}` : 'Free'}
+                                    <span className="ml-1.5 text-base font-normal text-stone-500">/ session</span>
+                                </p>
+                                {mentor.response_time ? (
+                                    <p className="mt-2 text-xs text-stone-500">⚡ {mentor.response_time}</p>
+                                ) : null}
+                                {!isOwnMentorProfile && !bookingDisabledForMentor ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                                        className={`mt-5 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:from-amber-400 hover:to-orange-400 ${focusRing}`}
+                                    >
+                                        Book a Session
+                                    </button>
+                                ) : null}
+                                {mentor.linkedin_url ? (
+                                    <a
+                                        href={mentor.linkedin_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={`mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white py-3 text-sm font-semibold text-stone-700 transition hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-700 ${focusRing}`}
+                                    >
+                                        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 shrink-0">
+                                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                                        </svg>
+                                        LinkedIn
+                                    </a>
+                                ) : null}
+                            </div>
+                        </aside>
                     </div>
                 </div>
             </main>

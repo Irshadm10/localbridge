@@ -4,34 +4,10 @@ import { getFeaturedMentors } from '../api/mentors';
 import Reveal from '../components/Reveal';
 import { useAuth } from '../context/useAuth';
 import { focusRing } from '../ui';
+import MentorAvatar from '../components/MentorAvatar';
 
 const focusRingWhite =
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-orange-600';
-
-const AVATAR_COLORS = [
-  'bg-violet-200 text-violet-900',
-  'bg-amber-200 text-amber-900',
-  'bg-emerald-200 text-emerald-900',
-  'bg-sky-200 text-sky-900',
-  'bg-rose-200 text-rose-900',
-  'bg-indigo-200 text-indigo-900',
-];
-
-function avatarColor(name) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
-  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
-function initials(name) {
-  return name
-      .split(' ')
-      .filter(Boolean)
-      .map((w) => w[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-}
 
 // Persona-driven mentor matches for the hero. Each persona maps to 2 representative
 // mentor "preview pills" — this is the identification layer, not a directory.
@@ -303,15 +279,12 @@ function Hero() {
                     Talk to
                   </p>
                   {persona.matches.map((m) => {
-                    const color = avatarColor(m.name);
                     return (
                         <div
                             key={m.name}
                             className="flex items-center gap-4 border-b border-[var(--bridge-border)] px-5 py-3.5 transition last:border-b-0 hover:bg-orange-50/50 dark:hover:bg-white/[0.04]"
                         >
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[11px] font-bold shadow-sm ${color}`}>
-                            {initials(m.name)}
-                          </div>
+                          <MentorAvatar name={m.name} size="xs" className="shadow-sm" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-semibold text-[var(--bridge-text)]">{m.name}</p>
                             <p className="truncate text-xs text-[var(--bridge-text-muted)]">{m.role}</p>
@@ -355,8 +328,6 @@ function FeaturedMentor({ mentor, loading }) {
         years_experience: 11,
         total_sessions: 86,
       };
-  const color = avatarColor(display.name);
-
   return (
       <section className="relative px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
         <div className="mx-auto max-w-bridge">
@@ -381,9 +352,7 @@ function FeaturedMentor({ mentor, loading }) {
                   <div aria-hidden className="pointer-events-none absolute -left-8 bottom-0 h-40 w-40 rounded-full bg-amber-400/10 blur-3xl" />
 
                   <div className="relative flex items-start gap-5">
-                    <div className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl text-lg font-bold shadow-lg ring-4 ring-white/10 ${color}`}>
-                      {initials(display.name)}
-                    </div>
+                    <MentorAvatar name={display.name} size="lg" className="shadow-lg ring-4 ring-white/10" />
                     <div className="min-w-0">
                       <p className="font-display text-2xl font-semibold tracking-tight text-white">{display.name}</p>
                       <p className="mt-1 text-sm text-stone-300">

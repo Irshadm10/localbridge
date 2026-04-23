@@ -8,6 +8,7 @@ import PageGutterAtmosphere from '../components/PageGutterAtmosphere';
 import Reveal from '../components/Reveal';
 import { focusRing } from '../ui';
 import MentorMatchWizard from '../components/MentorMatchWizard';
+import MentorAvatar from '../components/MentorAvatar';
 import { getAIMatchedMentors, saveMenteeAssessment, loadMenteeAssessment } from '../api/aiMatching';
 
 const PAGE_SIZE = 12;
@@ -48,32 +49,6 @@ const SORT_OPTIONS = [
   { label: 'Most years in the game', value: 'experience' },
   { label: 'Most sessions logged', value: 'sessions' },
 ];
-
-const AVATAR_COLORS = [
-  'bg-violet-200 text-violet-800',
-  'bg-amber-200 text-amber-800',
-  'bg-emerald-200 text-emerald-800',
-  'bg-sky-200 text-sky-800',
-  'bg-rose-200 text-rose-800',
-  'bg-indigo-200 text-indigo-800',
-  'bg-teal-200 text-teal-800',
-  'bg-orange-200 text-orange-800',
-];
-
-function getAvatarColor(name) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-function getInitials(name) {
-  return name
-      .split(' ')
-      .map((w) => w[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
-}
 
 function normalizeMentorId(id) {
   return id == null ? '' : String(id).toLowerCase();
@@ -180,8 +155,6 @@ function HeartButton({ filled, onClick, label, disabled }) {
 }
 
 function MentorCard({ mentor, isFavorite, onToggleFavorite, user, navigate, favoriteBusy, favoritesEnabled = true }) {
-  const avatarColor = getAvatarColor(mentor.name);
-
   function handleHeart() {
     if (!user) {
       navigate('/login', { state: { from: '/mentors' } });
@@ -205,19 +178,7 @@ function MentorCard({ mentor, isFavorite, onToggleFavorite, user, navigate, favo
         ) : null}
 
         <div className={`flex items-start gap-4 ${favoritesEnabled ? 'pr-12' : ''}`}>
-          {mentor.image_url ? (
-              <img
-                  src={mentor.image_url}
-                  alt=""
-                  className="h-14 w-14 shrink-0 rounded-2xl object-cover ring-2 ring-white shadow-md"
-              />
-          ) : (
-              <div
-                  className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-sm font-bold shadow-md ring-2 ring-white ${avatarColor}`}
-              >
-                {getInitials(mentor.name)}
-              </div>
-          )}
+          <MentorAvatar name={mentor.name} size="md" className="shadow-md ring-2 ring-white" />
           <div className="min-w-0 pt-0.5">
             <h3 className="truncate font-semibold text-stone-900">{mentor.name}</h3>
             <p className="truncate text-sm text-stone-500">{mentor.title}</p>
@@ -308,7 +269,6 @@ function MatchLabelChip({ label }) {
 
 function AiMatchCard({ mentor, match, navigate }) {
   const [expanded, setExpanded] = useState(false);
-  const avatarColor = getAvatarColor(mentor.name);
 
   return (
     <div className="group relative flex h-full flex-col gap-4 overflow-hidden rounded-[1.75rem] border border-orange-200/50 bg-white/95 p-6 shadow-bridge-card transition duration-300 hover:-translate-y-1 hover:border-orange-300/60 hover:shadow-bridge-glow">
@@ -323,13 +283,7 @@ function AiMatchCard({ mentor, match, navigate }) {
       </div>
 
       <div className="flex items-start gap-4 pr-24">
-        {mentor.image_url ? (
-          <img src={mentor.image_url} alt="" className="h-14 w-14 shrink-0 rounded-2xl object-cover ring-2 ring-white shadow-md" />
-        ) : (
-          <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-sm font-bold shadow-md ring-2 ring-white ${avatarColor}`}>
-            {getInitials(mentor.name)}
-          </div>
-        )}
+        <MentorAvatar name={mentor.name} size="md" className="shadow-md ring-2 ring-white" />
         <div className="min-w-0 pt-0.5">
           <h3 className="truncate font-semibold text-stone-900">{mentor.name}</h3>
           <p className="truncate text-sm text-stone-500">{mentor.title}</p>
@@ -389,16 +343,9 @@ function AiMatchCard({ mentor, match, navigate }) {
 }
 
 function AiHonorableCard({ mentor, match }) {
-  const avatarColor = getAvatarColor(mentor.name);
   return (
     <div className="flex items-center gap-4 rounded-2xl border border-stone-200/80 bg-white/95 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-orange-200/60 hover:shadow-md">
-      {mentor.image_url ? (
-        <img src={mentor.image_url} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover ring-2 ring-white shadow" />
-      ) : (
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-bold shadow ring-2 ring-white ${avatarColor}`}>
-          {getInitials(mentor.name)}
-        </div>
-      )}
+      <MentorAvatar name={mentor.name} size="sm" className="shadow ring-2 ring-white" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h4 className="truncate text-sm font-semibold text-stone-900">{mentor.name}</h4>
