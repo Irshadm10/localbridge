@@ -16,7 +16,7 @@ const SECTIONS = [
         { id: 'termination', title: '11. Termination', body: `We may suspend or terminate accounts that violate these Terms. You can close your account at any time through settings. Termination doesn't relieve either party of obligations incurred before termination.` },
         { id: 'disputes', title: '12. Dispute Resolution', body: `Disputes will be resolved through binding arbitration under the rules of the American Arbitration Association, except for small-claims court actions and injunctive relief. Class-action waiver applies.` },
         { id: 'governing', title: '13. Governing Law', body: `These Terms are governed by the laws of the State of California, without regard to conflict-of-law principles. Exclusive venue for any court actions: San Francisco County, California.` },
-        { id: 'contact', title: '14. Contact', body: `Questions about these Terms? Email legal@bridge.com.` },
+        { id: 'contact', title: '14. Contact', body: `Questions about these Terms? Email mentors.bridge@gmail.com.` },
 ];
 
 export default function Terms() {

@@ -1,20 +1,59 @@
 import { useState } from 'react';
-import { Mail, Phone, MapPin, ShieldAlert, CheckCircle2, Send, ArrowRight } from 'lucide-react';
+import { Mail, Phone, MapPin, ShieldAlert, CheckCircle2, Send, ArrowRight, Loader2 } from 'lucide-react';
 import Reveal from '../../components/Reveal';
 import { focusRing, pageShell } from '../../ui';
+import { COMPANY_EMAIL, generateTicketId } from '../../config/contact';
+import { sendSupportEmail } from '../../api/supportEmail';
 
 export default function Contact() {
     const [form, setForm] = useState({ name: '', email: '', topic: 'General question', message: '' });
     const [sent, setSent] = useState(false);
+    const [ticketId, setTicketId] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
 
-    function handleSubmit(e) {
+    async function handleSubmit(e) {
         e.preventDefault();
-        if (!form.name || !form.email || !form.message) return;
-        setSent(true);
+        if (!form.name || !form.email || !form.message || submitting) return;
+
+        const id = generateTicketId();
+        const subject = `[${form.topic}] [#${id}] Bridge contact from ${form.name}`;
+        const body = [
+            `Topic: ${form.topic}`,
+            `From: ${form.name} <${form.email}>`,
+            '',
+            form.message,
+        ].join('\n');
+
+        setSubmitting(true);
+        setSubmitError(null);
+        try {
+            await sendSupportEmail({
+                kind: 'contact',
+                ticketId: id,
+                subject,
+                body,
+                replyTo: form.email,
+                fromName: form.name,
+                meta: {
+                    Topic: form.topic,
+                    Name: form.name,
+                    Email: form.email,
+                    Page: typeof window !== 'undefined' ? window.location.href : '',
+                    Submitted: new Date().toISOString(),
+                },
+            });
+            setTicketId(id);
+            setSent(true);
+        } catch (err) {
+            setSubmitError(err?.message || 'Could not send your message. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     }
 
     const cards = [
-        { Icon: Mail, eyebrow: 'Email', primary: 'support@bridge.com', secondary: 'Reply within 24 hours', hue: 'from-orange-500 to-amber-500' },
+        { Icon: Mail, eyebrow: 'Email', primary: COMPANY_EMAIL, secondary: 'Reply within 24 hours', hue: 'from-orange-500 to-amber-500' },
         { Icon: Phone, eyebrow: 'Phone', primary: '+1 (555) 123-4567', secondary: 'Mon–Fri, 9am–6pm PT', hue: 'from-sky-500 to-indigo-500' },
         { Icon: MapPin, eyebrow: 'Office', primary: '525 Market Street', secondary: 'San Francisco, CA 94105', hue: 'from-emerald-500 to-teal-500' },
     ];
@@ -73,11 +112,12 @@ export default function Contact() {
                                 <div className="min-w-0">
                                     <p className="text-xs font-bold uppercase tracking-[0.2em] text-red-800 dark:text-red-200">Urgent?</p>
                                     <p className="mt-1.5 text-sm leading-relaxed text-red-900/95 dark:text-red-100/90">
-                                        For Trust &amp; Safety issues, email{' '}
-                                        <a href="mailto:trust@bridge.com" className="font-bold underline decoration-red-300 underline-offset-2 hover:text-red-950">
-                                            trust@bridge.com
-                                        </a>{' '}
-                                        — reviewed within 4 hours.
+                                        For Trust &amp; Safety issues, use the{' '}
+                                        <a href="/trust" className="font-bold underline decoration-red-300 underline-offset-2 hover:text-red-950">
+                                            Trust &amp; Safety report form
+                                        </a>
+                                        {' '}— reviewed within 4 hours and routed to{' '}
+                                        <span className="font-semibold">{COMPANY_EMAIL}</span>.
                                     </p>
                                 </div>
                             </div>
@@ -98,9 +138,17 @@ export default function Contact() {
                                         <p className="mt-3 text-[var(--bridge-text-secondary)]">
                                             We&apos;ll be in touch at <span className="font-semibold text-[var(--bridge-text)]">{form.email}</span> shortly.
                                         </p>
+                                        {ticketId && (
+                                            <div className="mx-auto mt-5 inline-flex flex-col items-center gap-1 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-5 py-3 text-left">
+                                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-muted)]">Ticket number</span>
+                                                <code className="font-mono text-base font-semibold tracking-wide text-[var(--bridge-text)]">#{ticketId}</code>
+                                                <span className="text-[11px] text-[var(--bridge-text-muted)]">Keep this for replies — we&apos;ll reference it in our response.</span>
+                                            </div>
+                                        )}
                                         <button
                                             onClick={() => {
                                                 setSent(false);
+                                                setTicketId(null);
                                                 setForm({ name: '', email: '', topic: 'General question', message: '' });
                                             }}
                                             className={`mt-8 inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-6 py-3 text-sm font-semibold text-[var(--bridge-text)] transition hover:-translate-y-0.5 hover:border-orange-300/70 hover:shadow-md ${focusRing}`}
@@ -164,13 +212,28 @@ export default function Contact() {
                                                 {form.message.length} characters
                                             </p>
                                         </div>
+                                        {submitError && (
+                                            <div role="alert" className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-100">
+                                                {submitError}
+                                            </div>
+                                        )}
                                         <button
                                             type="submit"
-                                            className={`btn-sheen group relative inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 py-4 text-sm font-semibold text-white shadow-[0_14px_36px_-8px_rgba(234,88,12,0.55)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-10px_rgba(234,88,12,0.7)] ${focusRing}`}
+                                            disabled={submitting}
+                                            className={`btn-sheen group relative inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 py-4 text-sm font-semibold text-white shadow-[0_14px_36px_-8px_rgba(234,88,12,0.55)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-10px_rgba(234,88,12,0.7)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 ${focusRing}`}
                                         >
-                                            <Send className="h-4 w-4" />
-                                            Send message
-                                            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                                            {submitting ? (
+                                                <>
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                    Sending…
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Send className="h-4 w-4" />
+                                                    Send message
+                                                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                                                </>
+                                            )}
                                         </button>
                                     </form>
                                 )}

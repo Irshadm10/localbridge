@@ -298,13 +298,13 @@ export default function Login() {
                         <label htmlFor="login-password" className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--bridge-text-muted)]">
                           Password
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => alert('Password reset is coming soon — email support@bridge.com.')}
+                        <Link
+                          to="/contact"
+                          state={{ topic: 'Billing issue' }}
                           className="text-[11px] font-semibold text-orange-700 transition hover:text-orange-800 dark:text-orange-300 dark:hover:text-orange-200"
                         >
                           Forgot?
-                        </button>
+                        </Link>
                       </div>
                       <div className="relative">
                         <Lock className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bridge-text-faint)] transition group-focus-within:text-orange-500" aria-hidden />

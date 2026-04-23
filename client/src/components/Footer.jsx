@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, MapPin, Phone } from 'lucide-react';
+import { COMPANY_EMAIL, mailtoHref } from '../config/contact';
 
 const linkClass =
   'text-sm text-stone-400 transition-colors hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 rounded-sm';
@@ -143,7 +144,12 @@ export default function Footer() {
             <ul className="mt-6 space-y-3 text-sm">
               <li className="flex items-start gap-3 text-stone-400">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-orange-400/80" aria-hidden />
-                <span>support@bridge.com</span>
+                <a
+                  href={mailtoHref()}
+                  className="rounded-sm transition hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950"
+                >
+                  {COMPANY_EMAIL}
+                </a>
               </li>
               <li className="flex items-start gap-3 text-stone-400">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-orange-400/80" aria-hidden />

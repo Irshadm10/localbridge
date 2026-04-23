@@ -97,8 +97,8 @@ export default function Cookies() {
           <h2 className="font-display text-2xl font-semibold text-[var(--bridge-text)]">Contact</h2>
           <p className="mt-3 leading-relaxed text-[var(--bridge-text-secondary)]">
             Questions? Email{' '}
-            <a href="mailto:privacy@bridge.com" className="font-semibold text-orange-700 underline decoration-orange-300/60 underline-offset-4 hover:text-orange-800 dark:text-orange-300 dark:hover:text-orange-200">
-              privacy@bridge.com
+            <a href="mailto:mentors.bridge@gmail.com" className="font-semibold text-orange-700 underline decoration-orange-300/60 underline-offset-4 hover:text-orange-800 dark:text-orange-300 dark:hover:text-orange-200">
+              mentors.bridge@gmail.com
             </a>
             .
           </p>

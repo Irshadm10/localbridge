@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { X, Check, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { X, Check, ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react';
 import { focusRing } from '../ui';
+import { generateTicketId } from '../config/contact';
+import { sendSupportEmail } from '../api/supportEmail';
 
 const focusRingWhite =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
@@ -29,6 +31,9 @@ export default function FeedbackModal({ open, onClose }) {
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [ticketId, setTicketId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const handleClose = useCallback(() => {
     onClose();
@@ -39,6 +44,9 @@ export default function FeedbackModal({ open, onClose }) {
       setMessage('');
       setEmail('');
       setSent(false);
+      setTicketId(null);
+      setSubmitting(false);
+      setSubmitError(null);
     }, 220);
   }, [onClose]);
 
@@ -58,18 +66,48 @@ export default function FeedbackModal({ open, onClose }) {
 
   if (!open) return null;
 
-  function submit() {
-    const payload = {
-      category: category?.key,
-      sentiment: sentiment?.key,
-      message,
-      email: email || null,
-      url: window.location.pathname,
-      userAgent: navigator.userAgent,
-      timestamp: new Date().toISOString(),
+  async function submit() {
+    if (submitting) return;
+    const isBug = category?.key === 'bug';
+    const prefix = isBug ? 'BUG' : 'FB';
+    const id = generateTicketId(prefix);
+    const subjectTag = isBug ? 'Bridge bug report' : 'Bridge feedback';
+    const subject = `[${subjectTag}] [#${id}] ${category?.label ?? 'Other'}${sentiment ? ` · ${sentiment.label}` : ''}`;
+
+    const meta = {
+      Type: isBug ? 'Bug report' : 'Feedback',
+      Category: category?.label ?? '',
+      ...(sentiment ? { Sentiment: sentiment.label } : {}),
+      Page: typeof window !== 'undefined' ? window.location.href : '',
+      ...(email ? { 'Reply to': email } : { 'Reply to': '(anonymous)' }),
+      Submitted: new Date().toISOString(),
+      ...(isBug
+        ? {
+            'User agent': navigator.userAgent,
+            Language: navigator.language,
+            Viewport: `${window.innerWidth}×${window.innerHeight}`,
+          }
+        : {}),
     };
-    console.log('[Feedback]', payload);
-    setSent(true);
+
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await sendSupportEmail({
+        kind: isBug ? 'bug' : 'feedback',
+        ticketId: id,
+        subject,
+        body: message,
+        replyTo: email || undefined,
+        meta,
+      });
+      setTicketId(id);
+      setSent(true);
+    } catch (err) {
+      setSubmitError(err?.message || 'Could not send your feedback. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -104,10 +142,23 @@ export default function FeedbackModal({ open, onClose }) {
             <div className="relative mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 shadow-[0_18px_48px_-8px_rgba(16,185,129,0.55)]">
               <CheckCircle2 className="h-10 w-10 text-white" />
             </div>
-            <h2 className="font-display text-3xl font-bold text-[var(--bridge-text)]">Thanks for the feedback</h2>
+            <h2 className="font-display text-3xl font-bold text-[var(--bridge-text)]">
+              {category?.key === 'bug' ? 'Bug report received' : 'Thanks for the feedback'}
+            </h2>
             <p className="mt-3 max-w-sm leading-relaxed text-[var(--bridge-text-secondary)]">
-              Every piece of feedback gets read. If you left your email, we&apos;ll follow up when relevant.
+              {category?.key === 'bug'
+                ? 'Engineering triages every bug. If you left your email, we\u2019ll follow up with status updates.'
+                : 'Every piece of feedback gets read. If you left your email, we\u2019ll follow up when relevant.'}
             </p>
+            {ticketId && (
+              <div className="mt-5 inline-flex flex-col items-center gap-1 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-5 py-3">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-muted)]">
+                  {category?.key === 'bug' ? 'Bug ticket' : 'Ticket number'}
+                </span>
+                <code className="font-mono text-base font-semibold tracking-wide text-[var(--bridge-text)]">#{ticketId}</code>
+                <span className="text-[11px] text-[var(--bridge-text-muted)]">Keep this for replies.</span>
+              </div>
+            )}
             <button
               type="button"
               onClick={handleClose}
@@ -261,12 +312,18 @@ export default function FeedbackModal({ open, onClose }) {
             </div>
 
             <footer className="shrink-0 border-t border-[var(--bridge-border)] bg-[var(--bridge-surface)]/95 px-6 py-4 sm:px-7">
+              {submitError && step === 3 && (
+                <div role="alert" className="mb-3 rounded-2xl border border-red-300/60 bg-red-50 px-3 py-2 text-xs text-red-900 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-100">
+                  {submitError}
+                </div>
+              )}
               <div className="flex items-center justify-between gap-3">
                 {step > 1 ? (
                   <button
                     type="button"
                     onClick={() => setStep(step - 1)}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-[var(--bridge-text-secondary)] transition hover:bg-[var(--bridge-surface-muted)] hover:text-[var(--bridge-text)] ${focusRing}`}
+                    disabled={submitting}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-[var(--bridge-text-secondary)] transition hover:bg-[var(--bridge-surface-muted)] hover:text-[var(--bridge-text)] disabled:opacity-50 ${focusRing}`}
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
@@ -277,10 +334,18 @@ export default function FeedbackModal({ open, onClose }) {
                   <button
                     type="button"
                     onClick={submit}
-                    disabled={!message.trim()}
+                    disabled={!message.trim() || submitting}
                     className={`btn-sheen group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 px-6 py-2.5 text-sm font-semibold text-white shadow-[0_12px_30px_-6px_rgba(234,88,12,0.55)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-8px_rgba(234,88,12,0.7)] disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
                   >
-                    <Check className="h-4 w-4" /> Send feedback
+                    {submitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Sending…
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4" /> Send feedback
+                      </>
+                    )}
                   </button>
                 ) : (
                   <span />

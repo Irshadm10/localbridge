@@ -1,11 +1,16 @@
 import { useState } from 'react';
-import { ShieldCheck, Lock, CreditCard, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, Lock, CreditCard, Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import Reveal from '../../components/Reveal';
 import { focusRing, pageShell } from '../../ui';
+import { generateTicketId } from '../../config/contact';
+import { sendSupportEmail } from '../../api/supportEmail';
 
 export default function Trust() {
     const [form, setForm] = useState({ type: 'Conduct issue', description: '', contact: '' });
     const [sent, setSent] = useState(false);
+    const [ticketId, setTicketId] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
     const pillars = [
         { title: 'Verified mentors', desc: 'Identity, credentials, and portfolio verified. Under 20% of applicants pass.', stat: '< 20%', Icon: ShieldCheck, hue: 'from-orange-500 to-amber-500' },
         { title: 'Encrypted in transit and at rest', desc: 'AES-256 encryption. SOC 2 Type II compliant.', stat: 'SOC 2', Icon: Lock, hue: 'from-sky-500 to-indigo-500' },
@@ -21,9 +26,35 @@ export default function Trust() {
         'Prompt cancellation if unable to attend',
     ];
 
-    function submit(e) {
+    async function submit(e) {
         e.preventDefault();
-        setSent(true);
+        if (!form.description.trim() || submitting) return;
+        const id = generateTicketId('SAFE');
+        const subject = `[Bridge Trust & Safety] [#${id}] ${form.type}`;
+
+        setSubmitting(true);
+        setSubmitError(null);
+        try {
+            await sendSupportEmail({
+                kind: 'safety',
+                ticketId: id,
+                subject,
+                body: form.description,
+                replyTo: form.contact || undefined,
+                meta: {
+                    Concern: form.type,
+                    'Reply to': form.contact || '(anonymous)',
+                    Page: typeof window !== 'undefined' ? window.location.href : '',
+                    Submitted: new Date().toISOString(),
+                },
+            });
+            setTicketId(id);
+            setSent(true);
+        } catch (err) {
+            setSubmitError(err?.message || 'Could not submit your report. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
     }
 
     return (
@@ -114,14 +145,20 @@ export default function Trust() {
                             </div>
                         </div>
                         {sent ? (
-                            <div className="relative mt-8 flex items-center gap-4 rounded-2xl border border-emerald-300/50 bg-[var(--bridge-surface)] p-6 shadow-bridge-tile dark:border-emerald-400/30">
-                                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-[0_8px_20px_-4px_rgba(16,185,129,0.5)]">
+                            <div className="relative mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-emerald-300/50 bg-[var(--bridge-surface)] p-6 shadow-bridge-tile dark:border-emerald-400/30">
+                                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-[0_8px_20px_-4px_rgba(16,185,129,0.5)]">
                                     <CheckCircle2 className="h-5 w-5" />
                                 </span>
-                                <div>
+                                <div className="min-w-0 flex-1">
                                     <p className="font-display text-lg font-semibold text-[var(--bridge-text)]">Report received</p>
                                     <p className="text-sm text-[var(--bridge-text-secondary)]">Our team will review within 4 hours.</p>
                                 </div>
+                                {ticketId && (
+                                    <div className="flex flex-col items-start gap-0.5 rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-4 py-2">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-muted)]">Ticket</span>
+                                        <code className="font-mono text-sm font-semibold tracking-wide text-[var(--bridge-text)]">#{ticketId}</code>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <form onSubmit={submit} className="relative mt-7 space-y-5">
@@ -165,12 +202,26 @@ export default function Trust() {
                                         className="w-full rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-4 py-3.5 text-sm text-[var(--bridge-text)] shadow-inner placeholder:text-[var(--bridge-text-faint)] outline-none transition focus:border-orange-400 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
                                     />
                                 </div>
+                                {submitError && (
+                                    <div role="alert" className="rounded-2xl border border-red-300/60 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-400/40 dark:bg-red-500/10 dark:text-red-100">
+                                        {submitError}
+                                    </div>
+                                )}
                                 <button
                                     type="submit"
-                                    className={`btn-sheen inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-rose-500 px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_-6px_rgba(239,68,68,0.5)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_38px_-8px_rgba(239,68,68,0.65)] ${focusRing}`}
+                                    disabled={submitting}
+                                    className={`btn-sheen inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-red-600 to-rose-500 px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_-6px_rgba(239,68,68,0.5)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_38px_-8px_rgba(239,68,68,0.65)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 ${focusRing}`}
                                 >
-                                    <ShieldCheck className="h-4 w-4" />
-                                    Submit report
+                                    {submitting ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" /> Submitting…
+                                        </>
+                                    ) : (
+                                        <>
+                                            <ShieldCheck className="h-4 w-4" />
+                                            Submit report
+                                        </>
+                                    )}
                                 </button>
                             </form>
                         )}
