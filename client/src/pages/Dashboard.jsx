@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMySession, updateSessionStatus } from "../api/sessions";
 import { getMentorById } from "../api/mentors";
+import { createReview } from "../api/reviews";
 import supabase from "../api/supabase";
 import LoadingSpinner from "../components/LoadingSpinner";
 
@@ -53,7 +54,156 @@ function StatCard({ icon, value, label, accent }) {
   );
 }
 
-function SessionCard({ session, isMentor, onAccept, onDecline, onCancel, actionLoading }) {
+function ReviewModal({ session, onClose, onSubmitted }) {
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    function onKey(e) { if (e.key === "Escape") onClose(); }
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  async function handleSubmit() {
+    if (rating === 0) { setError("Please select a star rating."); return; }
+    setSubmitting(true);
+    setError("");
+    const { error: err } = await createReview({
+      sessionId: session.id,
+      mentorId: session.mentor_id,
+      rating,
+      comment: comment.trim() || null,
+    });
+    setSubmitting(false);
+    if (err) {
+      setError(err.message || "Failed to submit review. Please try again.");
+    } else {
+      onSubmitted(session.id);
+    }
+  }
+
+  const LABELS = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
+  const displayStar = hovered || rating;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="review-modal-title"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-stone-900/60 backdrop-blur-sm focus-visible:outline-none"
+        aria-label="Close"
+        onClick={onClose}
+      />
+      <div className="relative w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-2xl ring-1 ring-stone-200/80 sm:rounded-3xl">
+        <div className="flex items-start justify-between px-6 pt-6 pb-0 sm:px-7">
+          <div>
+            <h2 id="review-modal-title" className="text-lg font-bold text-stone-800">Leave a review</h2>
+            <p className="mt-0.5 text-xs text-stone-500">
+              Session with {session.mentor_name || "your mentor"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="ml-4 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-600 transition-colors"
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" aria-hidden>
+              <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="px-6 pt-5 pb-6 sm:px-7">
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {/* Star picker */}
+          <div className="mb-5">
+            <p className="mb-2 text-sm font-semibold text-stone-700">
+              Rating <span className="text-red-400">*</span>
+            </p>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHovered(star)}
+                  onMouseLeave={() => setHovered(0)}
+                  aria-label={`${star} star${star !== 1 ? "s" : ""}`}
+                  className="transition-transform hover:scale-110 focus-visible:outline-none"
+                >
+                  <svg viewBox="0 0 24 24" className="h-8 w-8"
+                    fill={star <= displayStar ? "#d97706" : "none"}
+                    stroke={star <= displayStar ? "#d97706" : "#d6d3d1"}
+                    strokeWidth="1.5"
+                    aria-hidden
+                  >
+                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+            {displayStar > 0 && (
+              <p className="mt-1.5 text-xs text-stone-400">{LABELS[displayStar]}</p>
+            )}
+          </div>
+
+          {/* Comment */}
+          <div className="mb-6">
+            <label htmlFor="review-comment" className="block text-sm font-semibold text-stone-700 mb-1.5">
+              Comment <span className="font-normal text-stone-400">(optional)</span>
+            </label>
+            <textarea
+              id="review-comment"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={4}
+              placeholder="What did you get out of this session?"
+              className="w-full resize-none px-4 py-2.5 rounded-xl border border-stone-200 text-sm text-stone-800 placeholder-stone-300 bg-stone-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-400 transition-all"
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 border border-stone-200 text-stone-600 font-semibold text-sm rounded-xl hover:bg-stone-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting || rating === 0}
+              className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white font-semibold text-sm rounded-xl transition-colors shadow-sm"
+            >
+              {submitting ? "Submitting…" : "Submit review"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SessionCard({ session, isMentor, onAccept, onDecline, onCancel, actionLoading, reviewedSessionIds = new Set(), onReview }) {
   const typeInfo = getSessionTypeInfo(session.session_type);
   const otherName = isMentor ? session.mentee_name || "Mentee" : session.mentor_name || "Mentor";
   const formattedDate = session.scheduled_date
@@ -65,6 +215,8 @@ function SessionCard({ session, isMentor, onAccept, onDecline, onCancel, actionL
   const now = new Date();
   const isPast = session.scheduled_date && new Date(session.scheduled_date) < now;
   const showActions = !isPast && session.status !== "completed" && session.status !== "declined" && session.status !== "cancelled";
+  const canReview = !isMentor && session.status === "completed";
+  const alreadyReviewed = reviewedSessionIds.has(session.id);
 
   return (
     <div className="bg-white rounded-2xl border border-stone-200 shadow-sm px-5 py-4 hover:shadow-md transition-all duration-200 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -101,6 +253,23 @@ function SessionCard({ session, isMentor, onAccept, onDecline, onCancel, actionL
           )}
         </div>
       )}
+      {canReview && (
+        <div className="flex-shrink-0">
+          {alreadyReviewed ? (
+            <span className="px-3 py-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg">
+              ✓ Reviewed
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => onReview?.(session)}
+              className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 text-xs font-semibold rounded-lg transition-colors"
+            >
+              Leave a review
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -119,6 +288,8 @@ export default function Dashboard() {
   const [mentorProfileId, setMentorProfileId] = useState(null);
   const [onboardingComplete, setOnboardingComplete] = useState(null);
   const [calendarConnected, setCalendarConnected] = useState(null);
+  const [reviewedSessionIds, setReviewedSessionIds] = useState(new Set());
+  const [reviewingSession, setReviewingSession] = useState(null);
 
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long", year: "numeric", month: "long", day: "numeric",
@@ -185,6 +356,15 @@ export default function Dashboard() {
               mentor_company: m?.company || "",
             };
           });
+
+          // Fetch which sessions this mentee has already reviewed so we can hide the button.
+          const { data: myReviews } = await supabase
+            .from("reviews")
+            .select("session_id")
+            .eq("reviewer_id", user.id);
+          if (myReviews?.length > 0) {
+            setReviewedSessionIds(new Set(myReviews.map((r) => r.session_id)));
+          }
         }
         setSessions(rawSessions);
       } catch (err) {
@@ -356,6 +536,8 @@ export default function Dashboard() {
               {upcomingSessions.map((session) => (
                 <SessionCard key={session.id} session={session} isMentor={isMentor}
                   actionLoading={actionLoading}
+                  reviewedSessionIds={reviewedSessionIds}
+                  onReview={setReviewingSession}
                   onAccept={(id) => handleStatusUpdate(id, "accepted")}
                   onDecline={(id) => handleStatusUpdate(id, "declined")}
                   onCancel={(id) => handleStatusUpdate(id, "cancelled")}
@@ -381,6 +563,8 @@ export default function Dashboard() {
               {visibleHistory.map((session) => (
                 <SessionCard key={session.id} session={session} isMentor={isMentor}
                   actionLoading={null} onAccept={null} onDecline={null} onCancel={null}
+                  reviewedSessionIds={reviewedSessionIds}
+                  onReview={setReviewingSession}
                 />
               ))}
               {pastSessions.length > 10 && (
@@ -474,5 +658,16 @@ export default function Dashboard() {
 
       </div>
     </div>
+
+    {reviewingSession && (
+      <ReviewModal
+        session={reviewingSession}
+        onClose={() => setReviewingSession(null)}
+        onSubmitted={(sessionId) => {
+          setReviewedSessionIds((prev) => new Set([...prev, sessionId]));
+          setReviewingSession(null);
+        }}
+      />
+    )}
   );
 }
