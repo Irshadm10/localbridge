@@ -178,7 +178,7 @@ function Hero() {
               done the job.
             </h1>
 
-            <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-[var(--bridge-text-secondary)] sm:text-xl sm:leading-[1.55]">
+            <p className="mx-auto mt-7 max-w-2xl text-lg font-medium leading-[1.55] text-[var(--bridge-text-secondary)] sm:text-xl sm:leading-[1.55] lg:text-[1.35rem]">
               Bridge is a directory of vetted professionals you book by the hour. One session with someone who&apos;s
               lived your exact next step — not a recruiter, not a coach, not a content creator.
             </p>

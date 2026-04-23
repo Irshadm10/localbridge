@@ -234,7 +234,7 @@ export default function FeedbackModal({ open, onClose }) {
                       onChange={(e) => setMessage(e.target.value)}
                       rows={5}
                       placeholder="What happened? What did you expect? The more specific, the better."
-                      className="w-full resize-none rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-muted)] px-4 py-3 text-sm text-[var(--bridge-text)] shadow-inner placeholder:text-[var(--bridge-text-faint)] outline-none transition focus:border-orange-400 focus:bg-[var(--bridge-surface)] focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
+                      className="w-full resize-none rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-muted)] px-4 py-3.5 text-sm text-[var(--bridge-text)] shadow-inner placeholder:text-[var(--bridge-text-faint)] outline-none transition focus:border-orange-400 focus:bg-[var(--bridge-surface)] focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
                     />
                     <p className="mt-1.5 text-right text-[10px] font-medium text-[var(--bridge-text-faint)]">
                       {message.length} characters
@@ -253,7 +253,7 @@ export default function FeedbackModal({ open, onClose }) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
-                      className="w-full rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-muted)] px-4 py-3 text-sm text-[var(--bridge-text)] shadow-inner placeholder:text-[var(--bridge-text-faint)] outline-none transition focus:border-orange-400 focus:bg-[var(--bridge-surface)] focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
+                      className="w-full rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-muted)] px-4 py-3.5 text-sm text-[var(--bridge-text)] shadow-inner placeholder:text-[var(--bridge-text-faint)] outline-none transition focus:border-orange-400 focus:bg-[var(--bridge-surface)] focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
                     />
                   </div>
                 </div>

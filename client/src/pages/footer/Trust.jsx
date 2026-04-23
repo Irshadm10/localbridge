@@ -130,7 +130,7 @@ export default function Trust() {
                                     <select
                                         value={form.type}
                                         onChange={(e) => setForm({ ...form, type: e.target.value })}
-                                        className="w-full rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-4 py-3 text-sm text-[var(--bridge-text)] shadow-inner outline-none transition focus:border-orange-400 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
+                                        className="w-full rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-4 py-3.5 text-sm text-[var(--bridge-text)] shadow-inner outline-none transition focus:border-orange-400 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
                                     >
                                         <option>Conduct issue</option>
                                         <option>Harassment or discrimination</option>
@@ -148,7 +148,7 @@ export default function Trust() {
                                         value={form.description}
                                         onChange={(e) => setForm({ ...form, description: e.target.value })}
                                         placeholder="Describe what happened — the more detail, the faster we can help."
-                                        className="w-full resize-none rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-4 py-3 text-sm text-[var(--bridge-text)] shadow-inner placeholder:text-[var(--bridge-text-faint)] outline-none transition focus:border-orange-400 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
+                                        className="w-full resize-none rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-4 py-3.5 text-sm text-[var(--bridge-text)] shadow-inner placeholder:text-[var(--bridge-text-faint)] outline-none transition focus:border-orange-400 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
                                     />
                                 </div>
                                 <div>
@@ -162,7 +162,7 @@ export default function Trust() {
                                         type="email"
                                         value={form.contact}
                                         onChange={(e) => setForm({ ...form, contact: e.target.value })}
-                                        className="w-full rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-4 py-3 text-sm text-[var(--bridge-text)] shadow-inner placeholder:text-[var(--bridge-text-faint)] outline-none transition focus:border-orange-400 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
+                                        className="w-full rounded-2xl border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-4 py-3.5 text-sm text-[var(--bridge-text)] shadow-inner placeholder:text-[var(--bridge-text-faint)] outline-none transition focus:border-orange-400 focus:shadow-[0_0_0_4px_rgba(251,146,60,0.18)]"
                                     />
                                 </div>
                                 <button
