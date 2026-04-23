@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getMentorById } from '../api/mentors';
 import { getReviewsForMentor } from '../api/reviews';
 import { createSession } from '../api/sessions';
+import { getMentorAvailability, createCalendarEvent } from '../api/calendar';
 import { useAuth } from '../context/useAuth';
 import { SESSION_TYPES } from '../constants/sessionTypes';
 import { addRecentlyViewedMentor } from '../utils/recentlyViewed';
@@ -88,43 +89,53 @@ function StarRow({ rating, size = 'md' }) {
     );
 }
 
-/** Derive 14-day pseudo-availability seeded by mentor id. Swap for real data when backend ready. */
-function useAvailability(mentorId) {
-    return useMemo(() => {
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        let seed = 0;
-        const idStr = String(mentorId ?? '');
-        for (let i = 0; i < idStr.length; i++) seed = idStr.charCodeAt(i) + ((seed << 5) - seed);
-        const out = [];
-        for (let i = 0; i < 14; i++) {
-            const d = new Date(now);
-            d.setDate(now.getDate() + i);
-            const dow = d.getDay();
-            const pseudo = ((seed + i * 31) * 9301 + 49297) % 233280;
-            const rand = pseudo / 233280;
-            let status = 'free';
-            if (dow === 0 || dow === 6) status = rand > 0.6 ? 'limited' : rand > 0.3 ? 'booked' : 'free';
-            else status = rand > 0.7 ? 'booked' : rand > 0.35 ? 'limited' : 'free';
-            out.push({ date: d, status });
-        }
-        return out;
-    }, [mentorId]);
+function slotOverlapsBusy(slotDate, slotTime, busyTimes) {
+    const [h, m] = slotTime.split(':').map(Number);
+    const start = new Date(slotDate);
+    start.setHours(h, m, 0, 0);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    return busyTimes.some((b) => new Date(b.start) < end && new Date(b.end) > start);
 }
 
-/** Per-day pseudo time-slot availability so booked/limited days show fewer slots. */
-function useSlotsForDate(date, mentorId) {
-    return useMemo(() => {
-        if (!date) return [];
-        let seed = 0;
-        const key = `${mentorId ?? ''}-${date.toISOString().slice(0, 10)}`;
-        for (let i = 0; i < key.length; i++) seed = key.charCodeAt(i) + ((seed << 5) - seed);
-        return DEFAULT_TIME_SLOTS.map((slot, i) => {
-            const pseudo = ((seed + i * 53) * 9301 + 49297) % 233280;
-            const rand = pseudo / 233280;
-            return { time: slot, available: rand > 0.3 };
+function buildDaysFromBusy(busyTimes) {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return Array.from({ length: 14 }, (_, i) => {
+        const d = new Date(now);
+        d.setDate(now.getDate() + i);
+        const busyCount = DEFAULT_TIME_SLOTS.filter((s) => slotOverlapsBusy(d, s, busyTimes)).length;
+        let status = 'free';
+        if (busyCount === DEFAULT_TIME_SLOTS.length) status = 'booked';
+        else if (busyCount > DEFAULT_TIME_SLOTS.length / 2) status = 'limited';
+        return { date: d, status };
+    });
+}
+
+function buildSlotsForDate(date, busyTimes) {
+    if (!date) return [];
+    return DEFAULT_TIME_SLOTS.map((time) => ({
+        time,
+        available: !slotOverlapsBusy(date, time, busyTimes),
+    }));
+}
+
+function useCalendarData(mentorProfileId) {
+    const [busyTimes, setBusyTimes] = useState([]);
+    const [calLoading, setCalLoading] = useState(true);
+
+    useEffect(() => {
+        if (!mentorProfileId) return;
+        let cancelled = false;
+        getMentorAvailability(mentorProfileId).then(({ busyTimes: bt }) => {
+            if (!cancelled) {
+                setBusyTimes(bt ?? []);
+                setCalLoading(false);
+            }
         });
-    }, [date, mentorId]);
+        return () => { cancelled = true; };
+    }, [mentorProfileId]);
+
+    return { busyTimes, calLoading };
 }
 
 /**
@@ -132,11 +143,12 @@ function useSlotsForDate(date, mentorId) {
  * Two columns: choice summary on left, date + time picker on right.
  * "Book session" is gated until both date AND time are picked.
  */
-function BookingFlow({ mentor, sessionType, onReset, onRequestConfirm, user, navigate, mentorId }) {
+function BookingFlow({ mentor, sessionType, onReset, onRequestConfirm, user, navigate, mentorId, calendarData }) {
     const [pickedDate, setPickedDate] = useState(null);
     const [pickedTime, setPickedTime] = useState(null);
-    const availability = useAvailability(mentor.id);
-    const slots = useSlotsForDate(pickedDate, mentor.id);
+    const { busyTimes } = calendarData;
+    const availability = useMemo(() => buildDaysFromBusy(busyTimes), [busyTimes]);
+    const slots = useMemo(() => buildSlotsForDate(pickedDate, busyTimes), [pickedDate, busyTimes]);
 
     // Reset time when day changes so stale time doesn't persist.
     useEffect(() => {
@@ -363,10 +375,10 @@ function ConfirmModal({ mentor, confirmation, onClose, onConfirmed }) {
         setSubmitting(true);
         setResult(null);
 
-        const { error } = await createSession({
-            mentorId: mentor.id,
-            sessionType: confirmation.sessionType.key,
-            scheduledDate: confirmation.isoDate,
+        const { data: session, error } = await createSession({
+            mentor_id: mentor.id,
+            session_type: confirmation.sessionType.key,
+            scheduled_date: confirmation.isoDate,
             message: message || null,
         });
 
@@ -376,6 +388,14 @@ function ConfirmModal({ mentor, confirmation, onClose, onConfirmed }) {
             setResult({ ok: false, message: error.message ?? 'Something went wrong. Please try again.' });
         } else {
             setResult({ ok: true });
+            if (session) {
+                createCalendarEvent({
+                    mentorProfileId: mentor.id,
+                    sessionType: confirmation.sessionType.key,
+                    scheduledDate: confirmation.isoDate,
+                    message: message || null,
+                }).catch(console.error);
+            }
             onConfirmed?.();
         }
     }
@@ -573,20 +593,16 @@ export default function MentorProfile() {
 
         Promise.all([getMentorById(id), getReviewsForMentor(id)]).then(([mentorRes, reviewsRes]) => {
             if (cancelled) return;
-            if (mentorRes.error) {
-                setProfile(null);
-                setMentorReviews([]);
-                setLoadError(mentorRes.error.message ?? 'Could not load mentor.');
-            } else if (!mentorRes.data?.mentor) {
-                setProfile(null);
-                setMentorReviews([]);
-                setLoadError(null);
-            } else {
-                setProfile(mentorRes.data);
-                setMentorReviews(reviewsRes.error ? [] : (reviewsRes.data ?? []));
-                setLoadError(null);
-                addRecentlyViewedMentor(mentorRes.data.mentor);
-            }
+            setProfile(mentorRes ?? null);
+            setMentorReviews(reviewsRes.error ? [] : (reviewsRes.data ?? []));
+            setLoadError(null);
+            if (mentorRes) addRecentlyViewedMentor(mentorRes);
+            setLoading(false);
+        }).catch((err) => {
+            if (cancelled) return;
+            setProfile(null);
+            setMentorReviews([]);
+            setLoadError(err.message ?? 'Could not load mentor.');
             setLoading(false);
         });
 
@@ -595,13 +611,15 @@ export default function MentorProfile() {
         };
     }, [id]);
 
+    const calendarData = useCalendarData(id);
+
     const displayRating = useMemo(() => {
-        if (!profile?.mentor) return 0;
-        const fromReviews = profile.reviews?.average;
-        if (fromReviews != null && profile.reviews.count > 0) return Number(fromReviews);
-        const r = profile.mentor.rating;
-        return r != null ? Number(r) : 0;
-    }, [profile]);
+        if (!profile) return 0;
+        if (mentorReviews.length > 0) {
+            return mentorReviews.reduce((sum, r) => sum + r.rating, 0) / mentorReviews.length;
+        }
+        return Number(profile.rating) || 0;
+    }, [profile, mentorReviews]);
 
     // When user picks a format, scroll to the booking flow panel so they see it appear.
     function handlePickType(type) {
@@ -632,7 +650,7 @@ export default function MentorProfile() {
         );
     }
 
-    if (!profile?.mentor) {
+    if (!profile) {
         return (
             <main className="relative min-h-screen overflow-x-hidden px-4 py-16 sm:px-6">
                 <PageGutterAtmosphere />
@@ -650,8 +668,7 @@ export default function MentorProfile() {
         );
     }
 
-    const mentor = profile.mentor;
-    const reviewMeta = profile.reviews;
+    const mentor = profile;
     const industryLabel = formatIndustry(mentor.industry);
     const grad = avatarColor(mentor.name);
     const mentorInitials = initials(mentor.name);
@@ -761,8 +778,8 @@ export default function MentorProfile() {
                     <span className="font-display text-xl font-semibold tabular-nums text-stone-900 sm:text-2xl">
                       {displayRating > 0 ? displayRating.toFixed(1) : '—'}
                     </span>
-                                        {reviewMeta?.count > 0 ? (
-                                            <span className="text-[11px] font-medium text-stone-500">({reviewMeta.count})</span>
+                                        {mentorReviews.length > 0 ? (
+                                            <span className="text-[11px] font-medium text-stone-500">({mentorReviews.length})</span>
                                         ) : null}
                                     </dd>
                                 </div>
@@ -845,6 +862,7 @@ export default function MentorProfile() {
                                 user={user}
                                 navigate={navigate}
                                 mentorId={id}
+                                calendarData={calendarData}
                             />
                         )}
                     </div>

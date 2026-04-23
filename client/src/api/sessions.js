@@ -10,14 +10,26 @@ export async function getMySession(userId) {
   return data || [];
 }
 
-export async function createSession(sessionData) {
+export async function createSession({ mentor_id, session_type, scheduled_date, message }) {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    return { data: null, error: userError || new Error('Not authenticated') };
+  }
+
   const { data, error } = await supabase
     .from("sessions")
-    .insert([sessionData])
+    .insert([{
+      mentor_id,
+      mentee_id: user.id,
+      session_type,
+      scheduled_date,
+      message: message || null,
+      status: "pending",
+    }])
     .select()
     .single();
-  if (error) throw error;
-  return data;
+
+  return { data, error };
 }
 
 export async function updateSessionStatus(sessionId, status) {
