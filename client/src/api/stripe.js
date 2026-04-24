@@ -1,10 +1,3 @@
-import { API_URL } from '../config/api';
-
-/**
- * Try creating a Stripe Checkout session via the Express server.
- * If the server is unreachable, fall back to directly inserting the
- * session into Supabase (simulated booking — no real payment).
- */
 export async function createBookingCheckout({
   userId,
   userEmail,
@@ -18,7 +11,7 @@ export async function createBookingCheckout({
   sessionPrice,
   message,
 }) {
-  const res = await fetch(`${API_URL}/stripe/create-booking-checkout`, {
+  const res = await fetch('/api/create-booking-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -40,7 +33,7 @@ export async function createBookingCheckout({
 }
 
 export async function createSubscriptionCheckout({ planName, userId, userEmail }) {
-  const res = await fetch(`${API_URL}/stripe/create-subscription-checkout`, {
+  const res = await fetch('/api/create-subscription-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ planName, userId, userEmail }),
@@ -52,7 +45,7 @@ export async function createSubscriptionCheckout({ planName, userId, userEmail }
 }
 
 export async function finalizeCheckout(sessionId) {
-  const res = await fetch(`${API_URL}/stripe/finalize-checkout`, {
+  const res = await fetch('/api/finalize-checkout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sessionId }),
