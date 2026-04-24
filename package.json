@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "dependencies": {
     "stripe": "^14.0.0",
-    "@supabase/supabase-js": "^2.103.3"
+    "@supabase/supabase-js": "^2.103.3",
+    "googleapis": "^171.4.0"
   }
 }
