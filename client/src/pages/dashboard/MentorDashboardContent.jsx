@@ -17,7 +17,7 @@
  * - `MentorSessionsTab`, `MentorConnectionsTab`, `MentorAvailabilityModal` (quick availability) + settings via `DashboardSettingsPanel`.
  */
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar,
   Clock,
@@ -38,12 +38,31 @@ import {
 import { getAvatarColor, getInitials, formatSessionDate } from './dashboardUtils';
 import DashboardSettingsPanel from './DashboardSettingsPanel';
 import MentorAvailabilityModal from './MentorAvailabilityModal';
-import { useState } from 'react';
+import CalendarConnectButton from '../../components/CalendarConnectButton';
+import { useState, useEffect } from 'react';
 
 export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, user }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
   const [heroHint, setHeroHint] = useState(null);
+  const [calendarBanner, setCalendarBanner] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const calendarParam = params.get('calendar');
+    if (calendarParam === 'connected') {
+      setCalendarBanner('success');
+      window.history.replaceState({}, '', '/dashboard');
+      const timer = setTimeout(() => setCalendarBanner(null), 5000);
+      return () => clearTimeout(timer);
+    } else if (calendarParam === 'error') {
+      setCalendarBanner('error');
+      window.history.replaceState({}, '', '/dashboard');
+      const timer = setTimeout(() => setCalendarBanner(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
   const {
     sessions,
     mentorMap,
@@ -73,6 +92,16 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
         />
         {activeTab === 'overview' && (
             <div className="space-y-8 pb-10">
+              {calendarBanner === 'success' && (
+                <div className="rounded-xl bg-emerald-500/10 px-3 py-2 text-sm text-emerald-800">
+                  Google Calendar connected successfully!
+                </div>
+              )}
+              {calendarBanner === 'error' && (
+                <div className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-800">
+                  Failed to connect Google Calendar. Please try again.
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <StatCard label="Total Sessions" value={sessions.length} icon={CalendarDays} colorClass="bg-orange-100 text-orange-600" />
                 <StatCard label="Upcoming" value={upcomingSessions.length} icon={Clock} colorClass="bg-sky-100 text-sky-600" />
@@ -236,6 +265,11 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
                         </div>
                         <span className="text-sm font-bold text-stone-700">Manage Plan</span>
                       </Link>
+                      {mentorProfileId && (
+                        <div className="pt-1">
+                          <CalendarConnectButton isConnected={!!calendarConnected} mentorProfileId={mentorProfileId} />
+                        </div>
+                      )}
                     </div>
                   </div>
 
