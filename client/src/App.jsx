@@ -75,6 +75,7 @@ function AppContent() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/cookies" element={<Cookies />} />
+          <Route path="/onboarding" element={<MentorOnboarding />} />
         </Routes>
       </div>
       {!location.pathname.includes('/video') && <FeedbackFAB />}

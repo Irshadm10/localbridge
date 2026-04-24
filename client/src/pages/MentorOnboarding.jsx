@@ -9,6 +9,7 @@ import { useAuth } from '../context/useAuth';
 import LoadingSpinner from '../components/LoadingSpinner';
 import PageGutterAtmosphere from '../components/PageGutterAtmosphere';
 import {
+  DEFAULT_BIO,
   getMentorOnboardingProfile,
   saveMentorOnboardingStep,
   completeMentorOnboarding,

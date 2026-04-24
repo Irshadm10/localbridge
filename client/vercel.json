@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    { "source": "/auth/google/callback", "destination": "/api/auth/google/callback" },
+    { "source": "/auth/google", "destination": "/api/auth/google/index" },
+    { "source": "/calendar/availability", "destination": "/api/calendar/availability" },
+    { "source": "/calendar/book", "destination": "/api/calendar/book" }
+  ],
   "headers": [
     {
       "source": "/index.html",

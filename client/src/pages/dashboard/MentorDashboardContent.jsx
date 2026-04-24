@@ -48,6 +48,7 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
     sessions,
     mentorMap,
     mentorProfileId,
+    calendarConnected,
     refetch,
     actionLoading,
     searchQuery,
@@ -290,7 +291,7 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
         )}
 
         {activeTab === 'settings' && (
-            <DashboardSettingsPanel user={user} logout={logout} isMentor mentorProfileId={mentorProfileId} />
+            <DashboardSettingsPanel user={user} logout={logout} isMentor mentorProfileId={mentorProfileId} calendarConnected={calendarConnected} />
         )}
       </>
   );

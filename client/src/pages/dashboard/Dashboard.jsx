@@ -28,6 +28,7 @@ import { useDashboardData } from './useDashboardData.js';
 import { getFirstName, getTimeGreeting, getTodayLabel } from './dashboardUtils.js';
 import { MentorDashboardContent } from './MentorDashboardContent.jsx';
 import { MenteeDashboardContent } from './MenteeDashboardContent.jsx';
+import CalendarSuccessToast from '../../components/CalendarSuccessToast';
 
 export default function Dashboard() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -145,6 +146,7 @@ export default function Dashboard() {
       </main>
 
       <OnboardingModal />
+      <CalendarSuccessToast />
     </div>
   );
 }

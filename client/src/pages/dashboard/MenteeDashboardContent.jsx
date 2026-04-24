@@ -27,6 +27,8 @@ import {
   Search,
   ExternalLink,
   Users,
+  Star,
+  X,
 } from 'lucide-react';
 import {
   StatCard,
@@ -38,10 +40,13 @@ import {
 import { formatSessionDate } from './dashboardUtils';
 import DashboardSettingsPanel from './DashboardSettingsPanel';
 import { useState } from 'react';
+import { createReview } from '../../api/reviews';
 
 export function MenteeDashboardContent({ dash, activeTab, setActiveTab, logout, user }) {
   const navigate = useNavigate();
   const [heroHint, setHeroHint] = useState(null);
+  const [reviewingSession, setReviewingSession] = useState(null);
+  const [reviewedSessionIds, setReviewedSessionIds] = useState(new Set());
   const {
     sessions,
     mentorMap,
@@ -216,6 +221,8 @@ export function MenteeDashboardContent({ dash, activeTab, setActiveTab, logout, 
                 setSearchQuery={setSearchQuery}
                 handleStatusUpdate={handleStatusUpdate}
                 actionLoading={actionLoading}
+                onReview={setReviewingSession}
+                reviewedSessionIds={reviewedSessionIds}
             />
         )}
 
@@ -224,12 +231,23 @@ export function MenteeDashboardContent({ dash, activeTab, setActiveTab, logout, 
         )}
 
         {activeTab === 'settings' && <DashboardSettingsPanel user={user} logout={logout} isMentor={false} />}
+
+        {reviewingSession && (
+          <ReviewModal
+            session={reviewingSession}
+            onClose={() => setReviewingSession(null)}
+            onSubmitted={(sessionId) => {
+              setReviewedSessionIds((prev) => new Set([...prev, sessionId]));
+              setReviewingSession(null);
+            }}
+          />
+        )}
       </>
   );
 }
 
 /** Sessions list; `SessionCard` is mentee mode (cancel on pending, no accept/decline). `mentorMap` supplies avatar/meta. */
-function MenteeSessionsTab({ upcomingSessions, historySessions, mentorMap, searchQuery, setSearchQuery, handleStatusUpdate, actionLoading }) {
+function MenteeSessionsTab({ upcomingSessions, historySessions, mentorMap, searchQuery, setSearchQuery, handleStatusUpdate, actionLoading, onReview, reviewedSessionIds }) {
   const match = (s) =>
       s.mentor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.session_type?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -278,7 +296,14 @@ function MenteeSessionsTab({ upcomingSessions, historySessions, mentorMap, searc
             <SectionHeading count={historySessions.filter(match).length}>History</SectionHeading>
             <div className="space-y-3">
               {historySessions.filter(match).map((s) => (
-                  <SessionCard key={s.id} session={s} isMentor={false} mentorProfile={mentorMap[s.mentor_id]} />
+                  <SessionCard
+                    key={s.id}
+                    session={s}
+                    isMentor={false}
+                    mentorProfile={mentorMap[s.mentor_id]}
+                    onReview={onReview}
+                    reviewed={reviewedSessionIds?.has(s.id)}
+                  />
               ))}
               {historySessions.length === 0 && <EmptyState message="No past sessions yet." />}
               {historySessions.length > 0 && historySessions.filter(match).length === 0 && (
@@ -327,6 +352,84 @@ function MenteeConnectionsTab({ uniqueMentors, searchQuery, setSearchQuery }) {
               )}
         </div>
       </div>
+  );
+}
+
+function ReviewModal({ session, onClose, onSubmitted }) {
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (rating === 0) { setError('Please select a star rating.'); return; }
+    setSubmitting(true);
+    setError(null);
+    const { error: err } = await createReview({
+      sessionId: session.id,
+      mentorId: session.mentor_id,
+      rating,
+      comment: comment.trim() || null,
+    });
+    setSubmitting(false);
+    if (err) { setError(err.message ?? 'Failed to submit review.'); return; }
+    onSubmitted(session.id);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" onClick={onClose}>
+      <div
+        className="relative w-full max-w-md rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-8 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-white/10"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <h2 className="font-display text-xl font-bold text-[var(--bridge-text)]">Leave a Review</h2>
+        <p className="mt-1 text-sm text-[var(--bridge-text-muted)]">
+          Session with {session.mentor_name ?? 'your mentor'}
+        </p>
+        <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+          <div className="flex items-center gap-1">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setRating(star)}
+                onMouseEnter={() => setHovered(star)}
+                onMouseLeave={() => setHovered(0)}
+                className="transition-transform hover:scale-110"
+              >
+                <Star
+                  className={`h-8 w-8 ${(hovered || rating) >= star ? 'fill-amber-400 text-amber-400' : 'text-stone-300 dark:text-stone-600'}`}
+                />
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Share your experience (optional)…"
+            rows={3}
+            className="w-full rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-4 py-3 text-sm text-[var(--bridge-text)] placeholder:text-[var(--bridge-text-faint)] transition focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+          />
+          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 py-3 text-sm font-bold text-white shadow-[0_8px_22px_-6px_rgba(234,88,12,0.5)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-8px_rgba(234,88,12,0.65)] disabled:opacity-50"
+          >
+            {submitting ? 'Submitting…' : 'Submit Review'}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 

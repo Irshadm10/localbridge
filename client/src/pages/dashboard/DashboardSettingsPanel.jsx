@@ -22,7 +22,9 @@ import {
   LogOut,
   CheckCircle,
   AlertTriangle,
+  CalendarDays,
 } from 'lucide-react';
+import CalendarConnectButton from '../../components/CalendarConnectButton';
 import supabase from '../../api/supabase';
 import {
   applyAppearance,
@@ -56,7 +58,7 @@ function isUserSettingsMissing(err) {
   return m.includes('Could not find the table') && m.includes('user_settings');
 }
 
-export default function DashboardSettingsPanel({ user, logout, isMentor, mentorProfileId }) {
+export default function DashboardSettingsPanel({ user, logout, isMentor, mentorProfileId, calendarConnected = false }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [tableMissing, setTableMissing] = useState(false);
@@ -313,6 +315,25 @@ export default function DashboardSettingsPanel({ user, logout, isMentor, mentorP
           )}
         </div>
       </section>
+
+      {/* Calendar — mentor only */}
+      {isMentor && (
+        <section className="rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm">
+          <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-[var(--bridge-text)]">
+            <CalendarDays className="h-5 w-5 text-orange-500" />
+            Calendar
+          </h2>
+          <p className="mb-4 text-sm text-[var(--bridge-text-muted)]">
+            Connect Google Calendar so mentees can see your availability and sessions are added automatically.
+          </p>
+          <CalendarConnectButton mentorProfileId={mentorProfileId} isConnected={calendarConnected} />
+          {calendarConnected && (
+            <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-400">
+              Your availability is visible on your public profile.
+            </p>
+          )}
+        </section>
+      )}
 
       {/* Actions */}
       <div className="flex flex-col gap-3 rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">

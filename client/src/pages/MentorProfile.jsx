@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getMentorById } from '../api/mentors';
 import { getReviewsForMentor } from '../api/reviews';
 import { createSession } from '../api/sessions';
+import { getMentorAvailability, bookCalendarEvent } from '../api/calendar';
+import supabase from '../api/supabase';
 import { useAuth } from '../context/useAuth';
 import { isMentorAccount } from '../utils/accountRole';
 import { SESSION_TYPES } from '../constants/sessionTypes';
@@ -79,9 +81,15 @@ function StarRow({ rating, size = 'md' }) {
     );
 }
 
+function fmtTime(iso) {
+    return new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 function BookingFlow({ mentor, sessionType, onReset, onRequestConfirm, user, navigate, mentorId }) {
     const [pickedDate, setPickedDate] = useState(null);
     const [pickedTime, setPickedTime] = useState(null);
+    const [calBusy, setCalBusy] = useState(null);
+    const [calLoading, setCalLoading] = useState(false);
     const scheduleNorm = useMemo(() => normalizeAvailabilitySchedule(mentor.availability_schedule), [mentor.availability_schedule]);
     const acceptingBookings = mentor.available !== false;
     const availability = useMemo(
@@ -99,6 +107,16 @@ function BookingFlow({ mentor, sessionType, onReset, onRequestConfirm, user, nav
     );
 
     useEffect(() => { setPickedTime(null); }, [pickedDate]);
+
+    useEffect(() => {
+        if (!pickedDate || !mentor.calendar_connected) { setCalBusy(null); return; }
+        setCalLoading(true);
+        setCalBusy(null);
+        const dateStr = pickedDate.toISOString().slice(0, 10);
+        getMentorAvailability(mentor.id, dateStr)
+            .then(({ busy }) => { setCalBusy(busy ?? []); setCalLoading(false); })
+            .catch(() => { setCalBusy(null); setCalLoading(false); });
+    }, [pickedDate, mentor.calendar_connected, mentor.id]);
 
     const canBook = Boolean(sessionType && pickedDate && pickedTime);
 
@@ -222,6 +240,18 @@ function BookingFlow({ mentor, sessionType, onReset, onRequestConfirm, user, nav
                             })}
                         </div>
 
+                        {mentor.calendar_connected && pickedDate ? (
+                            <div className="mt-3 text-xs">
+                                {calLoading
+                                    ? <span className="text-stone-400">Checking calendar…</span>
+                                    : calBusy !== null
+                                        ? calBusy.length === 0
+                                            ? <span className="font-medium text-emerald-700">All day available</span>
+                                            : <span className="text-amber-700">Busy: {calBusy.map(b => `${fmtTime(b.start)}–${fmtTime(b.end)}`).join(', ')}</span>
+                                        : null}
+                            </div>
+                        ) : null}
+
                         <div className={`mt-6 overflow-hidden transition-all duration-300 ${pickedDate ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
                             <div className="rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] p-4">
                                 <div className="mb-3 flex items-baseline justify-between">
@@ -263,7 +293,7 @@ function BookingFlow({ mentor, sessionType, onReset, onRequestConfirm, user, nav
     );
 }
 
-function ConfirmModal({ mentor, confirmation, onClose, onConfirmed }) {
+function ConfirmModal({ mentor, confirmation, onClose, onConfirmed, user }) {
     const [submitting, setSubmitting] = useState(false);
     const [result, setResult] = useState(null);
     const [message, setMessage] = useState('');
@@ -284,15 +314,35 @@ function ConfirmModal({ mentor, confirmation, onClose, onConfirmed }) {
     async function handleConfirm() {
         setSubmitting(true);
         setResult(null);
-        const { error } = await createSession({
-            mentorId: mentor.id,
-            sessionType: confirmation.sessionType.key,
-            scheduledDate: confirmation.isoDate,
-            message: message || null,
-        });
-        setSubmitting(false);
-        if (error) setResult({ ok: false, message: error.message ?? 'Something went wrong. Please try again.' });
-        else { setResult({ ok: true }); onConfirmed?.(); }
+        try {
+            const session = await createSession({
+                mentorId: mentor.id,
+                sessionType: confirmation.sessionType.key,
+                scheduledDate: confirmation.isoDate,
+                message: message || null,
+            });
+            setResult({ ok: true });
+            onConfirmed?.();
+            if (mentor.calendar_connected) {
+                bookCalendarEvent({
+                    mentor_profile_id: mentor.id,
+                    mentee_email: user?.email ?? null,
+                    mentee_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || null,
+                    session_type: confirmation.sessionType.key,
+                    scheduled_date: confirmation.isoDate,
+                    duration_minutes: 60,
+                    bridge_session_id: session?.id ?? null,
+                }).then(({ google_event_id }) => {
+                    if (google_event_id && session?.id) {
+                        supabase.from('sessions').update({ google_event_id }).eq('id', session.id).then(() => {});
+                    }
+                }).catch(() => {});
+            }
+        } catch (err) {
+            setResult({ ok: false, message: err.message ?? 'Something went wrong. Please try again.' });
+        } finally {
+            setSubmitting(false);
+        }
     }
 
     const mentorFirst = mentor.name?.split(/\s+/)[0] ?? 'your mentor';
@@ -802,7 +852,7 @@ export default function MentorProfile() {
             </main>
 
             {pendingConfirm ? (
-                <ConfirmModal mentor={mentor} confirmation={pendingConfirm} onClose={() => setPendingConfirm(null)} onConfirmed={() => setSelectedType(null)} />
+                <ConfirmModal mentor={mentor} confirmation={pendingConfirm} onClose={() => setPendingConfirm(null)} onConfirmed={() => setSelectedType(null)} user={user} />
             ) : null}
         </>
     );

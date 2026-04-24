@@ -26,7 +26,7 @@
  * | error / setError  | ✓         | ✓         | Banner in Dashboard.jsx |
  * | actionLoading     | ✓         | ✓         | Disables session action buttons |
  * | searchQuery       | ✓         | ✓         | Sessions + connections search |
- * | showAllHistory    | ✓         | ✓         | Overview “recent activity” expand |
+ * | showAllHistory    | ✓         | ✓         | Overview "recent activity" expand |
  * | upcomingSessions  | ✓         | ✓         | pending/accepted, future |
  * | nextSession       | ✓         | ✓         | upcomingSessions[0] |
  * | historySessions   | ✓         | ✓         | completed / cancelled / past |
@@ -35,7 +35,7 @@
  * | menteeCards       | ✓         | ✗         | Deduped mentees + session counts |
  * | handleStatusUpdate| ✓         | ✓         | Wraps `updateSessionStatus` in api/sessions.js |
  *
- * `isMentor` is also returned for convenience (same as parent’s `isMentorAccount(user)`).
+ * `isMentor` is also returned for convenience (same as parent's `isMentorAccount(user)`).
  */
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -57,8 +57,9 @@ export function useDashboardData(user, authLoading) {
   const [sessions, setSessions] = useState([]);
   /** Mentee-only: `mentor_profiles` rows keyed by profile id (enriches session list + connections). */
   const [mentorMap, setMentorMap] = useState({});
-  /** Mentor-only: primary key of `mentor_profiles` for this auth user (for “View public profile” link). */
+  /** Mentor-only: primary key of `mentor_profiles` for this auth user (for "View public profile" link). */
   const [mentorProfileId, setMentorProfileId] = useState(null);
+  const [calendarConnected, setCalendarConnected] = useState(false);
   const [mentorOnboardingComplete, setMentorOnboardingComplete] = useState(true);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -82,17 +83,20 @@ export function useDashboardData(user, authLoading) {
           // maybeSingle: 0 rows is valid if onboarding insert failed (e.g. schema drift) or race before ensureMentorProfile finishes.
           const { data: profileData, error: profileErr } = await supabase
               .from('mentor_profiles')
-              .select('id, onboarding_complete')
+              .select('id, calendar_connected, onboarding_complete')
               .eq('user_id', user.id)
               .maybeSingle();
           if (profileErr) throw profileErr;
           if (!profileData?.id) {
             setMentorProfileId(null);
+            setCalendarConnected(false);
+            setMentorOnboardingComplete(false);
             setSessions([]);
             return;
           }
           const mpId = profileData.id;
           setMentorProfileId(mpId);
+          setCalendarConnected(!!profileData.calendar_connected);
           setMentorOnboardingComplete(profileData.onboarding_complete ?? false);
 
           let sessErr;
@@ -219,7 +223,7 @@ export function useDashboardData(user, authLoading) {
     return result;
   }, [sessions, mentorMap]);
 
-  /** Mentor dashboard “connections”: aggregate session counts per mentee_id. */
+  /** Mentor dashboard "connections": aggregate session counts per mentee_id. */
   const menteeCards = useMemo(() => {
     const map = {};
     for (const s of sessions) {
@@ -256,6 +260,7 @@ export function useDashboardData(user, authLoading) {
     sessions,
     mentorMap,
     mentorProfileId,
+    calendarConnected,
     mentorOnboardingComplete,
     dataLoading,
     error,

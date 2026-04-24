@@ -131,7 +131,7 @@ export function EmptyState({ message, cta, href, icon: Icon = CalendarDays }) {
   );
 }
 
-export function SessionCard({ session, isMentor = false, mentorProfile, onAccept, onDecline, onCancel, actionLoading }) {
+export function SessionCard({ session, isMentor = false, mentorProfile, onAccept, onDecline, onCancel, actionLoading, onReview, reviewed }) {
   const navigate = useNavigate();
   const type = SESSION_TYPE_MAP[session.session_type];
   const name = isMentor
@@ -256,6 +256,21 @@ export function SessionCard({ session, isMentor = false, mentorProfile, onAccept
               View profile
               <ArrowUpRight className="h-3 w-3" />
             </Link>
+          )}
+          {!isMentor && session.status === 'completed' && onReview && (
+            reviewed ? (
+              <span className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-stone-400 dark:text-stone-500">
+                Reviewed
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onReview(session)}
+                className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold text-amber-700 transition hover:bg-amber-50 hover:text-amber-800 dark:text-amber-300 dark:hover:bg-amber-500/10 dark:hover:text-amber-200"
+              >
+                Leave Review
+              </button>
+            )
           )}
         </div>
       </div>
