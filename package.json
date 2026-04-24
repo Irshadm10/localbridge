@@ -2,12 +2,15 @@
   "name": "bridge",
   "private": true,
   "description": "Monorepo root — Vercel serverless functions for Stripe",
-  "type": "module",
   "scripts": {
-    "build": "npm run build --prefix client"
+    "build": "npm run build --prefix client",
+    "dev": "npx concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.103.3",
     "stripe": "^22.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
   }
 }

@@ -1,6 +1,4 @@
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const Stripe = require('stripe');
 
 const PLAN_PRICES = {
   Starter: 1200,
@@ -8,29 +6,34 @@ const PLAN_PRICES = {
   Premium: 4900,
 };
 
-function toMetadataString(v, max = 500) {
+function toMeta(v, max = 500) {
   if (v == null) return '';
   const s = String(v);
   return s.length > max ? s.slice(0, max) : s;
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed.' });
   }
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return res.status(503).json({ error: 'Stripe is not configured on the server.' });
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    return res.status(503).json({ error: 'Stripe secret key is not configured on the server.' });
   }
 
-  try {
-    const { planName, userId, userEmail } = req.body;
+  const stripe = new Stripe(key);
 
-    if (!PLAN_PRICES[planName]) {
+  try {
+    const { planName, userId, userEmail } = req.body || {};
+
+    if (!planName || !PLAN_PRICES[planName]) {
       return res.status(400).json({ error: 'Invalid plan selected.' });
     }
 
-    const clientUrl = process.env.CLIENT_URL || `https://${req.headers.host}`;
+    const host = req.headers.host || '';
+    const proto = host.startsWith('localhost') ? 'http' : 'https';
+    const clientUrl = process.env.CLIENT_URL || `${proto}://${host}`;
 
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded_page',
@@ -52,15 +55,15 @@ export default async function handler(req, res) {
       ],
       metadata: {
         type: 'subscription',
-        userId: toMetadataString(userId),
-        planName: toMetadataString(planName),
+        userId: toMeta(userId),
+        planName: toMeta(planName),
       },
       return_url: `${clientUrl}/pricing?session_id={CHECKOUT_SESSION_ID}`,
     });
 
-    return res.json({ clientSecret: session.client_secret });
-  } catch (error) {
-    console.error('Subscription checkout error:', error);
-    return res.status(500).json({ error: error?.message || 'Could not create subscription checkout.' });
+    return res.status(200).json({ clientSecret: session.client_secret });
+  } catch (err) {
+    console.error('[create-subscription-checkout]', err);
+    return res.status(500).json({ error: err.message || 'Could not create subscription checkout.' });
   }
-}
+};
