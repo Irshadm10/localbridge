@@ -6,719 +6,721 @@ import { useAuth } from '../context/useAuth';
 import { focusRing } from '../ui';
 import MentorAvatar from '../components/MentorAvatar';
 
-const focusRingWhite =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-orange-600';
+// ─── Animated counter ─────────────────────────────────────────────────────────
+function useCountUp(target, duration = 2200) {
+  const ref = useRef(null);
+  const [value, setValue] = useState(0);
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setActive(true); obs.disconnect(); } }, { threshold: 0.3 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!active) return;
+    let start = null;
+    const raf = requestAnimationFrame(function tick(now) {
+      if (!start) start = now;
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 4);
+      setValue(Math.round(target * ease));
+      if (t < 1) requestAnimationFrame(tick);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [active, target, duration]);
+  return [ref, value];
+}
 
-const TRUST_MARQUEE_ITEMS = [
-  { label: 'Product',         dot: '#f59e0b' },
-  { label: 'Engineering',     dot: '#38bdf8' },
-  { label: 'Design',          dot: '#f472b6' },
-  { label: 'Finance',         dot: '#34d399' },
-  { label: 'Healthcare',      dot: '#f87171' },
-  { label: 'Startups',        dot: '#fb923c' },
-  { label: 'Career switchers',dot: '#a78bfa' },
-  { label: 'Interview prep',  dot: '#facc15' },
-  { label: 'Founders',        dot: '#fb7185' },
-  { label: 'Bootcamps',       dot: '#60a5fa' },
+// ─── Data ─────────────────────────────────────────────────────────────────────
+const AVATAR_GRAD = {
+  amber:   'from-amber-400 to-orange-500',
+  emerald: 'from-emerald-400 to-teal-500',
+  sky:     'from-sky-400 to-blue-500',
+  rose:    'from-rose-400 to-pink-500',
+  violet:  'from-violet-400 to-purple-500',
+  teal:    'from-teal-400 to-emerald-500',
+  orange:  'from-orange-400 to-rose-500',
+  pink:    'from-pink-400 to-rose-500',
+};
+
+const ACTIVITY = [
+  { ini: 'TN', name: 'Tyler N.',    tone: 'amber',   text: 'booked Interview Prep',        with: 'Maya Chen',     time: '2m ago'  },
+  { ini: 'PS', name: 'Priya S.',    tone: 'emerald', text: 'landed a Staff PM role',       with: '',              time: '1h ago',  win: true  },
+  { ini: 'LK', name: 'Liam K.',     tone: 'sky',     text: 'booked Resume Review',         with: 'Jordan R.',     time: '5m ago'  },
+  { ini: 'AM', name: 'Aisha M.',    tone: 'rose',    text: 'accepted an offer at Figma',   with: '',              time: '3h ago',  win: true  },
+  { ini: 'JD', name: 'James D.',    tone: 'violet',  text: 'booked Career Advice',         with: 'Elena Voss',    time: '8m ago'  },
+  { ini: 'SR', name: 'Sofia R.',    tone: 'teal',    text: 'left a 5-star review',         with: 'Marcus Lee',    time: '11m ago' },
+  { ini: 'KH', name: 'Kai H.',      tone: 'orange',  text: 'booked a Networking call',     with: 'Tom Rodriguez', time: '15m ago' },
+  { ini: 'NP', name: 'Nina P.',     tone: 'pink',    text: 'made the switch from finance', with: '',              time: '6h ago',  win: true  },
 ];
 
-// ─── Product preview (scene animator) ────────────────────────────────────────
+const MENTORS_ROW1 = [
+  { name: 'Maya Chen',      title: 'Director of Product',  co: 'Linear',     tags: ['PM Strategy','Promotion'],     rate: 95,  rating: 4.9, sessions: 86,  tone: 'amber'  },
+  { name: 'Jordan Reeves',  title: 'Ex-FAANG Recruiter',   co: 'Google',     tags: ['Interview Prep','Offers'],     rate: 60,  rating: 4.8, sessions: 142, tone: 'orange' },
+  { name: 'Elena Voss',     title: 'RN → UX Designer',     co: 'IDEO',       tags: ['Career Switch','Portfolio'],   rate: 45,  rating: 5.0, sessions: 58,  tone: 'rose'   },
+  { name: 'Marcus Lee',     title: 'Engineering Manager',   co: 'Stripe',     tags: ['EM Path','System Design'],    rate: 120, rating: 4.9, sessions: 203, tone: 'sky'    },
+  { name: 'Dr. Aisha Park', title: 'Biotech Founder',       co: 'Stanford',   tags: ['Fundraising','Science Biz'],  rate: 150, rating: 4.7, sessions: 37,  tone: 'violet' },
+  { name: 'Tom Rodriguez',  title: 'VP of Sales',           co: 'Salesforce', tags: ['Enterprise Sales','SDR→AE'],  rate: 55,  rating: 4.8, sessions: 95,  tone: 'teal'   },
+];
+const MENTORS_ROW2 = [
+  { name: 'Sarah Kim',      title: 'Head of Design',        co: 'Airbnb',     tags: ['Design Systems','Leadership'], rate: 85,  rating: 4.9, sessions: 64,  tone: 'pink'   },
+  { name: 'Raj Patel',      title: 'Principal Engineer',    co: 'Meta',       tags: ['Architecture','Staff Eng'],    rate: 110, rating: 4.8, sessions: 118, tone: 'emerald'},
+  { name: 'Camille Dubois', title: 'Brand Strategist',      co: 'Nike',       tags: ['Brand','Creative Strategy'],  rate: 70,  rating: 5.0, sessions: 43,  tone: 'rose'   },
+  { name: 'Alex Wong',      title: 'Growth Lead',           co: 'Notion',     tags: ['Growth','Retention','PLG'],    rate: 90,  rating: 4.7, sessions: 77,  tone: 'amber'  },
+  { name: 'Diana Ferreira', title: 'Data Science Manager',  co: 'Spotify',    tags: ['ML','Analytics','People Mgr'],rate: 100, rating: 4.9, sessions: 52,  tone: 'sky'    },
+  { name: 'Omar Hassan',    title: 'Startup Founder',        co: 'YC W23',     tags: ['Fundraising','0→1'],           rate: 130, rating: 4.8, sessions: 29,  tone: 'teal'   },
+];
 
-function HeroProductPreview() {
-  const SCENES = [
-    { id: 'search', label: 'Discover' },
-    { id: 'profile', label: 'Profile' },
-    { id: 'booked', label: 'Booked' },
-  ];
+const OUTCOMES = [
+  { result: 'Got the offer', metric: '+32% comp',        name: 'Tyler N.',   role: 'Senior Engineer', tone: 'amber',   quote: 'Two sessions with a former FAANG recruiter. She rewrote my "tell me about yourself" in ten minutes. Offer came a week later.' },
+  { result: 'Changed industries', metric: 'Banking → PM', name: 'Priya S.',  role: 'Ex-Analyst, now PM', tone: 'emerald', quote: 'I was terrified to leave finance. One session with someone who made the exact same jump saved me six months of second-guessing.' },
+  { result: 'Got promoted', metric: 'IC → Staff',         name: 'Jordan E.', role: 'Staff Engineer',  tone: 'sky',     quote: "Stuck at Senior for four years. My mentor called out exactly which work didn't count. Promoted in the next cycle." },
+];
+
+const WHY_ROWS = [
+  { label: 'You get a response',     dm: '~10% reply rate',    coaching: 'Always',             bridge: 'Always — mentors opt in' },
+  { label: "They've done your job",  dm: 'Maybe',              coaching: 'Rarely',             bridge: 'Yes — that\'s the filter' },
+  { label: 'Structured session',     dm: 'No',                 coaching: 'Yes',                bridge: 'Yes — 4 named formats' },
+  { label: 'Price shown upfront',    dm: '—',                  coaching: 'Often hidden',       bridge: 'On every profile' },
+  { label: 'Real unfiltered reviews',dm: 'No',                 coaching: 'Curated only',       bridge: 'All reviews, unfiltered' },
+  { label: 'Commitment',             dm: 'None',               coaching: 'Multi-session pkg',  bridge: 'One session at a time' },
+];
+
+// ─── Scene animator (product preview) ────────────────────────────────────────
+function ProductScene() {
   const [scene, setScene] = useState(0);
-
   useEffect(() => {
-    const id = setInterval(() => setScene(s => (s + 1) % SCENES.length), 3400);
+    const id = setInterval(() => setScene(s => (s + 1) % 3), 3200);
     return () => clearInterval(id);
-  }, [SCENES.length]);
-
-  const mentors = [
-    { name: 'Maya Chen',     role: 'Director of Product · Linear', rate: '$95', match: 98, tone: 'amber'  },
-    { name: 'Jordan Reeves', role: 'Ex-FAANG Recruiter',           rate: '$60', match: 94, tone: 'orange' },
-    { name: 'Elena Voss',    role: 'RN → UX Designer',             rate: '$45', match: 89, tone: 'rose'   },
-  ];
-
-  return (
-    <div className="relative mx-auto w-full max-w-xl lg:max-w-3xl">
-      {/* Ambient aura */}
-      <div aria-hidden className="pointer-events-none absolute -inset-8 rounded-[2.5rem] bg-gradient-to-br from-orange-400/30 via-amber-300/15 to-transparent opacity-80 blur-3xl dark:from-orange-500/35 dark:via-amber-500/10" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-10 -right-8 h-56 w-56 rounded-full bg-rose-400/20 blur-3xl dark:bg-rose-500/25" />
-
-      {/* Floating match chip */}
-      <div aria-hidden className="animate-landing-float absolute -left-3 -top-4 z-20 hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-raised)] px-3 py-2 shadow-[0_14px_36px_-12px_rgba(28,25,23,0.25)] backdrop-blur-md sm:block">
-        <div className="flex items-center gap-2">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-500 text-[10px] font-bold text-white">M</span>
-          <div className="text-left">
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-400">Match · 98%</p>
-            <p className="text-[11px] font-semibold text-[var(--bridge-text)]">Maya is a fit</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Floating price chip */}
-      <div aria-hidden className="animate-landing-float-delayed absolute -bottom-3 -right-2 z-20 hidden rounded-2xl border border-orange-300/60 bg-gradient-to-br from-orange-500 to-amber-500 px-3.5 py-2 text-stone-950 shadow-[0_14px_36px_-12px_rgba(234,88,12,0.6)] sm:block">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-950/80">First session</p>
-        <p className="font-display text-lg font-bold leading-none">45 min · $60</p>
-      </div>
-
-      {/* Main frame */}
-      <div className="relative">
-        <div className="bridge-shine-overlay relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] shadow-[0_28px_90px_-28px_rgba(28,25,23,0.35)] ring-1 ring-stone-900/5 dark:shadow-[0_32px_100px_-32px_rgba(234,88,12,0.45)] dark:ring-orange-400/20">
-          {/* Window chrome */}
-          <div className="flex items-center justify-between border-b border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/80 px-4 py-2.5 backdrop-blur-sm dark:bg-white/[0.03]">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
-            </div>
-            <div className="flex min-w-0 items-center gap-2 rounded-md border border-[var(--bridge-border)] bg-[var(--bridge-canvas)] px-2.5 py-1 text-[10px] font-medium text-[var(--bridge-text-muted)]">
-              <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" d="M12 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3Zm0 2c-2.67 0-8 1.34-8 4v3h16v-3c0-2.66-5.33-4-8-4Z" /></svg>
-              <span className="truncate">bridge.app / mentors</span>
-            </div>
-            <div className="flex items-center gap-1">
-              {SCENES.map((_, i) => (
-                <span key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i === scene ? 'w-5 bg-orange-500' : 'w-1.5 bg-[var(--bridge-text-faint)]/70'}`} />
-              ))}
-            </div>
-          </div>
-
-          {/* Scene stage */}
-          <div className="relative aspect-[16/7] w-full bg-gradient-to-br from-[var(--bridge-canvas)] via-[var(--bridge-surface)] to-[var(--bridge-canvas)] p-4 sm:p-5">
-            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.5]"
-              style={{
-                backgroundImage: 'radial-gradient(circle at 1px 1px, var(--landing-hero-dot) 1px, transparent 0)',
-                backgroundSize: '22px 22px',
-                maskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, #000 45%, transparent 85%)',
-                WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 50%, #000 45%, transparent 85%)',
-              }}
-            />
-
-            {/* Scene: Search */}
-            <div className={`absolute inset-0 p-4 transition-all duration-700 sm:p-5 ${scene === 0 ? 'opacity-100 translate-y-0' : 'pointer-events-none -translate-y-3 opacity-0'}`}>
-              <div className="flex items-center gap-2 rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-raised)] px-3 py-2 shadow-sm">
-                <svg className="h-3.5 w-3.5 text-[var(--bridge-text-muted)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" strokeLinecap="round" /></svg>
-                <span className="text-[11px] font-medium text-[var(--bridge-text)]">Product manager, Series B</span>
-                <span className="ml-auto inline-flex items-center gap-1 rounded-md bg-orange-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-orange-700 dark:text-orange-300">⌘ K</span>
-              </div>
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
-                {['Product', 'Strategy', 'Promo prep', 'Stripe'].map((t, i) => (
-                  <span key={t} className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold ${i === 0 ? 'border-transparent bg-gradient-to-r from-orange-500 to-amber-500 text-stone-950' : 'border-[var(--bridge-border)] bg-[var(--bridge-surface)] text-[var(--bridge-text-secondary)]'}`}>{t}</span>
-                ))}
-              </div>
-              <div className="mt-3 grid gap-1.5">
-                {mentors.map((m, idx) => (
-                  <div key={m.name} className="flex items-center gap-2.5 rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-raised)] px-2.5 py-2 shadow-sm"
-                    style={{ animation: `bridge-scene-row 620ms cubic-bezier(.2,.9,.32,1) ${idx * 140}ms both` }}>
-                    <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-[10px] font-bold text-white ${m.tone === 'amber' ? 'from-amber-400 to-orange-500' : m.tone === 'orange' ? 'from-orange-400 to-rose-500' : 'from-rose-400 to-pink-500'}`}>
-                      {m.name.split(' ').map(p => p[0]).join('')}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] font-semibold text-[var(--bridge-text)]">{m.name}</p>
-                      <p className="truncate text-[9px] text-[var(--bridge-text-muted)]">{m.role}</p>
-                    </div>
-                    <div className="hidden items-center gap-1 sm:flex">
-                      <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">{m.match}%</span>
-                    </div>
-                    <span className="rounded-md bg-stone-900 px-1.5 py-0.5 text-[9px] font-bold text-amber-50 dark:bg-amber-400 dark:text-stone-950">{m.rate}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Scene: Profile */}
-            <div className={`absolute inset-0 p-4 transition-all duration-700 sm:p-5 ${scene === 1 ? 'opacity-100 translate-y-0' : 'pointer-events-none translate-y-3 opacity-0'}`}>
-              <div className="flex items-start gap-3 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-raised)] p-3 shadow-sm">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-xs font-bold text-stone-950 shadow-md">MC</div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[12px] font-semibold text-[var(--bridge-text)]">Maya Chen</p>
-                  <p className="truncate text-[10px] text-[var(--bridge-text-muted)]">Director of Product · Linear</p>
-                  <div className="mt-1 flex items-center gap-1 text-amber-500">
-                    {[0,1,2,3,4].map(i => <span key={i} className="text-[8px]">★</span>)}
-                    <span className="ml-1 text-[9px] font-semibold text-[var(--bridge-text-secondary)]">4.9 · 86 sessions</span>
-                  </div>
-                </div>
-                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">Available</span>
-              </div>
-              <div className="mt-3 grid grid-cols-3 gap-1.5">
-                {[{ k: 'Rate', v: '4.9' }, { k: 'Exp', v: '11 yrs' }, { k: 'Sessions', v: '86' }].map((s, i) => (
-                  <div key={s.k} className="rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-2 text-center"
-                    style={{ animation: `bridge-scene-row 520ms cubic-bezier(.2,.9,.32,1) ${100 + i * 100}ms both` }}>
-                    <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[var(--bridge-text-muted)]">{s.k}</p>
-                    <p className="mt-0.5 font-display text-sm font-bold text-[var(--bridge-text)]">{s.v}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-2.5 grid grid-cols-7 gap-1">
-                {[0,1,2,3,4,5,6].map(d => {
-                  const state = [0,1,4].includes(d) ? 'emerald' : d === 2 ? 'amber' : d === 5 ? 'amber' : 'stone';
-                  const isPicked = d === 2;
-                  return (
-                    <div key={d} className={`flex aspect-square items-center justify-center rounded-md text-[9px] font-bold transition ${state === 'emerald' ? 'bg-emerald-400/25 text-emerald-700 dark:text-emerald-300' : state === 'amber' ? 'bg-amber-400/30 text-amber-700 dark:text-amber-200' : 'bg-stone-400/15 text-[var(--bridge-text-muted)]'} ${isPicked ? 'ring-2 ring-orange-500 shadow-[0_0_0_3px_rgba(249,115,22,0.15)]' : ''}`}>
-                      {d + 15}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="relative mt-2.5 flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 py-2 text-[11px] font-bold text-stone-950 shadow-md">
-                <span className="relative z-10">Book Tue, 2:00 PM · $60</span>
-                <span aria-hidden className="pointer-events-none absolute inset-0 animate-gradient-shift bg-[linear-gradient(110deg,transparent_35%,rgba(255,255,255,0.55)_50%,transparent_65%)]" />
-              </div>
-            </div>
-
-            {/* Scene: Booked */}
-            <div className={`absolute inset-0 flex items-center justify-center p-4 transition-all duration-700 sm:p-5 ${scene === 2 ? 'opacity-100 scale-100' : 'pointer-events-none scale-95 opacity-0'}`}>
-              <div className="relative w-full rounded-2xl border border-emerald-300/50 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-5 text-center shadow-[0_16px_40px_-16px_rgba(16,185,129,0.5)] dark:border-emerald-400/30 dark:from-emerald-950/60 dark:via-stone-900 dark:to-emerald-950/40">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-lg font-bold text-white shadow-lg shadow-emerald-500/35">✓</div>
-                <p className="mt-2.5 font-display text-sm font-bold text-[var(--bridge-text)]">Session confirmed</p>
-                <p className="text-[10px] text-[var(--bridge-text-muted)]">Tue · 2:00 PM · 45 min over video</p>
-                <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-raised)]/90 px-3 py-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-[10px] font-bold text-stone-950">MC</span>
-                  <div className="text-left">
-                    <p className="text-[10px] font-semibold text-[var(--bridge-text)]">Maya Chen</p>
-                    <p className="text-[9px] text-[var(--bridge-text-muted)]">Director of Product · Linear</p>
-                  </div>
-                  <span className="ml-2 rounded-md bg-orange-500 px-1.5 py-0.5 text-[9px] font-bold text-white">Join</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Cursor accent */}
-            <span aria-hidden className="pointer-events-none absolute bottom-6 right-8 hidden items-center gap-1.5 rounded-full bg-orange-500 px-2 py-0.5 text-[9px] font-bold text-white shadow-[0_6px_16px_-6px_rgba(249,115,22,0.7)] sm:inline-flex"
-              style={{ animation: 'bridge-cursor-drift 4.8s ease-in-out infinite' }}>
-              <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-soft" />
-              You
-            </span>
-          </div>
-
-          {/* Footer strip */}
-          <div className="flex items-center justify-between gap-3 border-t border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/85 px-4 py-2.5 backdrop-blur-sm dark:bg-black/30">
-            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[var(--bridge-text-muted)]">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400/70 animate-pulse-soft" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              </span>
-              <span>Live preview · {SCENES[scene].label}</span>
-            </div>
-            <div className="flex items-center gap-2 text-[10px] text-[var(--bridge-text-muted)]">
-              <span className="hidden sm:inline">Sessions this week</span>
-              <span className="rounded-md bg-stone-900 px-1.5 py-0.5 font-bold text-amber-50 dark:bg-amber-400 dark:text-stone-950">+842</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Marquee ──────────────────────────────────────────────────────────────────
-
-function TrustedByMarquee() {
-  const strip = (
-    <div className="flex items-center gap-x-7 gap-y-2 pr-7">
-      {TRUST_MARQUEE_ITEMS.map(item => (
-        <span key={item.label} className="inline-flex items-center gap-2 whitespace-nowrap text-[13px] font-semibold tracking-tight text-[var(--bridge-text-secondary)]">
-          <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: item.dot }} />
-          {item.label}
-        </span>
-      ))}
-    </div>
-  );
-  return (
-    <div className="landing-marquee-hover-pause mt-14 sm:mt-16">
-      <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--bridge-text-muted)]">
-        Built for people shipping the next step
-      </p>
-      <div className="relative overflow-hidden border-y border-[var(--bridge-border)]/70 bg-[var(--bridge-surface)]/40 py-3.5 dark:bg-white/[0.03]"
-        style={{ maskImage: 'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)', WebkitMaskImage: 'linear-gradient(90deg, transparent, black 8%, black 92%, transparent)' }}>
-        <div className="flex w-max animate-landing-marquee">
-          {strip}{strip}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Hero ─────────────────────────────────────────────────────────────────────
-// No Reveal wrapper — hero is always above the fold and must paint immediately.
-
-function Hero() {
-  const { user } = useAuth();
-  return (
-    <section aria-labelledby="landing-heading" className="landing-hero relative isolate overflow-hidden px-4 pb-16 pt-16 sm:px-6 sm:pb-20 sm:pt-24 lg:px-8 lg:pb-24 lg:pt-28">
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-[var(--bridge-surface-muted)] via-[var(--bridge-canvas)] to-[var(--bridge-canvas)]" />
-      <div aria-hidden className="pointer-events-none absolute left-1/2 top-[-18%] -z-10 h-[80rem] w-[80rem] -translate-x-1/2 opacity-45 dark:opacity-55"
-        style={{ background: 'conic-gradient(from 210deg at 50% 50%, rgba(251,146,60,0.14), rgba(253,230,138,0.1), rgba(234,88,12,0.16), rgba(251,146,60,0.14))', filter: 'blur(90px)' }} />
-      <div aria-hidden className="absolute inset-0 opacity-[0.75] dark:opacity-[0.85]"
-        style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, var(--landing-hero-dot) 1px, transparent 0)', backgroundSize: '28px 28px', maskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 40%, transparent 88%)', WebkitMaskImage: 'radial-gradient(ellipse 90% 70% at 50% 35%, #000 40%, transparent 88%)' }} />
-      <div aria-hidden className="pointer-events-none absolute -left-40 top-[-5%] h-[36rem] w-[36rem] rounded-full bg-gradient-to-br from-orange-400/20 via-amber-300/12 to-transparent blur-[100px] dark:from-orange-600/25" />
-      <div aria-hidden className="pointer-events-none absolute -right-24 top-[25%] h-[28rem] w-[28rem] rounded-full bg-gradient-to-tl from-rose-300/16 via-orange-200/10 to-transparent blur-[90px] dark:from-orange-500/18" />
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-bridge-noise opacity-[0.06] mix-blend-overlay dark:opacity-[0.12]" />
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[var(--bridge-canvas)] to-transparent" />
-
-      <div className="relative mx-auto max-w-4xl text-center">
-        <div className="mb-8 flex justify-center">
-          <div className="group inline-flex items-center gap-2.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2 shadow-sm backdrop-blur-md transition hover:border-emerald-400/50 hover:shadow-[0_8px_24px_-8px_rgba(16,185,129,0.35)] dark:bg-[var(--bridge-surface-raised)]">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400/70 animate-pulse-soft" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]" />
-            </span>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--bridge-text-secondary)]">Live · 2,400 vetted mentors</span>
-          </div>
-        </div>
-
-        <h1 id="landing-heading" className="animate-scale-in font-editorial text-balance text-[3rem] font-normal leading-[0.97] tracking-[-0.028em] text-[var(--bridge-text)] sm:text-[4.25rem] sm:leading-[0.95] lg:text-[5.5rem] lg:leading-[0.93]">
-          The person you need to talk to{' '}
-          <span className="relative inline-block">
-            <span className="relative z-10 font-editorial italic text-gradient-bridge">has already</span>
-            <span aria-hidden className="absolute bottom-1 left-0 right-0 -z-0 h-[0.32em] -rotate-1 bg-[var(--landing-hero-highlight)]" />
-          </span>{' '}
-          done the job.
-        </h1>
-
-        <p className="mx-auto mt-8 max-w-2xl text-base font-medium leading-[1.65] text-[var(--bridge-text-secondary)] sm:mt-9 sm:text-xl sm:leading-[1.6]">
-          Bridge is a directory of vetted professionals you book by the hour.
-          One session with someone who&apos;s lived your exact next step — not a recruiter, not a coach.
-        </p>
-
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-          <Link to="/mentors" data-magnet="10"
-            className={`magnetic group btn-sheen relative inline-flex w-full min-h-[3.4rem] items-center justify-center gap-2.5 rounded-full bg-stone-900 px-9 py-4 text-[0.95rem] font-semibold tracking-[-0.01em] text-white shadow-[0_14px_44px_-8px_rgba(28,25,23,0.5)] hover:bg-stone-800 hover:shadow-[0_24px_60px_-12px_rgba(28,25,23,0.6)] dark:bg-gradient-to-r dark:from-orange-500 dark:via-amber-500 dark:to-orange-600 dark:text-stone-950 dark:shadow-[0_16px_52px_-8px_rgba(234,88,12,0.65)] dark:hover:brightness-105 sm:w-auto ${focusRing}`}>
-            Browse 2,400+ mentors
-            <span className="transition group-hover:translate-x-1" aria-hidden>→</span>
-          </Link>
-          {!user && (
-            <Link to="/register?intent=mentor"
-              className={`group inline-flex w-full min-h-[3.25rem] items-center justify-center gap-2 rounded-full border-2 border-stone-300 bg-[var(--bridge-surface)] px-9 py-3.5 text-sm font-semibold text-[var(--bridge-text)] shadow-sm transition hover:-translate-y-0.5 hover:border-orange-400/90 hover:bg-[var(--bridge-surface-raised)] hover:shadow-md dark:border-white/15 dark:bg-white/[0.04] dark:text-stone-100 dark:hover:border-orange-400/60 sm:w-auto ${focusRing}`}>
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/15 text-orange-600 transition group-hover:bg-orange-500 group-hover:text-white dark:bg-orange-400/15 dark:text-orange-300">+</span>
-              Become a mentor
-            </Link>
-          )}
-        </div>
-
-        <div className="mt-11 flex flex-wrap items-center justify-center gap-4 text-sm text-[var(--bridge-text-muted)] sm:gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="flex -space-x-2" aria-hidden>
-              {['SK','MR','LV','JE','TN'].map((ini, idx) => (
-                <div key={ini} className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--bridge-canvas)] text-[9px] font-bold shadow-sm ${idx===0?'bg-amber-200 text-amber-900':idx===1?'bg-stone-800 text-amber-50':idx===2?'bg-orange-200 text-orange-900':idx===3?'bg-emerald-200 text-emerald-900':'bg-rose-200 text-rose-900'}`}>{ini}</div>
-              ))}
-            </div>
-            <span><span className="font-semibold text-[var(--bridge-text)]">4,800+</span> sessions booked</span>
-          </div>
-          <span className="hidden h-3 w-px bg-[var(--bridge-border-strong)] sm:block" aria-hidden />
-          <div className="flex items-center gap-1.5">
-            <span className="flex text-amber-500 dark:text-amber-400" aria-hidden>{[0,1,2,3,4].map(i=><span key={i} className="text-xs">★</span>)}</span>
-            <span><span className="font-semibold text-[var(--bridge-text)]">4.9</span> avg rating</span>
-          </div>
-          <span className="hidden h-3 w-px bg-[var(--bridge-border-strong)] sm:block" aria-hidden />
-          <span><span className="font-semibold text-[var(--bridge-text)]">From $25</span> / session</span>
-        </div>
-      </div>
-      <TrustedByMarquee />
-    </section>
-  );
-}
-
-// ─── Metrics — no Reveal (first section after hero, must appear instantly) ────
-
-function MetricsRibbon() {
-  const metrics = [
-    { value: '2,400+', label: 'Vetted mentors',   accent: 'from-orange-500 to-amber-500'  },
-    { value: '4,800+', label: 'Sessions booked',  accent: 'from-amber-500 to-orange-400'  },
-    { value: '4.9 / 5',label: 'Avg rating',       accent: 'from-rose-400 to-orange-500'   },
-    { value: '< 24h',  label: 'First booking',    accent: 'from-emerald-400 to-teal-500'  },
-  ];
-  return (
-    <section className="relative px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <div className="mx-auto max-w-bridge">
-        <div className="relative overflow-hidden rounded-[1.5rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)]/80 p-4 shadow-sm backdrop-blur-md sm:p-5">
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/50 to-transparent" />
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-2">
-            {metrics.map((m, i) => (
-              <div key={m.label} className="group relative flex flex-col items-start gap-0.5 px-2 py-1 text-left sm:px-4">
-                {i > 0 && <span aria-hidden className="absolute -left-px top-1/2 hidden h-10 w-px -translate-y-1/2 bg-[var(--bridge-border)] sm:block" />}
-                <p className={`font-display text-2xl font-bold tracking-tight text-transparent sm:text-[1.75rem] bg-clip-text bg-gradient-to-r ${m.accent}`}>{m.value}</p>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--bridge-text-muted)]">{m.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ─── Featured mentor ──────────────────────────────────────────────────────────
-
-function FeaturedMentor({ mentor, loading }) {
-  const display = (!loading && mentor) ? mentor : {
-    id: 'fallback',
-    name: 'Maya Chen',
-    title: 'Director of Product',
-    company: 'Linear',
-    bio: 'Led product at two Series B startups. I help PMs navigate ambiguity, run better discovery, and get promoted without playing politics. Former consultant — I\'m blunt about what\'s actually working.',
-    expertise: ['Product strategy', 'Promotion prep', 'Roadmapping', 'Stakeholder mgmt'],
-    rating: 4.9,
-    years_experience: 11,
-    total_sessions: 86,
-  };
-
-  return (
-    <section className="relative px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-      <div className="mx-auto max-w-bridge">
-        <Reveal className="mb-8 max-w-2xl">
-          <p className="mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300/95">
-            <span className="h-[3px] w-7 rounded-full bg-gradient-to-r from-orange-500 to-amber-400" />
-            This week&apos;s spotlight
-          </p>
-          <h2 className="font-display text-balance text-3xl font-bold text-[var(--bridge-text)] sm:text-4xl lg:text-[2.5rem] lg:leading-tight">
-            One mentor, up close
-          </h2>
-          <p className="mt-3 text-base leading-relaxed text-[var(--bridge-text-secondary)] sm:text-lg">
-            Every profile on Bridge looks like this — real bio, real numbers, real booking.
-          </p>
-        </Reveal>
-
-        <Reveal delay={80}>
-          <div className="relative overflow-hidden rounded-[2rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] shadow-bridge-glow transition hover:shadow-[0_32px_90px_-24px_rgba(234,88,12,0.32)]">
-            <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500" />
-            <div className="grid gap-0 lg:grid-cols-12">
-              {/* Left */}
-              <div className="relative overflow-hidden bg-gradient-to-br from-stone-900 via-stone-900 to-orange-950 p-8 text-amber-50 lg:col-span-5 lg:p-10">
-                <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-orange-500/20 blur-3xl" />
-                <div aria-hidden className="pointer-events-none absolute -left-8 bottom-0 h-40 w-40 rounded-full bg-amber-400/10 blur-3xl" />
-                <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.08]"
-                  style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,237,213,1) 1px, transparent 0)', backgroundSize: '22px 22px', maskImage: 'radial-gradient(ellipse 80% 60% at 30% 40%, #000 40%, transparent 85%)', WebkitMaskImage: 'radial-gradient(ellipse 80% 60% at 30% 40%, #000 40%, transparent 85%)' }} />
-                <div className="relative flex items-start gap-5">
-                  <div className="relative">
-                    <MentorAvatar name={display.name} size="lg" className="shadow-lg ring-4 ring-white/10" />
-                    <span aria-hidden className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-stone-900 bg-emerald-400">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-900 animate-pulse-soft" />
-                    </span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-display text-2xl font-semibold tracking-tight text-white">{display.name}</p>
-                    <p className="mt-1 text-sm text-stone-300">{display.title}{display.company && <span className="text-stone-400"> · {display.company}</span>}</p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="flex text-amber-400" aria-hidden>{[0,1,2,3,4].map(i=><span key={i}>★</span>)}</span>
-                      <span className="text-xs font-semibold text-amber-100">{Number(display.rating).toFixed(1)} · {display.total_sessions} sessions</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="relative mt-8 rounded-2xl border border-orange-400/20 bg-white/[0.04] p-5 backdrop-blur-sm">
-                  <span aria-hidden className="mb-2 block font-display text-3xl leading-none text-orange-400/60">&ldquo;</span>
-                  <p className="text-base leading-relaxed text-stone-200 sm:text-lg">
-                    I don&apos;t do fluff. You tell me what you&apos;re actually trying to figure out, and we work it in one session. If I can&apos;t help, I&apos;ll say so in the first ten minutes.
-                  </p>
-                </div>
-              </div>
-              {/* Right */}
-              <div className="p-8 lg:col-span-7 lg:p-10">
-                <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300/95">
-                  <span className="h-[3px] w-5 rounded-full bg-orange-500/80" />About
-                </p>
-                <p className="mt-3 text-base leading-relaxed text-[var(--bridge-text-secondary)]">{display.bio}</p>
-                <div className="mt-6">
-                  <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-orange-700 dark:text-orange-300/95">
-                    <span className="h-[3px] w-5 rounded-full bg-orange-500/80" />Focus areas
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {display.expertise.slice(0, 5).map(tag => (
-                      <span key={tag} className="rounded-full border border-orange-200/70 bg-orange-50/80 px-3 py-1 text-xs font-medium text-orange-900 transition hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-100 dark:border-orange-400/25 dark:bg-orange-400/10 dark:text-orange-100">{tag}</span>
-                    ))}
-                  </div>
-                </div>
-                <dl className="mt-7 grid grid-cols-3 gap-2 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/70 p-4 dark:bg-white/[0.03]">
-                  {[
-                    { term: 'Rating',     val: Number(display.rating).toFixed(1) },
-                    { term: 'Experience', val: `${display.years_experience} yrs`  },
-                    { term: 'Sessions',   val: display.total_sessions             },
-                  ].map(({ term, val }, i) => (
-                    <div key={term} className={`text-center ${i === 1 ? 'border-x border-[var(--bridge-border)]' : ''}`}>
-                      <dt className="text-[10px] font-bold uppercase tracking-wider text-[var(--bridge-text-muted)]">{term}</dt>
-                      <dd className="mt-1 font-display text-xl font-semibold tabular-nums text-[var(--bridge-text)]">{val}</dd>
-                    </div>
-                  ))}
-                </dl>
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <Link to={`/mentors/${display.id}`}
-                    className={`group btn-sheen relative inline-flex flex-1 items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-6 py-3.5 text-sm font-semibold text-white shadow-md shadow-orange-500/25 transition hover:-translate-y-0.5 hover:from-orange-500 hover:to-amber-400 hover:shadow-lg hover:shadow-orange-500/30 ${focusRing}`}>
-                    Open full profile <span aria-hidden className="transition group-hover:translate-x-1">→</span>
-                  </Link>
-                  <Link to="/mentors"
-                    className={`inline-flex items-center justify-center rounded-full border-2 border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-6 py-3.5 text-sm font-semibold text-[var(--bridge-text)] transition hover:-translate-y-0.5 hover:border-orange-300/70 hover:bg-[var(--bridge-surface-raised)] dark:hover:border-orange-500/40 ${focusRing}`}>
-                    See more mentors
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// ─── Product preview section ──────────────────────────────────────────────────
-
-function ProductPreview() {
-  return (
-    <section id="product-preview" className="relative scroll-mt-20 overflow-hidden border-y border-[var(--bridge-border)] bg-gradient-to-b from-[var(--bridge-surface)] via-[var(--bridge-surface-muted)] to-[var(--bridge-surface)] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
-      <div aria-hidden className="pointer-events-none absolute left-1/2 top-0 -z-10 h-[36rem] w-[56rem] -translate-x-1/2 opacity-40"
-        style={{ background: 'conic-gradient(from 190deg at 50% 0%, rgba(251,146,60,0.18), rgba(253,230,138,0.1), rgba(234,88,12,0.2), rgba(251,146,60,0.18))', filter: 'blur(80px)' }} />
-      <div className="mx-auto max-w-bridge">
-        <Reveal className="mb-8 text-center">
-          <p className="mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300/95">
-            <span className="h-[3px] w-7 rounded-full bg-gradient-to-r from-orange-500 to-amber-400" />
-            See it in action
-            <span className="h-[3px] w-7 rounded-full bg-gradient-to-r from-amber-400 to-orange-500" />
-          </p>
-          <h2 className="font-display text-balance text-3xl font-bold text-[var(--bridge-text)] sm:text-4xl lg:text-[2.65rem] lg:leading-tight">
-            From search to session booked in minutes.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-[var(--bridge-text-secondary)] sm:text-lg">
-            Discover the right mentor, read real bios and reviews, pick a time, and book — all in one place.
-          </p>
-        </Reveal>
-        <Reveal delay={80}>
-          <HeroProductPreview />
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// ─── Why Bridge ───────────────────────────────────────────────────────────────
-
-function WhyBridge() {
-  const rows = [
-    { label: 'You get a response',      dm: '~10% reply rate',         coaching: 'Always — they sell hours',     bridge: 'Always — mentors opt-in to listings' },
-    { label: 'They\'ve done your job',  dm: 'Maybe',                   coaching: 'Rarely — usually pro coaches', bridge: 'Yes, that\'s the filter'             },
-    { label: 'Session has structure',   dm: 'No',                      coaching: 'Yes',                          bridge: 'Yes — 4 named formats'               },
-    { label: 'Price is clear upfront',  dm: '—',                       coaching: 'Often bundled/hidden',         bridge: 'On every profile'                    },
-    { label: 'You can see reviews',     dm: 'No',                      coaching: 'Curated testimonials',         bridge: 'All reviews, unfiltered'             },
-    { label: 'Commitment',              dm: 'None',                    coaching: 'Multi-session packages',       bridge: 'One session at a time'               },
-  ];
-  return (
-    <section id="why-bridge" className="relative scroll-mt-20 px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-      <div className="mx-auto max-w-bridge">
-        <Reveal className="mb-10 max-w-3xl">
-          <p className="mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300/95">
-            <span className="h-[3px] w-7 rounded-full bg-gradient-to-r from-orange-500 to-amber-400" />
-            Why Bridge
-          </p>
-          <h2 className="font-display text-balance text-3xl font-bold text-[var(--bridge-text)] sm:text-4xl lg:text-[2.65rem] lg:leading-tight">
-            You have three options right now. Here&apos;s how they compare.
-          </h2>
-          <p className="mt-4 text-base leading-relaxed text-[var(--bridge-text-secondary)] sm:text-lg">
-            Most advice lives on LinkedIn DMs or expensive coaching packages. We built Bridge to sit in the middle: single-session bookings with people who actually did the thing.
-          </p>
-        </Reveal>
-        <Reveal delay={60}>
-          <div className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] shadow-bridge-card">
-            <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/60 to-transparent" />
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/70 dark:bg-white/[0.03]">
-                    <th scope="col" className="px-4 py-4 font-semibold text-[var(--bridge-text)] sm:px-6" />
-                    <th scope="col" className="px-3 py-4 text-center font-semibold text-[var(--bridge-text-muted)] sm:px-4"><div className="flex flex-col items-center gap-0.5"><span className="text-sm">Cold LinkedIn DMs</span><span className="text-[10px] font-normal text-[var(--bridge-text-faint)]">Free, slow</span></div></th>
-                    <th scope="col" className="px-3 py-4 text-center font-semibold text-[var(--bridge-text-muted)] sm:px-4"><div className="flex flex-col items-center gap-0.5"><span className="text-sm">Coaching platforms</span><span className="text-[10px] font-normal text-[var(--bridge-text-faint)]">$200–$500/mo</span></div></th>
-                    <th scope="col" className="relative bg-gradient-to-b from-orange-50/80 to-amber-50/50 px-3 py-4 text-center font-semibold text-orange-950 dark:from-orange-500/15 dark:to-amber-500/10 dark:text-orange-100 sm:px-4">
-                      <div className="flex flex-col items-center gap-0.5"><span className="inline-flex items-center gap-1.5 text-sm"><span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse-soft" />Bridge</span><span className="text-[10px] font-normal text-orange-800/80 dark:text-orange-200/80">$25–$150 / session</span></div>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((row, i) => (
-                    <tr key={row.label} className={`border-b border-[var(--bridge-border)]/70 transition hover:bg-[var(--bridge-surface-muted)]/60 last:border-0 dark:hover:bg-white/[0.03] ${i % 2 === 1 ? 'bg-[var(--bridge-surface-muted)]/40 dark:bg-white/[0.015]' : ''}`}>
-                      <th scope="row" className="px-4 py-4 font-medium text-[var(--bridge-text)] sm:px-6">{row.label}</th>
-                      <td className="px-3 py-4 text-center text-xs text-[var(--bridge-text-muted)] sm:px-4 sm:text-sm">{row.dm}</td>
-                      <td className="px-3 py-4 text-center text-xs text-[var(--bridge-text-muted)] sm:px-4 sm:text-sm">{row.coaching}</td>
-                      <td className="bg-orange-50/40 px-3 py-4 text-center text-xs font-semibold text-[var(--bridge-text)] dark:bg-orange-500/[0.07] sm:px-4 sm:text-sm">
-                        <span className="inline-flex items-center gap-1.5"><span aria-hidden className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500/90 text-[9px] font-bold text-white">✓</span>{row.bridge}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// ─── Outcomes ─────────────────────────────────────────────────────────────────
-// Single Reveal on the grid — not one per card (fewer simultaneous layers).
-
-function Outcomes() {
-  const outcomes = [
-    { result: 'Got the offer',     metric: '+32% comp',       quote: 'Two sessions with a former FAANG recruiter. She rewrote my answer to "tell me about yourself" in ten minutes. I got the offer a week later.',              name: 'Tyler N.',  role: 'Senior Engineer'       },
-    { result: 'Changed industries',metric: 'Banking → Startup',quote: 'I was terrified to leave finance. One session with someone who made the exact same jump saved me six months of second-guessing.',                      name: 'Priya S.',  role: 'Ex-Analyst, now PM'    },
-    { result: 'Got promoted',      metric: 'IC → Staff',      quote: 'I\'d been stuck at senior for four years. My mentor called out exactly which work I was doing that didn\'t count. Promoted in the next cycle.',            name: 'Jordan E.', role: 'Staff Engineer'         },
-  ];
-
-  return (
-    <section id="outcomes" className="relative scroll-mt-20 overflow-hidden px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <div className="absolute inset-0 bg-gradient-to-br from-stone-950 via-stone-900 to-orange-950" />
-      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
-      <div aria-hidden className="pointer-events-none absolute -right-24 top-1/4 h-[min(480px,70vw)] w-[min(480px,70vw)] rounded-full bg-orange-500/25 blur-3xl" />
-
-      <div className="relative mx-auto max-w-bridge">
-        <Reveal className="mb-10 max-w-2xl">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-orange-300">Outcomes</p>
-          <h2 className="font-display text-balance text-3xl font-bold text-white sm:text-4xl lg:text-[2.5rem]">
-            What people walked away with
-          </h2>
-        </Reveal>
-
-        {/* Single Reveal for all 3 cards — avoids simultaneous compositing of 3 layers */}
-        <Reveal delay={60}>
-          <div className="grid gap-5 lg:grid-cols-3 lg:items-stretch">
-            {outcomes.map(({ result, metric, quote, name, role }, i) => (
-              <figure key={name}
-                className={`relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border bg-white/[0.07] p-7 backdrop-blur-md transition hover:-translate-y-0.5 hover:bg-white/[0.11] sm:p-8 ${i === 1 ? 'border-orange-400/35 shadow-lg shadow-orange-950/40 ring-1 ring-orange-400/25 lg:scale-[1.02] lg:z-10' : 'border-white/10 hover:border-white/20'}`}>
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-500 text-xs font-bold text-white shadow-sm">✓</span>
-                  <div>
-                    <p className="text-xs font-medium text-emerald-300">{result}</p>
-                    <p className="font-display text-xl font-semibold text-white">{metric}</p>
-                  </div>
-                </div>
-                <blockquote className="mt-5 flex-1 text-pretty">
-                  <p className="text-sm leading-relaxed text-stone-200 sm:text-base">&ldquo;{quote}&rdquo;</p>
-                </blockquote>
-                <figcaption className="mt-6 flex items-center gap-3 border-t border-white/10 pt-5 text-sm">
-                  <span className="text-stone-300">—</span>
-                  <div>
-                    <p className="font-semibold text-white">{name}</p>
-                    <p className="text-xs text-orange-100/85">{role}</p>
-                  </div>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// ─── Pricing block ────────────────────────────────────────────────────────────
-
-function PricingBlock() {
-  return (
-    <section className="relative px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-      <div className="mx-auto max-w-5xl">
-        <Reveal>
-          <div className="relative grid gap-5 overflow-hidden rounded-[2rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-8 shadow-bridge-card transition hover:shadow-bridge-glow sm:p-10 lg:grid-cols-5 lg:items-center lg:gap-8 lg:p-12">
-            <div aria-hidden className="pointer-events-none absolute -right-28 -top-28 h-64 w-64 rounded-full bg-gradient-to-br from-orange-400/25 via-amber-300/15 to-transparent blur-3xl dark:from-orange-500/30 dark:via-amber-500/15" />
-            <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/60 to-transparent" />
-            <div className="relative lg:col-span-3">
-              <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.28em] text-orange-700 dark:text-orange-300/95">
-                <span className="h-[3px] w-7 rounded-full bg-gradient-to-r from-orange-500 to-amber-400" />Pricing, clearly
-              </p>
-              <h2 className="mt-3 font-display text-balance text-2xl font-semibold text-[var(--bridge-text)] sm:text-3xl lg:text-[2.25rem] lg:leading-tight">
-                No subscription to unlock mentors. You pay per session.
-              </h2>
-              <p className="mt-4 text-base leading-relaxed text-[var(--bridge-text-secondary)]">
-                Mentors set their own rates — shown on every profile before you book. Optional paid Bridge plans add unlimited requests and extras, but they&apos;re not required.
-              </p>
-              <Link to="/pricing" className={`mt-6 inline-flex items-center gap-1.5 rounded-sm text-sm font-semibold text-orange-700 underline-offset-4 transition hover:text-orange-600 hover:underline dark:text-orange-300 dark:hover:text-orange-200 ${focusRing}`}>
-                See pricing details <span aria-hidden>→</span>
-              </Link>
-            </div>
-            <div className="relative grid grid-cols-3 gap-3 lg:col-span-2">
-              {[
-                { label: 'From',  val: '$25',  sub: 'per 30 min',     highlight: false },
-                { label: 'Avg',   val: '$60',  sub: 'per session',    highlight: true  },
-                { label: 'Up to', val: '$150', sub: 'senior mentors', highlight: false },
-              ].map(({ label, val, sub, highlight }) => (
-                <div key={label} className={`rounded-2xl border p-4 text-center transition hover:-translate-y-0.5 ${highlight ? 'relative border-orange-300/60 bg-gradient-to-br from-orange-50/80 to-amber-50/50 shadow-[0_10px_28px_-12px_rgba(234,88,12,0.35)] ring-1 ring-orange-300/30 hover:shadow-[0_18px_36px_-12px_rgba(234,88,12,0.5)] dark:border-orange-400/30 dark:from-orange-500/15 dark:to-amber-500/10 hover:-translate-y-1' : 'border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/70 hover:border-orange-300/60 dark:bg-white/[0.03]'}`}>
-                  {highlight && <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white shadow">Most</span>}
-                  <p className={`mt-1 text-[10px] font-bold uppercase tracking-wider ${highlight ? 'text-orange-800 dark:text-orange-200' : 'text-[var(--bridge-text-muted)]'}`}>{label}</p>
-                  <p className={`mt-1 font-display text-2xl font-semibold ${highlight ? 'text-orange-950 dark:text-orange-100' : 'text-[var(--bridge-text)]'}`}>{val}</p>
-                  <p className={`text-[11px] ${highlight ? 'text-orange-900/80 dark:text-orange-200/80' : 'text-[var(--bridge-text-muted)]'}`}>{sub}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// ─── Final CTA ────────────────────────────────────────────────────────────────
-
-function FinalCTA() {
-  const { user } = useAuth();
-  return (
-    <section id="get-started" aria-labelledby="final-cta-heading" className="scroll-mt-20 px-4 pb-24 pt-10 sm:px-6 sm:pb-28 lg:px-8">
-      <Reveal>
-        <div className="relative mx-auto max-w-4xl overflow-hidden rounded-[2rem] bg-gradient-to-br from-orange-600 via-amber-500 to-orange-700 px-8 py-16 text-center shadow-bridge-glow ring-1 ring-white/20 sm:px-14 sm:py-20">
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.06\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]" />
-          <div aria-hidden className="pointer-events-none absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-          <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-300/20 blur-2xl" />
-          <span aria-hidden className="pointer-events-none absolute inset-0 animate-gradient-shift bg-[linear-gradient(110deg,transparent_42%,rgba(255,255,255,0.12)_50%,transparent_58%)]" />
-
-          <p className="relative mx-auto inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-50 backdrop-blur-sm">
-            <span className="relative flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full rounded-full bg-emerald-300 animate-pulse-soft" /><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" /></span>
-            842 sessions this week
-          </p>
-          <h2 id="final-cta-heading" className="relative mt-4 font-display text-balance text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-[2.6rem] lg:leading-[1.12]">
-            One conversation with the right person changes things.
-          </h2>
-          <p className="relative mx-auto mt-4 max-w-xl text-lg leading-relaxed text-orange-50/95">Free to sign up. Free to browse. Pay only when you book.</p>
-          <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            {user ? (
-              <>
-                <Link to="/mentors" className={`inline-flex w-full items-center justify-center rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-orange-700 shadow-lg transition hover:bg-orange-50 sm:w-auto ${focusRingWhite}`}>Browse mentors</Link>
-                <Link to="/dashboard" className={`inline-flex w-full items-center justify-center rounded-full border-2 border-white/45 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/15 sm:w-auto ${focusRingWhite}`}>Go to dashboard</Link>
-              </>
-            ) : (
-              <>
-                <Link to="/register" className={`inline-flex w-full items-center justify-center rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-orange-700 shadow-lg transition hover:bg-orange-50 sm:w-auto ${focusRingWhite}`}>Sign up free</Link>
-                <Link to="/mentors" className={`inline-flex w-full items-center justify-center rounded-full border-2 border-white/45 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/15 sm:w-auto ${focusRingWhite}`}>Just show me mentors</Link>
-              </>
-            )}
-          </div>
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
-// ─── Page root ────────────────────────────────────────────────────────────────
-
-export default function Landing() {
-  const [featured, setFeatured] = useState(null);
-
-  useEffect(() => {
-    // Non-blocking: page renders immediately with fallback data.
-    // API result replaces fallback only when it arrives.
-    getFeaturedMentors().then(({ data }) => {
-      if (data?.length) setFeatured(data[0]);
-    });
   }, []);
 
+  const scenes = [
+    // Scene 0 — search / AI match
+    <div key="search" className="flex flex-col gap-3 px-4 py-4 sm:px-6">
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-400">AI Mentor Match</p>
+      <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
+        <svg className="h-3.5 w-3.5 shrink-0 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/></svg>
+        <span className="text-xs text-white/50">I want to become a PM at a Series B startup</span>
+        <span className="ml-auto h-4 w-px animate-pulse bg-orange-400" />
+      </div>
+      <div className="space-y-2">
+        {[
+          { ini: 'MC', name: 'Maya Chen', tag: 'PM Strategy', match: 98, tone: 'amber' },
+          { ini: 'JR', name: 'Jordan Reeves', tag: 'Product Growth', match: 94, tone: 'orange' },
+          { ini: 'EV', name: 'Elena Voss', tag: 'Career Switch', match: 91, tone: 'rose' },
+        ].map((m, i) => (
+          <div key={i} className="flex items-center gap-2.5 rounded-xl bg-white/5 px-3 py-2 transition hover:bg-white/10"
+            style={{ animationDelay: `${i * 80}ms` }}>
+            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${AVATAR_GRAD[m.tone]} text-[9px] font-bold text-white`}>{m.ini}</div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold text-white">{m.name}</p>
+              <p className="text-[10px] text-white/40">{m.tag}</p>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-1 w-12 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400" style={{ width: `${m.match}%` }} />
+              </div>
+              <span className="text-[10px] font-bold text-orange-400">{m.match}%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>,
+
+    // Scene 1 — mentor profile
+    <div key="profile" className="flex flex-col gap-3 px-4 py-4 sm:px-6">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-bold text-white">MC</div>
+        <div>
+          <p className="text-sm font-semibold text-white">Maya Chen</p>
+          <p className="text-[11px] text-white/50">Director of Product · Linear</p>
+        </div>
+        <div className="ml-auto rounded-full bg-emerald-500/20 px-2.5 py-1 text-[10px] font-bold text-emerald-400">● Available</div>
+      </div>
+      <div className="flex gap-1.5 flex-wrap">
+        {['PM Strategy','Promotion','Roadmapping'].map(t => (
+          <span key={t} className="rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-medium text-orange-300">{t}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {[['4.9 ★','Rating'],['86','Sessions'],['$95','/ session']].map(([v,l]) => (
+          <div key={l} className="rounded-xl bg-white/5 px-2 py-2 text-center">
+            <p className="text-sm font-bold text-white">{v}</p>
+            <p className="text-[9px] text-white/40">{l}</p>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-1.5">
+        {['Career Advice','Interview Prep','Resume Review'].map(t => (
+          <div key={t} className="flex items-center gap-2 rounded-xl border border-white/8 px-3 py-2 text-[11px] text-white/60 hover:border-orange-500/40 hover:text-white/90 transition cursor-pointer">
+            <svg className="h-3 w-3 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" strokeLinecap="round"/></svg>
+            {t}
+          </div>
+        ))}
+      </div>
+    </div>,
+
+    // Scene 2 — session booked
+    <div key="booked" className="flex flex-col items-center gap-3 px-4 py-6 sm:px-6 text-center">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 shadow-[0_0_40px_rgba(16,185,129,0.5)]">
+        <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </div>
+      <div>
+        <p className="text-base font-bold text-white">Session confirmed!</p>
+        <p className="mt-0.5 text-[12px] text-white/50">Tomorrow · 3:00 PM EST · 45 min</p>
+      </div>
+      <div className="w-full rounded-2xl border border-emerald-500/20 bg-emerald-500/8 p-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-[10px] font-bold text-white">MC</div>
+          <div className="text-left">
+            <p className="text-[11px] font-semibold text-white">Maya Chen</p>
+            <p className="text-[10px] text-white/40">Career Advice Session</p>
+          </div>
+          <div className="ml-auto flex items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-[10px] text-white/60">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.361a1 1 0 0 1-1.447.894L15 14M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" strokeLinecap="round"/></svg>
+            Video room ready
+          </div>
+        </div>
+      </div>
+      <div className="flex w-full gap-2">
+        <div className="flex-1 rounded-xl bg-white/5 py-2 text-[11px] font-medium text-white/60">Add to Calendar</div>
+        <div className="flex-1 rounded-xl bg-orange-500 py-2 text-[11px] font-bold text-white">Join Room</div>
+      </div>
+    </div>,
+  ];
+
   return (
-    <main id="main-content" aria-label="Bridge — home" className="overflow-x-hidden">
-      <Hero />
-      <MetricsRibbon />
-      <FeaturedMentor mentor={featured} loading={false} />
-      <ProductPreview />
-      <WhyBridge />
-      <Outcomes />
-      <PricingBlock />
-      <FinalCTA />
-    </main>
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0d0a07] shadow-[0_0_80px_rgba(234,88,12,0.15)]" style={{ minHeight: 290 }}>
+      {/* top bar */}
+      <div className="flex items-center gap-1.5 border-b border-white/8 px-4 py-3">
+        <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+        <span className="h-2.5 w-2.5 rounded-full bg-yellow-500/80" />
+        <span className="h-2.5 w-2.5 rounded-full bg-green-500/80" />
+        <span className="ml-auto text-[10px] text-white/20">bridge.app</span>
+      </div>
+      {/* scene tabs */}
+      <div className="flex gap-0 border-b border-white/8">
+        {['AI Match','Profile','Booked ✓'].map((tab, i) => (
+          <button key={i} onClick={() => setScene(i)}
+            className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] transition ${scene === i ? 'text-orange-400 border-b-2 border-orange-400' : 'text-white/25 hover:text-white/50'}`}>
+            {tab}
+          </button>
+        ))}
+      </div>
+      {/* scene content */}
+      <div key={scene} style={{ animation: 'bridge-scale-in 320ms cubic-bezier(0.16,1,0.3,1)' }}>
+        {scenes[scene]}
+      </div>
+    </div>
+  );
+}
+
+// ─── Mentor marquee card ──────────────────────────────────────────────────────
+function MarqueeCard({ m }) {
+  return (
+    <div className="inline-flex shrink-0 flex-col gap-2.5 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm hover:border-orange-500/30 hover:bg-white/8 transition w-52">
+      <div className="flex items-center gap-2.5">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${AVATAR_GRAD[m.tone]} text-[11px] font-bold text-white`}>
+          {m.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-[12px] font-semibold text-white">{m.name}</p>
+          <p className="truncate text-[10px] text-white/40">{m.co}</p>
+        </div>
+      </div>
+      <p className="text-[11px] text-white/60 leading-relaxed">{m.title}</p>
+      <div className="flex flex-wrap gap-1">
+        {m.tags.slice(0, 2).map(t => (
+          <span key={t} className="rounded-full bg-orange-500/12 px-2 py-0.5 text-[9px] font-medium text-orange-300">{t}</span>
+        ))}
+      </div>
+      <div className="flex items-center justify-between border-t border-white/8 pt-2">
+        <span className="text-[10px] font-bold text-white">{'★'.repeat(Math.round(m.rating))} <span className="text-white/40">{m.rating}</span></span>
+        <span className="text-[11px] font-bold text-orange-400">${m.rate}/mo</span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Testimonial rotator ──────────────────────────────────────────────────────
+function TestimonialRotator() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setIdx(i => (i + 1) % OUTCOMES.length), 4500);
+    return () => clearInterval(id);
+  }, []);
+  const o = OUTCOMES[idx];
+  return (
+    <div className="relative flex flex-col items-center text-center">
+      <div key={idx} style={{ animation: 'bridge-scale-in 400ms cubic-bezier(0.16,1,0.3,1)' }} className="flex flex-col items-center gap-4">
+        <svg className="h-8 w-8 text-orange-400/50" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+        <p className="max-w-lg text-base font-medium text-white/80 leading-relaxed italic">&ldquo;{o.quote}&rdquo;</p>
+        <div className="flex items-center gap-3">
+          <div className={`flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${AVATAR_GRAD[o.tone]} text-[10px] font-bold text-white`}>
+            {o.name.split(' ').map(n => n[0]).join('')}
+          </div>
+          <div className="text-left">
+            <p className="text-[12px] font-semibold text-white">{o.name}</p>
+            <p className="text-[11px] text-white/40">{o.role}</p>
+          </div>
+          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-bold text-emerald-400">{o.result} · {o.metric}</span>
+        </div>
+      </div>
+      <div className="mt-6 flex gap-2">
+        {OUTCOMES.map((_, i) => (
+          <button key={i} onClick={() => setIdx(i)}
+            className={`h-1.5 rounded-full transition-all duration-300 ${i === idx ? 'w-8 bg-orange-400' : 'w-1.5 bg-white/20'}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Stat item (needs its own component so hook rules are satisfied) ──────────
+function StatItem({ target, suffix, label, accent, decimal }) {
+  const raw = decimal ? target * 10 : target;
+  const [ref, value] = useCountUp(raw);
+  const display = decimal ? (value / 10).toFixed(1) : value.toLocaleString();
+  return (
+    <div ref={ref} className="flex flex-col items-center gap-2 text-center">
+      <p className={`font-display text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r ${accent} sm:text-6xl`}>
+        {display}{suffix}
+      </p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30">{label}</p>
+    </div>
+  );
+}
+
+// ─── Main export ──────────────────────────────────────────────────────────────
+export default function Landing() {
+  const { user } = useAuth();
+  const [featuredMentors, setFeaturedMentors] = useState([]);
+
+  useEffect(() => {
+    getFeaturedMentors(6).then(data => { if (data?.length) setFeaturedMentors(data); });
+  }, []);
+
+  const displayMentors = featuredMentors.length ? featuredMentors : MENTORS_ROW1;
+
+  return (
+    <div className="relative overflow-x-hidden bg-[var(--bridge-canvas)]">
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          HERO — always dark, dramatic, cinematic
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="relative min-h-screen overflow-hidden bg-[#060403]">
+
+        {/* CSS grid overlay */}
+        <div aria-hidden className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(234,88,12,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,0.06) 1px,transparent 1px)',
+            backgroundSize: '64px 64px',
+          }} />
+
+        {/* Blob orbs */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="animate-blob-breathe absolute -top-32 left-1/2 h-[700px] w-[700px] -translate-x-1/2 rounded-full opacity-25"
+            style={{ background: 'radial-gradient(circle,rgba(234,88,12,0.6) 0%,rgba(234,88,12,0.1) 55%,transparent 75%)' }} />
+          <div className="animate-blob-breathe absolute bottom-0 -left-48 h-[500px] w-[500px] rounded-full opacity-15"
+            style={{ background: 'radial-gradient(circle,rgba(251,146,60,0.5) 0%,transparent 70%)', animationDelay: '1.2s' }} />
+          <div className="animate-blob-breathe absolute bottom-24 -right-32 h-[400px] w-[400px] rounded-full opacity-15"
+            style={{ background: 'radial-gradient(circle,rgba(234,88,12,0.4) 0%,transparent 70%)', animationDelay: '2.4s' }} />
+        </div>
+
+        {/* Spinning gradient ring behind content */}
+        <div aria-hidden className="pointer-events-none absolute left-1/2 top-48 -translate-x-1/2 -translate-y-1/2 hidden lg:block">
+          <div className="border-gradient-bridge animate-border-bridge h-[640px] w-[640px] rounded-full opacity-20" />
+        </div>
+
+        {/* Grain texture */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-bridge-noise opacity-[0.04]" />
+
+        {/* ── Content ── */}
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-28 pb-0 sm:px-6 lg:px-8 lg:pt-36">
+
+          {/* Live badge */}
+          <div className="flex justify-center">
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 shadow-sm backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/60">Live · 2,400+ vetted mentors</span>
+            </div>
+          </div>
+
+          {/* Headline */}
+          <div className="mt-8 text-center">
+            <h1 className="font-display leading-[0.9] tracking-tight text-white"
+              style={{ fontSize: 'clamp(3.5rem,9vw,7.5rem)', fontWeight: 900 }}>
+              <span className="block">Your next</span>
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-orange-500" style={{ filter: 'drop-shadow(0 0 48px rgba(234,88,12,0.6))' }}>
+                career move
+              </span>
+              <span className="block">starts with</span>
+              <span className="block text-white/30">one conversation.</span>
+            </h1>
+            <p className="mx-auto mt-8 max-w-xl text-lg text-white/50 leading-relaxed">
+              Real mentors. Real sessions. Real outcomes. Skip the LinkedIn cold messages — book a 1-on-1 with someone who's already done what you want to do.
+            </p>
+          </div>
+
+          {/* CTAs */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+            <Link to={user ? '/mentors' : '/register'}
+              className="btn-sheen relative inline-flex items-center gap-2.5 overflow-hidden rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-8 py-4 text-sm font-bold text-white shadow-[0_0_48px_rgba(234,88,12,0.45)] transition hover:shadow-[0_0_64px_rgba(234,88,12,0.65)] hover:scale-[1.03] active:scale-95">
+              Find your mentor
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </Link>
+            <Link to="/mentors"
+              className="border-gradient-bridge animate-border-bridge inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-white/70 transition hover:text-white">
+              Browse mentors →
+            </Link>
+          </div>
+
+          {/* Floating chips */}
+          <div className="relative mx-auto mt-16 max-w-5xl">
+            {/* chip: match */}
+            <div className="pointer-events-none absolute -left-4 top-8 hidden xl:block z-20"
+              style={{ animation: 'landing-float-soft 7s 0.3s ease-in-out infinite' }}>
+              <div className="flex items-center gap-2 rounded-2xl border border-white/12 bg-[#0d0a07]/95 px-3.5 py-2.5 shadow-bridge-float backdrop-blur-xl">
+                <span className="text-base">🎯</span>
+                <div>
+                  <p className="text-[10px] font-bold text-white">98% AI Match</p>
+                  <p className="text-[9px] text-white/40">PM Strategy · Maya Chen</p>
+                </div>
+              </div>
+            </div>
+            {/* chip: win */}
+            <div className="pointer-events-none absolute -right-4 top-12 hidden xl:block z-20"
+              style={{ animation: 'landing-float-soft 8s 1.5s ease-in-out infinite' }}>
+              <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/25 bg-[#0d0a07]/95 px-3.5 py-2.5 shadow-bridge-float backdrop-blur-xl">
+                <span className="text-base">🎉</span>
+                <div>
+                  <p className="text-[10px] font-bold text-emerald-400">Offer accepted</p>
+                  <p className="text-[9px] text-white/40">+32% comp · Tyler N.</p>
+                </div>
+              </div>
+            </div>
+            {/* chip: live */}
+            <div className="pointer-events-none absolute -left-8 bottom-16 hidden xl:block z-20"
+              style={{ animation: 'landing-float-soft 9s 0.8s ease-in-out infinite' }}>
+              <div className="flex items-center gap-2 rounded-2xl border border-white/12 bg-[#0d0a07]/95 px-3.5 py-2.5 shadow-bridge-float backdrop-blur-xl">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-400" />
+                </span>
+                <p className="text-[10px] font-bold text-white/70">3 people booking now</p>
+              </div>
+            </div>
+            {/* chip: review */}
+            <div className="pointer-events-none absolute -right-8 bottom-24 hidden xl:block z-20"
+              style={{ animation: 'landing-float-soft 6.5s 2.2s ease-in-out infinite' }}>
+              <div className="flex items-center gap-2 rounded-2xl border border-white/12 bg-[#0d0a07]/95 px-3.5 py-2.5 shadow-bridge-float backdrop-blur-xl">
+                <span className="text-base">⭐</span>
+                <div>
+                  <p className="text-[10px] font-bold text-white">4.9 / 5 avg rating</p>
+                  <p className="text-[9px] text-white/40">from 4,800+ sessions</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Product preview */}
+            <ProductScene />
+          </div>
+        </div>
+
+        {/* Bottom fade */}
+        <div aria-hidden className="pointer-events-none absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[var(--bridge-canvas)] to-transparent" />
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          ACTIVITY TICKER
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <div className="relative border-y border-[var(--bridge-border)]/60 bg-[var(--bridge-surface-muted)]/30 py-3">
+        <div className="overflow-hidden" style={{ maskImage: 'linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)', WebkitMaskImage: 'linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)' }}>
+          <div className="flex w-max animate-landing-marquee gap-3 pr-3">
+            {[...ACTIVITY, ...ACTIVITY].map((item, i) => (
+              <div key={i} className="inline-flex shrink-0 items-center gap-2.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)]/80 px-3.5 py-2 backdrop-blur-sm">
+                <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${AVATAR_GRAD[item.tone]} text-[9px] font-bold text-white`}>{item.ini}</div>
+                <span className="whitespace-nowrap text-[12px] font-medium text-[var(--bridge-text-secondary)]">
+                  <span className="font-semibold text-[var(--bridge-text)]">{item.name}</span>{' '}{item.text}
+                  {item.with && <>{' '}<span className="text-[var(--bridge-text-muted)]">with</span>{' '}<span className="font-semibold text-[var(--bridge-text)]">{item.with}</span></>}
+                </span>
+                {item.win && <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold text-emerald-600 dark:text-emerald-300">🎉 Win</span>}
+                <span className="text-[10px] text-[var(--bridge-text-faint)]">{item.time}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          STATS — dark dramatic band
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden bg-[#060403] py-20">
+        <div aria-hidden className="pointer-events-none absolute inset-0"
+          style={{ backgroundImage: 'linear-gradient(rgba(234,88,12,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,0.04) 1px,transparent 1px)', backgroundSize: '64px 64px' }} />
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+            <StatItem target={2400} suffix="+"   label="Vetted mentors"    accent="from-orange-400 to-amber-400" />
+            <StatItem target={4800} suffix="+"   label="Sessions booked"   accent="from-amber-400 to-orange-500" />
+            <StatItem target={49}   suffix="/5"  label="Average rating"    accent="from-rose-400 to-orange-400"  decimal />
+            <StatItem target={97}   suffix="%"   label="Would recommend"   accent="from-emerald-400 to-teal-400" />
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          MENTOR MARQUEE — two rows, opposite directions
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden bg-[var(--bridge-canvas)] py-20">
+        <Reveal>
+          <div className="mb-12 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-orange-500">Our mentors</p>
+            <h2 className="mt-3 font-display text-3xl font-black tracking-tight text-[var(--bridge-text)] sm:text-4xl lg:text-5xl">
+              Professionals who've<br /><span className="text-gradient-bridge">been where you want to go</span>
+            </h2>
+          </div>
+        </Reveal>
+        {/* Row 1 — left */}
+        <div className="relative" style={{ maskImage: 'linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)', WebkitMaskImage: 'linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)' }}>
+          <div className="flex w-max animate-landing-marquee gap-4 pr-4 pb-4">
+            {[...MENTORS_ROW1, ...MENTORS_ROW1].map((m, i) => <MarqueeCard key={i} m={m} />)}
+          </div>
+        </div>
+        {/* Row 2 — right (reverse) */}
+        <div className="relative mt-4" style={{ maskImage: 'linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)', WebkitMaskImage: 'linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)' }}>
+          <div className="flex w-max gap-4 pr-4" style={{ animation: 'landing-marquee 38s linear infinite reverse' }}>
+            {[...MENTORS_ROW2, ...MENTORS_ROW2].map((m, i) => <MarqueeCard key={i} m={m} />)}
+          </div>
+        </div>
+        <div className="mt-12 flex justify-center">
+          <Link to="/mentors"
+            className="btn-sheen inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-6 py-3 text-sm font-semibold text-[var(--bridge-text)] shadow-bridge-card transition hover:border-orange-500/50 hover:shadow-bridge-glow">
+            Browse all 2,400+ mentors →
+          </Link>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          HOW IT WORKS — dark, large numbered steps
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden bg-[#060403] py-28">
+        <div aria-hidden className="pointer-events-none absolute inset-0"
+          style={{ backgroundImage: 'linear-gradient(rgba(234,88,12,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,0.04) 1px,transparent 1px)', backgroundSize: '64px 64px' }} />
+        {/* Blob */}
+        <div aria-hidden className="animate-blob-breathe pointer-events-none absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-10"
+          style={{ background: 'radial-gradient(circle,rgba(234,88,12,0.7) 0%,transparent 70%)' }} />
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-16 text-center">
+              <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-orange-400">How it works</p>
+              <h2 className="mt-3 font-display text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+                Three steps.<br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300">One hour.</span><br />Real momentum.
+              </h2>
+            </div>
+          </Reveal>
+          <div className="grid gap-6 sm:grid-cols-3">
+            {[
+              {
+                num: '01', accent: 'from-orange-500 to-amber-400', chip: '"PM at a Series B startup"',
+                icon: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8" strokeLinecap="round"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/></svg>,
+                title: 'Tell us your goal',
+                desc: 'Plain English. Our AI searches 2,400+ professionals and surfaces the exact few most likely to move the needle for you.',
+              },
+              {
+                num: '02', accent: 'from-amber-400 to-orange-400', chip: '98% match · $60/session',
+                icon: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+                title: 'Pick your mentor',
+                desc: 'Real bios, honest reviews, exact rates — all visible before you commit to anything. No surprises.',
+              },
+              {
+                num: '03', accent: 'from-emerald-400 to-teal-400', chip: 'Session confirmed ✓',
+                icon: <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="18" height="18" rx="2" strokeLinecap="round"/><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+                title: 'Book and get unstuck',
+                desc: 'Real-time availability. Built-in video room. No Zoom links, no scheduling emails. One session, done.',
+              },
+            ].map((step, i) => (
+              <Reveal key={i} delay={i * 120}>
+                <div className="group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:border-orange-500/30 hover:bg-white/8">
+                  {/* Big number */}
+                  <div className={`font-display text-[5rem] font-black leading-none text-transparent bg-clip-text bg-gradient-to-br ${step.accent} opacity-20 transition group-hover:opacity-35`}>{step.num}</div>
+                  <div className="mt-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/8 text-white/70">{step.icon}</div>
+                  <h3 className="mt-4 text-lg font-bold text-white">{step.title}</h3>
+                  <p className="mt-2 text-sm text-white/50 leading-relaxed">{step.desc}</p>
+                  <div className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-[10px] font-semibold text-white/50">
+                    <span className="h-1.5 w-1.5 rounded-full bg-orange-400" />{step.chip}
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          TESTIMONIALS — rotating, centered
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-28 bg-[var(--bridge-canvas)]">
+        <div aria-hidden className="animate-blob-breathe pointer-events-none absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-10"
+          style={{ background: 'radial-gradient(circle,rgba(234,88,12,0.4) 0%,transparent 70%)' }} />
+        <div className="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-12 text-center">
+              <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-orange-500">Real outcomes</p>
+              <h2 className="mt-3 font-display text-3xl font-black tracking-tight text-[var(--bridge-text)] sm:text-4xl">People who got unstuck</h2>
+            </div>
+          </Reveal>
+          <TestimonialRotator />
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          BENTO — feature grid, dark
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden bg-[#060403] py-28">
+        <div aria-hidden className="pointer-events-none absolute inset-0"
+          style={{ backgroundImage: 'linear-gradient(rgba(234,88,12,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,0.04) 1px,transparent 1px)', backgroundSize: '64px 64px' }} />
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-12 text-center">
+              <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-orange-400">Why Bridge</p>
+              <h2 className="mt-3 font-display text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+                Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-300">real results</span>
+              </h2>
+            </div>
+          </Reveal>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                icon: '🧠', title: 'AI-powered matching',
+                desc: 'Describe your goal in plain English. Our model ranks 2,400+ mentors by relevance to your exact situation.',
+                wide: true, accent: 'orange',
+              },
+              {
+                icon: '🔒', title: 'Vetted professionals only',
+                desc: 'Every mentor is reviewed. No random LinkedIn strangers.',
+                accent: 'amber',
+              },
+              {
+                icon: '⚡', title: 'One session at a time',
+                desc: 'No packages, no subscriptions. Pay for one hour, commit to nothing.',
+                accent: 'rose',
+              },
+              {
+                icon: '📹', title: 'Built-in video rooms',
+                desc: 'No Zoom links. Video room is auto-generated and ready the moment your session is accepted.',
+                accent: 'sky',
+              },
+              {
+                icon: '📆', title: 'Real-time availability',
+                desc: 'Google Calendar integration. See actual open slots, book in 30 seconds.',
+                accent: 'emerald',
+              },
+              {
+                icon: '⭐', title: 'Honest reviews',
+                desc: 'All reviews, unfiltered. No curated testimonials. Know exactly who you\'re booking.',
+                accent: 'violet',
+              },
+            ].map((f, i) => (
+              <Reveal key={i} delay={i * 60}>
+                <div className={`group relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 transition hover:border-orange-500/20 hover:bg-white/8 ${f.wide ? 'sm:col-span-2 lg:col-span-1' : ''}`}>
+                  <div className="text-3xl">{f.icon}</div>
+                  <h3 className="mt-4 text-base font-bold text-white">{f.title}</h3>
+                  <p className="mt-2 text-sm text-white/50 leading-relaxed">{f.desc}</p>
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-400/20 to-transparent opacity-0 transition group-hover:opacity-100" />
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          COMPARISON TABLE
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="relative py-24 bg-[var(--bridge-canvas)]">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-12 text-center">
+              <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-orange-500">Why not just DM on LinkedIn?</p>
+              <h2 className="mt-3 font-display text-3xl font-black tracking-tight text-[var(--bridge-text)] sm:text-4xl">
+                Bridge vs the alternatives
+              </h2>
+            </div>
+          </Reveal>
+          <Reveal delay={100}>
+            <div className="overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] shadow-bridge-card">
+              {/* header */}
+              <div className="grid grid-cols-4 border-b border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/50">
+                <div className="px-4 py-3 text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--bridge-text-faint)]"></div>
+                {['LinkedIn DMs','Life Coaching','Bridge'].map((h, i) => (
+                  <div key={h} className={`border-l border-[var(--bridge-border)] px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.15em] ${i === 2 ? 'text-orange-500' : 'text-[var(--bridge-text-muted)]'}`}>{h}</div>
+                ))}
+              </div>
+              {WHY_ROWS.map((row, i) => (
+                <div key={i} className={`grid grid-cols-4 border-b border-[var(--bridge-border)]/50 ${i % 2 === 0 ? '' : 'bg-[var(--bridge-surface-muted)]/20'}`}>
+                  <div className="px-4 py-3.5 text-[12px] font-semibold text-[var(--bridge-text-secondary)]">{row.label}</div>
+                  {[row.dm, row.coaching, row.bridge].map((v, j) => (
+                    <div key={j} className={`border-l border-[var(--bridge-border)]/50 px-4 py-3.5 text-center text-[12px] ${j === 2 ? 'font-semibold text-orange-500' : 'text-[var(--bridge-text-muted)]'}`}>{v}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          FINAL CTA — dark, dramatic
+      ══════════════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden bg-[#060403] py-32">
+        <div aria-hidden className="pointer-events-none absolute inset-0"
+          style={{ backgroundImage: 'linear-gradient(rgba(234,88,12,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,0.05) 1px,transparent 1px)', backgroundSize: '64px 64px' }} />
+        {/* Central orb */}
+        <div aria-hidden className="animate-blob-breathe pointer-events-none absolute left-1/2 top-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{ background: 'radial-gradient(circle,rgba(234,88,12,0.18) 0%,rgba(234,88,12,0.04) 50%,transparent 75%)' }} />
+        {/* Spinning ring */}
+        <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:block">
+          <div className="border-gradient-bridge animate-border-bridge h-[520px] w-[520px] rounded-full opacity-15" />
+        </div>
+        <div className="relative z-10 mx-auto max-w-3xl px-4 text-center sm:px-6">
+          <Reveal>
+            <p className="text-[11px] font-bold uppercase tracking-[0.25em] text-orange-400">Ready?</p>
+            <h2 className="mt-4 font-display leading-[0.95] tracking-tight text-white"
+              style={{ fontSize: 'clamp(2.5rem,6vw,5rem)', fontWeight: 900 }}>
+              One conversation<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-orange-500">changes everything.</span>
+            </h2>
+            <p className="mx-auto mt-6 max-w-lg text-base text-white/50 leading-relaxed">
+              Stop spinning. Book a session with someone who's walked the exact path you're on — and made it through.
+            </p>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+              <Link to={user ? '/mentors' : '/register'}
+                className="btn-sheen inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-10 py-5 text-base font-bold text-white shadow-[0_0_64px_rgba(234,88,12,0.5)] transition hover:shadow-[0_0_80px_rgba(234,88,12,0.7)] hover:scale-[1.03] active:scale-95">
+                Get started for free
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </Link>
+              <Link to="/about"
+                className="text-sm font-medium text-white/40 transition hover:text-white/70 underline underline-offset-4">
+                Learn more about Bridge
+              </Link>
+            </div>
+            {/* Trust signals */}
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-[11px] text-white/25">
+              <span>No credit card required</span>
+              <span className="h-1 w-1 rounded-full bg-white/20" />
+              <span>First session guaranteed</span>
+              <span className="h-1 w-1 rounded-full bg-white/20" />
+              <span>Cancel any time</span>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+    </div>
   );
 }

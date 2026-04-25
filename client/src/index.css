@@ -259,9 +259,9 @@ textarea {
 
 @utility bg-bridge-aurora {
   background-image:
-    radial-gradient(40% 50% at 20% 10%, var(--bridge-aurora-1, rgb(254 215 170 / 0.55)), transparent 60%),
-    radial-gradient(35% 45% at 80% 15%, var(--bridge-aurora-2, rgb(253 230 138 / 0.5)), transparent 60%),
-    radial-gradient(50% 55% at 50% 100%, var(--bridge-aurora-3, rgb(251 191 36 / 0.28)), transparent 65%);
+    radial-gradient(40% 50% at 20% 10%, var(--bridge-aurora-1, rgb(254 215 170 / 0.78)), transparent 60%),
+    radial-gradient(35% 45% at 80% 15%, var(--bridge-aurora-2, rgb(253 186 116 / 0.68)), transparent 60%),
+    radial-gradient(50% 55% at 50% 100%, var(--bridge-aurora-3, rgb(251 146 60 / 0.45)), transparent 65%);
 }
 
 /* ── Text glow (dark-mode-tuned via token) ─────────────────────────────────── */
@@ -350,11 +350,11 @@ html.theme-dark {
 
 @utility bg-bridge-hero-mesh {
   background-image:
-    radial-gradient(ellipse 120% 100% at 50% -30%, rgb(255 237 213 / 0.85), transparent 52%),
-    radial-gradient(ellipse 55% 45% at 100% 15%, rgb(254 215 170 / 0.5), transparent 48%),
-    radial-gradient(ellipse 50% 40% at 0% 85%, rgb(253 230 138 / 0.45), transparent 46%),
-    radial-gradient(ellipse 42% 36% at 88% 72%, rgb(196 181 253 / 0.2), transparent 54%),
-    radial-gradient(ellipse 38% 32% at 10% 28%, rgb(251 113 133 / 0.14), transparent 56%);
+    radial-gradient(ellipse 120% 100% at 50% -30%, rgb(253 186 116 / 0.72), transparent 52%),
+    radial-gradient(ellipse 55% 45% at 100% 15%, rgb(254 215 170 / 0.62), transparent 48%),
+    radial-gradient(ellipse 50% 40% at 0% 85%, rgb(251 146 60 / 0.32), transparent 46%),
+    radial-gradient(ellipse 42% 36% at 88% 72%, rgb(196 181 253 / 0.18), transparent 54%),
+    radial-gradient(ellipse 38% 32% at 10% 28%, rgb(251 113 133 / 0.12), transparent 56%);
 }
 
 @utility custom-scrollbar {
