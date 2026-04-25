@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useId, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import EmbeddedCheckoutPanel from '../components/EmbeddedCheckoutPanel';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getMentorById } from '../api/mentors';
@@ -380,18 +381,14 @@ function ConfirmModal({ mentor, user, confirmation, onClose }) {
     const mentorFirst = mentor.name?.split(/\s+/)[0] ?? 'your mentor';
     const prettyDate = confirmation.prettyDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
             <EmbeddedCheckoutPanel
                 clientSecret={checkoutClientSecret}
                 onClose={() => setCheckoutClientSecret(null)}
             />
             <button type="button" className="absolute inset-0 bg-stone-950/70 backdrop-blur-[2px]" aria-label="Close" onClick={handleClose} />
-            {/* Mobile drag handle */}
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex justify-center pb-1 pt-3 sm:hidden" aria-hidden>
-                <span className="h-1 w-10 rounded-full bg-stone-300/60" />
-            </div>
-            <div className="relative flex max-h-[94dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-[var(--bridge-surface)] shadow-2xl ring-1 ring-[var(--bridge-border)] sm:max-h-[92vh] sm:rounded-3xl">
+            <div className="relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-[var(--bridge-surface)] shadow-2xl ring-1 ring-[var(--bridge-border)] sm:rounded-3xl">
                 {result?.ok ? (
                     <div className="flex flex-col items-center px-8 py-14 text-center">
                         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-4xl text-white shadow-lg">✓</div>
@@ -452,7 +449,7 @@ function ConfirmModal({ mentor, user, confirmation, onClose }) {
                 )}
             </div>
         </div>
-    );
+    , document.body);
 }
 
 function ProfileSkeleton() {
