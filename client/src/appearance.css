@@ -4,41 +4,41 @@
 /* ── Design tokens ─────────────────────────────────────────── */
 html {
   color-scheme: light;
-  /* Light: golden hour — warm cream canvas with amber glow, not flat paper */
-  --bridge-canvas: #fdf8f0;
-  --bridge-surface: #fffcf7;
+  /* Light: amber ember — rich warm canvas, floating card surfaces, strong orange presence */
+  --bridge-canvas: #f9eedb;
+  --bridge-surface: #fef8ee;
   --bridge-surface-raised: #ffffff;
-  --bridge-surface-muted: #faf5ec;
-  --bridge-border: rgb(234 88 12 / 0.13);
-  --bridge-border-strong: rgb(234 88 12 / 0.24);
-  --bridge-text: #1c1917;
-  --bridge-text-secondary: #44403c;
-  --bridge-text-muted: #78716c;
-  --bridge-text-faint: #a8a29e;
+  --bridge-surface-muted: #f2e2c4;
+  --bridge-border: rgb(140 55 8 / 0.16);
+  --bridge-border-strong: rgb(140 55 8 / 0.30);
+  --bridge-text: #1a1209;
+  --bridge-text-secondary: #3d2c18;
+  --bridge-text-muted: #6b5438;
+  --bridge-text-faint: #9e7f5e;
   --bridge-accent: #ea580c;
   --bridge-accent-muted: #c2410c;
   --bridge-accent-soft: #fb923c;
-  --bridge-accent-glow: 0 0 32px rgba(234, 88, 12, 0.2);
-  --bridge-mesh-1: rgb(254 215 170 / 0.72);
-  --bridge-mesh-2: rgb(255 237 213 / 0.68);
-  --bridge-mesh-3: rgb(253 186 116 / 0.5);
-  --bridge-aurora-1: rgb(254 215 170 / 0.78);
-  --bridge-aurora-2: rgb(253 186 116 / 0.68);
-  --bridge-aurora-3: rgb(251 146 60 / 0.45);
-  --bridge-shadow-ring: rgb(255 255 255 / 0.75);
-  --bridge-shadow-soft: rgb(28 25 23 / 0.09);
-  --bridge-scrollbar: #e7e5e4;
-  --bridge-scrollbar-hover: #d6d3d1;
-  --bridge-text-glow: rgba(234, 88, 12, 0.12);
-  /* Landing hero dot grid (readable in both schemes) */
-  --landing-hero-dot: rgba(68, 64, 60, 0.12);
-  --landing-hero-highlight: rgb(251 146 60 / 0.42);
-  /* Always-dark hero/CTA background — intentionally dark in both modes */
+  --bridge-accent-glow: 0 0 32px rgba(234, 88, 12, 0.28);
+  --bridge-mesh-1: rgb(253 186 116 / 0.88);
+  --bridge-mesh-2: rgb(254 215 170 / 0.82);
+  --bridge-mesh-3: rgb(251 146 60 / 0.65);
+  --bridge-aurora-1: rgb(253 186 116 / 0.92);
+  --bridge-aurora-2: rgb(251 146 60 / 0.78);
+  --bridge-aurora-3: rgb(234 88 12 / 0.55);
+  --bridge-shadow-ring: rgb(255 255 255 / 0.9);
+  --bridge-shadow-soft: rgb(100 45 8 / 0.13);
+  --bridge-scrollbar: #d4b896;
+  --bridge-scrollbar-hover: #c4a07a;
+  --bridge-text-glow: rgba(234, 88, 12, 0.18);
+  /* Landing hero dot grid */
+  --landing-hero-dot: rgba(68, 40, 10, 0.14);
+  --landing-hero-highlight: rgb(251 146 60 / 0.48);
+  /* Always-dark hero/CTA background */
   --bridge-hero-bg: #150803;
-  /* Fixed side fades (PageGutterAtmosphere) — theme-aware */
-  --bridge-gutter-l: linear-gradient(to right, rgb(234 88 12 / 0.1), rgb(253 186 116 / 0.05), transparent 72%);
-  --bridge-gutter-r: linear-gradient(to left, rgb(234 88 12 / 0.09), rgb(253 186 116 / 0.04), transparent 72%);
-  --bridge-gutter-vline: linear-gradient(to bottom, transparent, rgb(234 88 12 / 0.22), transparent);
+  /* Fixed side fades */
+  --bridge-gutter-l: linear-gradient(to right, rgb(234 88 12 / 0.14), rgb(253 186 116 / 0.07), transparent 72%);
+  --bridge-gutter-r: linear-gradient(to left, rgb(234 88 12 / 0.12), rgb(253 186 116 / 0.06), transparent 72%);
+  --bridge-gutter-vline: linear-gradient(to bottom, transparent, rgb(234 88 12 / 0.28), transparent);
 }
 
 html.theme-dark {
@@ -86,16 +86,17 @@ html.theme-light body,
 html:not(.theme-dark) body {
   background-color: var(--bridge-canvas);
   color: var(--bridge-text);
-  /* Warm amber blushes — matches dark mode's ambient radials, tuned for light */
+  /* Saturated warm amber radials — give depth comparable to dark mode's glows */
   background-image:
-    radial-gradient(ellipse 80% 45% at 12% -5%, rgba(254, 215, 170, 0.55), transparent 60%),
-    radial-gradient(ellipse 65% 45% at 95% 28%, rgba(253, 186, 116, 0.38), transparent 58%),
-    radial-gradient(ellipse 70% 50% at 55% 108%, rgba(251, 146, 60, 0.14), transparent 60%);
+    radial-gradient(ellipse 90% 60% at -8% -8%, rgba(234, 88, 12, 0.22), transparent 52%),
+    radial-gradient(ellipse 80% 55% at 112% 10%, rgba(253, 186, 116, 0.45), transparent 52%),
+    radial-gradient(ellipse 65% 50% at 50% 118%, rgba(251, 146, 60, 0.18), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 80% 55%, rgba(254, 215, 170, 0.3), transparent 50%);
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
 
-/* Light mode grain — same SVG as dark but lighter opacity + multiply blend */
+/* Light mode grain — subtle texture adds tactile depth, avoids flat "paper" look */
 html.theme-light body::before,
 html:not(.theme-dark) body::before {
   content: "";
@@ -104,7 +105,7 @@ html:not(.theme-dark) body::before {
   pointer-events: none;
   z-index: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.07;
+  opacity: 0.10;
   mix-blend-mode: multiply;
 }
 
@@ -152,14 +153,14 @@ html .bg-bridge-hero-mesh {
 html .text-gradient-bridge {
   background-image: linear-gradient(
     135deg,
-    var(--bridge-accent-muted) 0%,
-    var(--bridge-accent) 45%,
+    #b83a07 0%,
+    #ea580c 40%,
     #d97706 100%
   ) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   color: transparent !important;
-  filter: drop-shadow(0 0 18px rgba(234, 88, 12, 0.18));
+  filter: drop-shadow(0 0 20px rgba(234, 88, 12, 0.28));
 }
 
 html.theme-dark .text-gradient-bridge {
@@ -175,9 +176,9 @@ html.theme-dark .text-gradient-bridge {
 html .shadow-bridge-glow {
   box-shadow:
     0 0 0 1px var(--bridge-shadow-ring) inset,
-    0 1px 2px var(--bridge-shadow-soft),
-    0 8px 22px -6px rgb(234 88 12 / 0.2),
-    0 26px 60px -18px rgb(234 88 12 / 0.22) !important;
+    0 1px 3px rgb(100 45 8 / 0.12),
+    0 8px 24px -6px rgb(180 80 10 / 0.28),
+    0 26px 60px -18px rgb(180 80 10 / 0.22) !important;
 }
 
 html.theme-dark .shadow-bridge-glow {
@@ -190,10 +191,10 @@ html.theme-dark .shadow-bridge-glow {
 
 html .shadow-bridge-card {
   box-shadow:
-    0 0 0 1px var(--bridge-border),
-    0 1px 2px var(--bridge-shadow-soft),
-    0 6px 14px -6px var(--bridge-shadow-soft),
-    0 28px 56px -24px var(--bridge-shadow-soft) !important;
+    0 0 0 1px rgb(140 55 8 / 0.12),
+    0 1px 3px rgb(100 45 8 / 0.1),
+    0 6px 18px -6px rgb(100 45 8 / 0.18),
+    0 28px 56px -24px rgb(100 45 8 / 0.14) !important;
 }
 
 html.theme-dark .shadow-bridge-card {
@@ -206,10 +207,10 @@ html.theme-dark .shadow-bridge-card {
 
 html .shadow-bridge-float {
   box-shadow:
-    0 0 0 1px var(--bridge-border) inset,
-    0 2px 4px var(--bridge-shadow-soft),
-    0 12px 28px -10px var(--bridge-shadow-soft),
-    0 40px 80px -20px rgb(234 88 12 / 0.24) !important;
+    0 0 0 1px rgb(140 55 8 / 0.14) inset,
+    0 2px 6px rgb(100 45 8 / 0.14),
+    0 12px 32px -10px rgb(100 45 8 / 0.22),
+    0 40px 80px -20px rgb(180 80 10 / 0.28) !important;
 }
 
 html.theme-dark .shadow-bridge-float {
@@ -293,6 +294,23 @@ html:not(.theme-dark) .bg-stone-50\/80,
 html:not(.theme-dark) .bg-stone-50\/90 {
   background-color: var(--bridge-surface-muted) !important;
 }
+
+/* Light mode: make bg-white and surface-raised elements visually pop above canvas */
+html:not(.theme-dark) .bg-white,
+html:not(.theme-dark) .bg-white\/80,
+html:not(.theme-dark) .bg-white\/85,
+html:not(.theme-dark) .bg-white\/90,
+html:not(.theme-dark) .bg-white\/95 {
+  background-color: var(--bridge-surface-raised) !important;
+}
+
+/* Light mode text: map stone to warm brown tones for better light-mode feel */
+html:not(.theme-dark) .text-stone-900 { color: var(--bridge-text) !important; }
+html:not(.theme-dark) .text-stone-800,
+html:not(.theme-dark) .text-stone-700 { color: var(--bridge-text-secondary) !important; }
+html:not(.theme-dark) .text-stone-600,
+html:not(.theme-dark) .text-stone-500 { color: var(--bridge-text-muted) !important; }
+html:not(.theme-dark) .text-stone-400 { color: var(--bridge-text-faint) !important; }
 
 /* Input focus ring in light mode — warm amber glow */
 html:not(.theme-dark) input:focus-visible,
@@ -566,6 +584,38 @@ html.theme-dark .btn-sheen::after {
     rgba(255, 237, 213, 0.22) 50%,
     transparent 100%
   );
+}
+
+/* ── Light mode component depth helpers ──────────────────────── */
+
+/* Navbar in light mode: warm tinted glass */
+html:not(.theme-dark) nav,
+html:not(.theme-dark) [class*="bg-[var(--bridge-canvas)]/95"] {
+  box-shadow: 0 1px 0 rgb(140 55 8 / 0.12), 0 4px 16px -4px rgb(100 45 8 / 0.12);
+}
+
+/* Input fields in light mode: white on the warm canvas = clear elevation */
+html:not(.theme-dark) input[type="text"],
+html:not(.theme-dark) input[type="email"],
+html:not(.theme-dark) input[type="number"],
+html:not(.theme-dark) input[type="password"],
+html:not(.theme-dark) select,
+html:not(.theme-dark) textarea {
+  background-color: #ffffff !important;
+  border-color: rgb(140 55 8 / 0.18) !important;
+  box-shadow: 0 1px 3px rgb(100 45 8 / 0.08) inset !important;
+}
+
+/* Orange tag/expertise chips in light mode — more visible */
+html:not(.theme-dark) .bg-orange-50\/80,
+html:not(.theme-dark) .bg-orange-50\/60 {
+  background-color: rgb(254 215 170 / 0.6) !important;
+}
+
+/* Border color on orange-tinted elements — richer in light mode */
+html:not(.theme-dark) .border-orange-100,
+html:not(.theme-dark) .border-orange-200\/60 {
+  border-color: rgb(180 80 10 / 0.22) !important;
 }
 
 /* ── High contrast ───────────────────────────────────────────── */

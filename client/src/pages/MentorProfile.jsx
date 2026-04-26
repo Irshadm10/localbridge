@@ -25,6 +25,156 @@ import { finalizeCheckout } from '../api/stripe';
 const focusRingDark  = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
 const focusRingWhite = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
 
+// ─── Mentor tiers data ────────────────────────────────────────────────────────
+
+const MENTOR_TIERS = [
+  {
+    name: 'Rising',
+    rateRange: '$40–$70',
+    experienceDesc: '0–4 years · Early-career professionals and recent grads who have earned their first real wins.',
+    useCases: ['First job search and resume polish', 'Breaking into competitive entry-level roles', 'Building professional habits and early momentum'],
+    accentFrom: 'from-emerald-500',
+    accentTo: 'to-emerald-400',
+    badgeBg: 'bg-emerald-500/15',
+    badgeText: 'text-emerald-300',
+    badgeBorder: 'border-emerald-500/30',
+    glowColor: 'rgba(16,185,129,0.18)',
+  },
+  {
+    name: 'Established',
+    rateRange: '$75–$120',
+    experienceDesc: '5–9 years · Mid-career contributors with a proven track record and a clear area of focus.',
+    useCases: ['Mid-level to senior career transitions', 'Navigating promotion cycles and leveling up', 'Changing industries or switching functions'],
+    accentFrom: 'from-sky-500',
+    accentTo: 'to-sky-400',
+    badgeBg: 'bg-sky-500/15',
+    badgeText: 'text-sky-300',
+    badgeBorder: 'border-sky-500/30',
+    glowColor: 'rgba(14,165,233,0.18)',
+  },
+  {
+    name: 'Expert',
+    rateRange: '$125–$175',
+    experienceDesc: '10–15 years · Senior leaders with deep functional expertise and meaningful organizational scope.',
+    useCases: ['Senior or staff-level interview preparation', 'Executive communication and cross-functional influence', 'High-stakes career pivots and role expansions'],
+    accentFrom: 'from-violet-500',
+    accentTo: 'to-violet-400',
+    badgeBg: 'bg-violet-500/15',
+    badgeText: 'text-violet-300',
+    badgeBorder: 'border-violet-500/30',
+    glowColor: 'rgba(139,92,246,0.18)',
+  },
+  {
+    name: 'Elite',
+    rateRange: '$180–$250',
+    experienceDesc: '15+ years · C-suite executives and industry-defining practitioners at the top of their fields.',
+    useCases: ['VP and C-suite transition coaching', 'Board-level presence and strategic positioning', 'Legacy career decisions, exits, and portfolio moves'],
+    accentFrom: 'from-amber-500',
+    accentTo: 'to-orange-500',
+    badgeBg: 'bg-gradient-to-r from-amber-500 to-orange-500',
+    badgeText: 'text-white',
+    badgeBorder: '',
+    glowColor: 'rgba(245,158,11,0.22)',
+  },
+];
+
+// ─── Mentor Tiers Modal ────────────────────────────────────────────────────────
+
+function MentorTiersModal({ onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-6"
+      role="dialog" aria-modal="true" aria-labelledby="tiers-modal-title">
+      {/* Backdrop */}
+      <button type="button" className="absolute inset-0 bg-stone-950/75 backdrop-blur-[3px]" aria-label="Close" onClick={onClose} />
+
+      {/* Panel */}
+      <div className="relative flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-[var(--bridge-surface)] shadow-2xl ring-1 ring-[var(--bridge-border)] sm:rounded-3xl">
+
+        {/* Header */}
+        <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-stone-900 via-stone-900 to-orange-950 px-6 py-5 sm:px-8">
+          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/15 blur-3xl" />
+          <div aria-hidden className="pointer-events-none absolute -left-8 bottom-0 h-32 w-32 rounded-full bg-orange-600/10 blur-2xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-300/80">Bridge</p>
+              <h2 id="tiers-modal-title" className="mt-1 font-display text-2xl font-black text-white sm:text-3xl">Mentor Tiers</h2>
+              <p className="mt-1.5 max-w-md text-sm leading-relaxed text-stone-400">
+                Every mentor on Bridge is placed in one of four tiers based on experience and expertise.
+              </p>
+            </div>
+            <button type="button" onClick={onClose} aria-label="Close"
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-stone-300 transition hover:bg-white/20 hover:text-white ${focusRingWhite}`}>
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Tiers grid */}
+        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {MENTOR_TIERS.map((tier) => (
+              <div key={tier.name} className="group relative overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] p-5 transition hover:border-[var(--bridge-border-strong)] hover:shadow-bridge-card">
+                {/* Subtle glow */}
+                <div aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                  style={{ background: `radial-gradient(circle, ${tier.glowColor}, transparent 70%)` }} />
+
+                {/* Top accent bar */}
+                <div aria-hidden className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${tier.accentFrom} ${tier.accentTo} opacity-70`} />
+
+                <div className="relative">
+                  {/* Badge + rate */}
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] border ${tier.badgeBg} ${tier.badgeText} ${tier.badgeBorder}`}>
+                      {tier.name}
+                    </span>
+                    <span className={`font-display text-xl font-black tabular-nums bg-gradient-to-r ${tier.accentFrom} ${tier.accentTo} bg-clip-text text-transparent`}>
+                      {tier.rateRange}
+                    </span>
+                  </div>
+
+                  {/* Experience desc */}
+                  <p className="mb-3 text-xs leading-relaxed text-[var(--bridge-text-muted)]">{tier.experienceDesc}</p>
+
+                  {/* Use cases */}
+                  <ul className="space-y-1.5">
+                    {tier.useCases.map((uc) => (
+                      <li key={uc} className="flex items-start gap-2 text-xs text-[var(--bridge-text-secondary)]">
+                        <svg className={`mt-0.5 h-3.5 w-3.5 shrink-0 bg-gradient-to-r ${tier.accentFrom} ${tier.accentTo} bg-clip-text`} viewBox="0 0 14 14" fill="none">
+                          <circle cx="7" cy="7" r="6" className={`fill-current bg-gradient-to-r ${tier.accentFrom} ${tier.accentTo}`} style={{ fill: `url(#g-${tier.name})` }} />
+                          <defs>
+                            <linearGradient id={`g-${tier.name}`} x1="0" y1="0" x2="14" y2="14" gradientUnits="userSpaceOnUse">
+                              <stop stopColor={tier.name === 'Rising' ? '#10b981' : tier.name === 'Established' ? '#0ea5e9' : tier.name === 'Expert' ? '#8b5cf6' : '#f59e0b'} />
+                              <stop offset="1" stopColor={tier.name === 'Rising' ? '#34d399' : tier.name === 'Established' ? '#38bdf8' : tier.name === 'Expert' ? '#a78bfa' : '#f97316'} />
+                            </linearGradient>
+                          </defs>
+                          <path d="M4.5 7l1.75 1.75L9.5 5.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {uc}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-4 text-center text-[11px] text-[var(--bridge-text-faint)]">
+            Rates shown are typical ranges. Each mentor sets their own session price.
+          </p>
+        </div>
+      </div>
+    </div>
+  , document.body);
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function tierBadgeClasses(tier) {
@@ -104,23 +254,24 @@ function SessionTypeIcon({ typeKey, className = 'h-5 w-5' }) {
 
 function ProfileSkeleton() {
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <div style={{ backgroundColor: 'var(--bridge-hero-bg)' }} className="relative pb-24 pt-28">
-        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-30"
-          style={{ backgroundImage: 'linear-gradient(rgba(234,88,12,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(234,88,12,0.08) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+    <div className="relative min-h-screen overflow-hidden bg-[var(--bridge-canvas)]">
+      <div className="relative border-b border-[var(--bridge-border)] pb-8 pt-6">
         <div className="relative mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-end">
-            <div className="h-32 w-32 animate-pulse rounded-2xl bg-white/10" />
+          <div className="mb-6 flex items-center gap-2">
+            <div className="h-3 w-12 animate-pulse rounded-full bg-[var(--bridge-surface-muted)]" />
+            <div className="h-3 w-16 animate-pulse rounded-full bg-[var(--bridge-surface-muted)]" />
+          </div>
+          <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
+            <div className="h-28 w-28 animate-pulse rounded-[1.25rem] bg-[var(--bridge-surface-muted)] shadow-bridge-card" />
             <div className="flex-1 space-y-3">
-              <div className="h-4 w-28 animate-pulse rounded-full bg-white/10" />
-              <div className="h-10 w-64 animate-pulse rounded-xl bg-white/15" />
-              <div className="h-5 w-48 animate-pulse rounded-lg bg-white/10" />
+              <div className="h-4 w-28 animate-pulse rounded-full bg-[var(--bridge-surface-muted)]" />
+              <div className="h-10 w-64 animate-pulse rounded-xl bg-[var(--bridge-surface-muted)]" />
+              <div className="h-5 w-48 animate-pulse rounded-lg bg-[var(--bridge-surface-muted)]" />
             </div>
           </div>
         </div>
       </div>
-      <div aria-hidden className="pointer-events-none h-48" style={{ background: 'linear-gradient(to bottom, var(--bridge-hero-bg), var(--bridge-canvas))' }} />
-      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[90rem] px-4 py-8 sm:px-6 lg:px-8">
         <div className="h-64 animate-pulse rounded-[1.75rem] bg-[var(--bridge-surface)]" />
       </div>
     </div>
@@ -466,6 +617,7 @@ export default function MentorProfile() {
   const [pendingConfirm, setPendingConfirm] = useState(null);
   const [checkoutNotice, setCheckoutNotice] = useState(null);
   const [checkoutError, setCheckoutError]   = useState(null);
+  const [showTiersModal, setShowTiersModal] = useState(false);
   const bookingRef = useRef(null);
 
   // Load mentor + reviews
@@ -598,34 +750,24 @@ export default function MentorProfile() {
       <main id="mentor-profile" className="relative isolate min-h-screen overflow-x-hidden" aria-labelledby="profile-heading">
 
         {/* ════════════════════════════════════════════════════════
-            ALWAYS-DARK HERO
+            HERO — theme-aware
         ════════════════════════════════════════════════════════ */}
-        <section style={{ backgroundColor: 'var(--bridge-hero-bg)' }} className="relative overflow-hidden pb-10 pt-10">
-
-          {/* Grid lines */}
-          <div aria-hidden className="pointer-events-none absolute inset-0"
-            style={{ backgroundImage: 'linear-gradient(rgba(234,88,12,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(234,88,12,0.06) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+        <section className="relative overflow-hidden border-b border-[var(--bridge-border)] bg-[var(--bridge-canvas)] pb-8 pt-6">
 
           {/* Ambient orbs */}
-          <div aria-hidden className="pointer-events-none absolute -left-32 top-0 h-[500px] w-[500px] animate-blob-breathe rounded-full opacity-25"
-            style={{ background: 'radial-gradient(circle, rgba(234,88,12,0.55) 0%, transparent 70%)' }} />
-          <div aria-hidden className="pointer-events-none absolute -right-20 -top-20 h-[420px] w-[420px] animate-blob-breathe rounded-full opacity-20 [animation-delay:-2.5s]"
-            style={{ background: 'radial-gradient(circle, rgba(251,146,60,0.45) 0%, transparent 70%)' }} />
-          <div aria-hidden className="pointer-events-none absolute bottom-0 left-1/2 h-[300px] w-[600px] -translate-x-1/2 rounded-full opacity-15 blur-3xl"
-            style={{ background: 'radial-gradient(ellipse, rgba(234,88,12,0.4) 0%, transparent 70%)' }} />
-
-          {/* Top prismatic edge */}
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px"
-            style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(234,88,12,0.3) 20%, rgba(251,146,60,0.8) 50%, rgba(234,88,12,0.3) 80%, transparent 100%)' }} />
+          <div aria-hidden className="pointer-events-none absolute -left-24 -top-8 h-80 w-80 rounded-full opacity-40 blur-3xl"
+            style={{ background: 'radial-gradient(circle, rgba(234,88,12,0.18) 0%, transparent 70%)' }} />
+          <div aria-hidden className="pointer-events-none absolute -right-16 top-0 h-64 w-64 rounded-full opacity-30 blur-3xl"
+            style={{ background: 'radial-gradient(circle, rgba(251,146,60,0.15) 0%, transparent 70%)' }} />
 
           {/* Checkout notices */}
           {(checkoutError || checkoutNotice) && (
-            <div className="relative mx-auto mb-6 max-w-[90rem] px-4 sm:px-6 lg:px-8">
+            <div className="relative mx-auto mb-4 max-w-[90rem] px-4 sm:px-6 lg:px-8">
               {checkoutError && (
-                <p className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{checkoutError}</p>
+                <p className="rounded-2xl border border-red-200/80 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-300">{checkoutError}</p>
               )}
               {checkoutNotice && (
-                <p className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{checkoutNotice}</p>
+                <p className="rounded-2xl border border-emerald-200/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300">{checkoutNotice}</p>
               )}
             </div>
           )}
@@ -633,36 +775,33 @@ export default function MentorProfile() {
           <div className="relative mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
 
             {/* Breadcrumb */}
-            <nav aria-label="Breadcrumb" className="mb-10">
-              <ol className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
-                <li><Link to="/" className="transition hover:text-amber-400">Home</Link></li>
-                <li aria-hidden><svg className="h-3 w-3 text-stone-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6" /></svg></li>
-                <li><Link to="/mentors" className="transition hover:text-amber-400">Mentors</Link></li>
-                <li aria-hidden><svg className="h-3 w-3 text-stone-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6" /></svg></li>
-                <li className="max-w-[14rem] truncate font-medium text-stone-300">{mentor.name}</li>
+            <nav aria-label="Breadcrumb" className="mb-6">
+              <ol className="flex flex-wrap items-center gap-2 text-sm text-[var(--bridge-text-muted)]">
+                <li><Link to="/" className="transition hover:text-orange-500">Home</Link></li>
+                <li aria-hidden><svg className="h-3 w-3 text-[var(--bridge-border-strong)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6" /></svg></li>
+                <li><Link to="/mentors" className="transition hover:text-orange-500">Mentors</Link></li>
+                <li aria-hidden><svg className="h-3 w-3 text-[var(--bridge-border-strong)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6" /></svg></li>
+                <li className="max-w-[14rem] truncate font-medium text-[var(--bridge-text-secondary)]">{mentor.name}</li>
               </ol>
             </nav>
 
             {/* Hero content */}
-            <div className="flex flex-col items-center gap-8 text-center lg:flex-row lg:items-end lg:text-left">
+            <div className="flex flex-col items-center gap-6 text-center lg:flex-row lg:items-center lg:text-left">
 
               {/* Avatar */}
               <div className="relative shrink-0">
-                {/* Glow behind avatar */}
-                <div aria-hidden className="absolute inset-0 -m-4 rounded-3xl opacity-50 blur-2xl"
-                  style={{ background: 'radial-gradient(circle, rgba(251,146,60,0.6) 0%, transparent 70%)' }} />
-                {/* Spinning gradient ring */}
-                <div aria-hidden className="absolute -inset-1.5 rounded-[1.4rem] border-gradient-bridge animate-border-bridge opacity-60" />
-                <div className="relative rounded-[1.25rem] ring-2 ring-orange-500/30">
+                <div aria-hidden className="absolute inset-0 -m-3 rounded-3xl opacity-40 blur-xl"
+                  style={{ background: 'radial-gradient(circle, rgba(251,146,60,0.5) 0%, transparent 70%)' }} />
+                <div aria-hidden className="absolute -inset-1.5 rounded-[1.4rem] border-gradient-bridge animate-border-bridge opacity-50" />
+                <div className="relative rounded-[1.25rem] ring-2 ring-orange-400/20">
                   <MentorAvatar
                     name={mentor.name}
                     size="xl"
-                    className="h-28 w-28 rounded-[1.25rem] text-3xl shadow-2xl sm:h-36 sm:w-36 sm:text-4xl"
+                    className="h-24 w-24 rounded-[1.25rem] text-3xl shadow-bridge-float sm:h-32 sm:w-32 sm:text-4xl"
                   />
                 </div>
-                {/* Available badge */}
                 {mentor.available && (
-                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1 shadow-lg shadow-emerald-500/40 whitespace-nowrap">
+                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1 shadow-lg shadow-emerald-500/30 whitespace-nowrap">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
@@ -674,7 +813,7 @@ export default function MentorProfile() {
 
               {/* Name + title + tags */}
               <div className="min-w-0 flex-1">
-                {/* Badges row */}
+                {/* Tier + industry badges */}
                 <div className="mb-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
                   {mentor.tier && (
                     <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] ${tierBadgeClasses(mentor.tier)}`}>
@@ -682,48 +821,48 @@ export default function MentorProfile() {
                     </span>
                   )}
                   {industryLabel && (
-                    <span className="rounded-full border border-orange-400/30 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-300">
+                    <span className="rounded-full border border-orange-300/50 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-600 dark:border-orange-400/30 dark:bg-orange-500/10 dark:text-orange-300">
                       {industryLabel}
                     </span>
                   )}
                   {mentor.calendar_connected && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-400/30 bg-sky-500/10 px-3 py-1 text-[11px] font-semibold text-sky-300">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200/60 bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-600 dark:border-sky-400/30 dark:bg-sky-500/10 dark:text-sky-300">
                       <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
                       Calendar synced
                     </span>
                   )}
                 </div>
 
-                <h1 id="profile-heading" className="font-display text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+                <h1 id="profile-heading" className="font-display text-4xl font-black tracking-tight text-[var(--bridge-text)] sm:text-5xl">
                   {mentor.name}
                 </h1>
 
                 {mentor.title && (
-                  <p className="mt-3 text-lg text-stone-300 sm:text-xl">
-                    <span className="font-semibold text-amber-200">{mentor.title}</span>
-                    {mentor.company && <><span className="text-stone-500"> · </span><span className="text-stone-300">{mentor.company}</span></>}
+                  <p className="mt-2 text-lg text-[var(--bridge-text-secondary)] sm:text-xl">
+                    <span className="font-semibold text-orange-600 dark:text-amber-400">{mentor.title}</span>
+                    {mentor.company && <><span className="text-[var(--bridge-text-faint)]"> · </span><span>{mentor.company}</span></>}
                   </p>
                 )}
 
                 {/* Social links */}
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
                   {mentor.linkedin_url && (
                     <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-semibold text-stone-300 transition hover:border-blue-400/50 hover:bg-blue-500/15 hover:text-blue-300">
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-blue-300/70 hover:bg-blue-50 hover:text-blue-600 dark:hover:border-blue-400/40 dark:hover:bg-blue-500/10 dark:hover:text-blue-300">
                       <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
                       LinkedIn
                     </a>
                   )}
                   {mentor.github_url && (
                     <a href={mentor.github_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-semibold text-stone-300 transition hover:border-white/30 hover:bg-white/15 hover:text-white">
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-[var(--bridge-border-strong)] hover:bg-[var(--bridge-surface-muted)] hover:text-[var(--bridge-text)]">
                       <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
                       GitHub
                     </a>
                   )}
                   {mentor.website_url && (
                     <a href={mentor.website_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 text-xs font-semibold text-stone-300 transition hover:border-orange-400/50 hover:bg-orange-500/10 hover:text-orange-300">
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-orange-300/60 hover:bg-orange-50 hover:text-orange-600 dark:hover:border-orange-400/30 dark:hover:bg-orange-500/10 dark:hover:text-orange-300">
                       <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5a17.92 17.92 0 0 1-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" /></svg>
                       Website
                     </a>
@@ -732,34 +871,31 @@ export default function MentorProfile() {
               </div>
 
               {/* Stats + pricing + CTA */}
-              <div className="shrink-0 flex flex-col items-center gap-5 lg:items-end">
-                {/* Floating stat chips */}
+              <div className="shrink-0 flex flex-col items-center gap-4 lg:items-end">
+                {/* Stat chips */}
                 <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-end">
-                  {/* Rating */}
-                  <div className="flex items-center gap-2 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-2.5">
-                    <svg className="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292Z" /></svg>
+                  <div className="flex items-center gap-2 rounded-2xl border border-amber-300/50 bg-amber-50 px-4 py-2.5 shadow-sm dark:border-amber-400/25 dark:bg-amber-400/10">
+                    <svg className="h-4 w-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292Z" /></svg>
                     <div>
-                      <p className="font-display text-lg font-black tabular-nums text-white leading-none">
+                      <p className="font-display text-lg font-black tabular-nums text-[var(--bridge-text)] leading-none">
                         {displayRating > 0 ? displayRating.toFixed(1) : '—'}
                       </p>
-                      {reviewMeta?.count > 0 && <p className="text-[10px] text-amber-300/70">{reviewMeta.count} review{reviewMeta.count !== 1 ? 's' : ''}</p>}
+                      {reviewMeta?.count > 0 && <p className="text-[10px] text-amber-600 dark:text-amber-300">{reviewMeta.count} review{reviewMeta.count !== 1 ? 's' : ''}</p>}
                     </div>
                   </div>
-                  {/* Sessions */}
-                  <div className="flex items-center gap-2 rounded-2xl border border-white/15 bg-white/8 px-4 py-2.5">
-                    <svg className="h-4 w-4 text-stone-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                  <div className="flex items-center gap-2 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2.5 shadow-sm">
+                    <svg className="h-4 w-4 text-[var(--bridge-text-muted)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
                     <div>
-                      <p className="font-display text-lg font-black tabular-nums text-white leading-none">{mentor.total_sessions ?? '—'}</p>
-                      <p className="text-[10px] text-stone-400">sessions</p>
+                      <p className="font-display text-lg font-black tabular-nums text-[var(--bridge-text)] leading-none">{mentor.total_sessions ?? '—'}</p>
+                      <p className="text-[10px] text-[var(--bridge-text-faint)]">sessions</p>
                     </div>
                   </div>
-                  {/* Experience */}
                   {mentor.years_experience != null && (
-                    <div className="flex items-center gap-2 rounded-2xl border border-white/15 bg-white/8 px-4 py-2.5">
-                      <svg className="h-4 w-4 text-stone-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                    <div className="flex items-center gap-2 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2.5 shadow-sm">
+                      <svg className="h-4 w-4 text-[var(--bridge-text-muted)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
                       <div>
-                        <p className="font-display text-lg font-black tabular-nums text-white leading-none">{mentor.years_experience}</p>
-                        <p className="text-[10px] text-stone-400">yrs exp</p>
+                        <p className="font-display text-lg font-black tabular-nums text-[var(--bridge-text)] leading-none">{mentor.years_experience}</p>
+                        <p className="text-[10px] text-[var(--bridge-text-faint)]">yrs exp</p>
                       </div>
                     </div>
                   )}
@@ -770,31 +906,34 @@ export default function MentorProfile() {
                   <p className="font-display text-5xl font-black tabular-nums text-gradient-bridge leading-none">
                     {mentor.session_rate ? `$${mentor.session_rate}` : 'Free'}
                   </p>
-                  <p className="mt-1 text-sm text-stone-400">per session</p>
+                  <p className="mt-1 text-sm text-[var(--bridge-text-muted)]">per session</p>
                 </div>
 
-                {/* Book CTA */}
-                {!isOwnMentorProfile && !bookingDisabledForMentor && (
-                  <button type="button"
-                    onClick={() => bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                    className={`btn-sheen flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-8 py-4 text-sm font-bold text-white shadow-[0_4px_32px_-4px_rgba(234,88,12,0.7)] transition hover:brightness-110 hover:shadow-[0_8px_40px_-4px_rgba(234,88,12,0.85)] ${focusRing}`}>
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
-                    Book a Session
+                {/* CTA buttons — side by side */}
+                <div className="flex flex-wrap items-center justify-center gap-2.5 lg:justify-end">
+                  {!isOwnMentorProfile && !bookingDisabledForMentor && (
+                    <button type="button"
+                      onClick={() => bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      className={`btn-sheen flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-6 py-3 text-sm font-bold text-white shadow-[0_4px_24px_-4px_rgba(234,88,12,0.6)] transition hover:brightness-110 hover:shadow-[0_8px_32px_-4px_rgba(234,88,12,0.75)] ${focusRing}`}>
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                      Book a Session
+                    </button>
+                  )}
+                  <button type="button" onClick={() => setShowTiersModal(true)}
+                    className={`flex items-center gap-2 rounded-full border-2 border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-5 py-3 text-sm font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-orange-400/60 hover:bg-orange-50 hover:text-orange-600 dark:hover:border-orange-400/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-300 ${focusRing}`}>
+                    <svg className="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
+                    See Mentor Tiers
                   </button>
-                )}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Gradient transition strip */}
-        <div aria-hidden className="pointer-events-none h-10"
-          style={{ background: 'linear-gradient(to bottom, var(--bridge-hero-bg), var(--bridge-canvas))' }} />
-
         {/* ════════════════════════════════════════════════════════
             MAIN CONTENT — theme-aware
         ════════════════════════════════════════════════════════ */}
-        <div className="mx-auto max-w-[90rem] px-4 pb-28 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[90rem] px-4 pb-28 pt-6 sm:px-6 lg:px-8">
 
           {/* ── Booking section ─────────────────────────────────── */}
           <div ref={bookingRef} className="mb-10 scroll-mt-24">
@@ -1111,6 +1250,7 @@ export default function MentorProfile() {
       {pendingConfirm && (
         <ConfirmModal mentor={mentor} user={user} confirmation={pendingConfirm} onClose={() => setPendingConfirm(null)} />
       )}
+      {showTiersModal && <MentorTiersModal onClose={() => setShowTiersModal(false)} />}
     </>
   );
 }

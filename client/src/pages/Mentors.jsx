@@ -480,29 +480,26 @@ export default function Mentors() {
           HERO HEADER
       ═══════════════════════════════════════════════════════════ */}
       {!aiMode && (
-        <section style={{ backgroundColor: 'var(--bridge-hero-bg)' }} className="relative overflow-hidden pb-8 pt-8">
-          {/* Grid */}
-          <div aria-hidden className="pointer-events-none absolute inset-0"
-            style={{ backgroundImage: 'linear-gradient(rgba(234,88,12,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(234,88,12,0.055) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
-          {/* Orbs */}
-          <div aria-hidden className="pointer-events-none absolute -left-24 top-0 h-72 w-72 animate-blob-breathe rounded-full opacity-20" style={{ background: 'radial-gradient(circle, rgba(234,88,12,0.6) 0%, transparent 70%)' }} />
-          <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-64 w-64 animate-blob-breathe rounded-full opacity-15 [animation-delay:-2s]" style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.5) 0%, transparent 70%)' }} />
-          {/* Top edge */}
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(234,88,12,0.3) 30%, rgba(251,146,60,0.7) 50%, rgba(234,88,12,0.3) 70%, transparent 100%)' }} />
+        <section className="relative overflow-hidden border-b border-[var(--bridge-border)] bg-[var(--bridge-canvas)] pb-5 pt-8">
+          {/* Ambient orbs */}
+          <div aria-hidden className="pointer-events-none absolute -left-24 -top-12 h-64 w-64 rounded-full opacity-40 blur-3xl"
+            style={{ background: 'radial-gradient(circle, rgba(234,88,12,0.22) 0%, transparent 70%)' }} />
+          <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-56 w-56 rounded-full opacity-30 blur-3xl"
+            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)' }} />
 
           <div className="relative mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/6 px-3 py-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse-soft" />
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-400">
+                <div className="mb-2.5 inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3 py-1 shadow-sm">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse-soft" />
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--bridge-text-muted)]">
                     {totalCount > 0 ? `${totalCount} mentors available` : 'Browse mentors'}
                   </span>
                 </div>
-                <h1 className="font-display text-4xl font-black tracking-tight text-white sm:text-5xl">
+                <h1 className="font-display text-3xl font-black tracking-tight text-[var(--bridge-text)] sm:text-4xl">
                   Find your <span className="text-gradient-bridge">mentor</span>
                 </h1>
-                <p className="mt-3 max-w-md text-[15px] leading-relaxed text-stone-400">
+                <p className="mt-2 max-w-md text-[14px] leading-relaxed text-[var(--bridge-text-muted)]">
                   Connect with professionals who've been where you want to go. Real advice, real experience.
                 </p>
               </div>
@@ -513,16 +510,16 @@ export default function Mentors() {
                   {remainingUses !== null && remainingUses > 0 && (
                     <div className="flex items-center gap-1.5">
                       {Array.from({ length: LIMITS.mentor_match }).map((_, i) => (
-                        <span key={i} className={`h-1.5 w-1.5 rounded-full transition-all ${i < LIMITS.mentor_match - remainingUses ? 'bg-white/20' : 'bg-violet-400 shadow-[0_0_4px_rgba(139,92,246,0.6)]'}`} />
+                        <span key={i} className={`h-1.5 w-1.5 rounded-full transition-all ${i < LIMITS.mentor_match - remainingUses ? 'bg-[var(--bridge-border-strong)]' : 'bg-violet-500 shadow-[0_0_4px_rgba(139,92,246,0.5)]'}`} />
                       ))}
-                      <span className="text-[11px] text-stone-500">{remainingUses} use{remainingUses !== 1 ? 's' : ''} left</span>
+                      <span className="text-[11px] text-[var(--bridge-text-faint)]">{remainingUses} use{remainingUses !== 1 ? 's' : ''} left</span>
                     </div>
                   )}
                   {remainingUses === 0 ? (
-                    <span className="rounded-full border border-white/10 px-4 py-2 text-[12px] font-medium text-stone-500">AI matching used up</span>
+                    <span className="rounded-full border border-[var(--bridge-border)] px-4 py-2 text-[12px] font-medium text-[var(--bridge-text-faint)]">AI matching used up</span>
                   ) : (
                     <button type="button" onClick={handleAiMatchClick}
-                      className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_4px_20px_-4px_rgba(139,92,246,0.6)] transition hover:brightness-110 hover:shadow-[0_8px_28px_-4px_rgba(139,92,246,0.75)] ${focusRing}`}>
+                      className={`inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-purple-500 px-5 py-2.5 text-[13px] font-semibold text-white shadow-[0_4px_16px_-4px_rgba(139,92,246,0.55)] transition hover:brightness-110 hover:shadow-[0_8px_24px_-4px_rgba(139,92,246,0.7)] ${focusRing}`}>
                       <svg className="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>
                       AI Match
                     </button>
@@ -532,12 +529,6 @@ export default function Mentors() {
             </div>
           </div>
         </section>
-      )}
-
-      {/* Gradient transition */}
-      {!aiMode && (
-        <div aria-hidden className="pointer-events-none h-6"
-          style={{ background: 'linear-gradient(to bottom, var(--bridge-hero-bg), var(--bridge-canvas))' }} />
       )}
 
       {/* ═══════════════════════════════════════════════════════════
