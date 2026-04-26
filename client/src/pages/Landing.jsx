@@ -366,9 +366,9 @@ export default function Landing() {
               Find your mentor
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </Link>
-            <Link to="/mentors"
+            <Link to="/dashboard"
               className="border-gradient-bridge animate-border-bridge inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-white/70 transition hover:text-white">
-              Browse mentors →
+              Dashboard →
             </Link>
           </div>
 
@@ -421,8 +421,8 @@ export default function Landing() {
       </section>
 
       {/* ── Hero → content transition strip ── */}
-      <div aria-hidden className="pointer-events-none h-48"
-        style={{ background: 'linear-gradient(to bottom, var(--bridge-hero-bg), var(--bridge-canvas))' }} />
+      <div aria-hidden className="pointer-events-none h-40 w-full"
+        style={{ background: 'linear-gradient(to bottom, #150803 0%, #1e0d04 12%, #2e1606 24%, rgba(62,26,8,0.88) 36%, rgba(95,42,12,0.68) 48%, rgba(140,65,18,0.44) 60%, rgba(185,100,35,0.22) 72%, rgba(215,145,65,0.09) 84%, var(--bridge-canvas) 100%)' }} />
 
       {/* ═══════════════════════════════════════════════════════════════════════
           ACTIVITY TICKER — theme-aware
@@ -465,7 +465,7 @@ export default function Landing() {
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
             <StatItem target={2400} suffix="+"   label="Vetted mentors"   accent="from-orange-500 to-amber-400" />
             <StatItem target={4800} suffix="+"   label="Sessions booked"  accent="from-amber-500 to-orange-400" />
-            <StatItem target={49}   suffix="/5"  label="Average rating"   accent="from-rose-400 to-orange-500"  decimal />
+            <StatItem target={4.9}   suffix="/5"  label="Average rating"   accent="from-rose-400 to-orange-500"  decimal />
             <StatItem target={97}   suffix="%"   label="Would recommend"  accent="from-emerald-400 to-teal-500" />
           </div>
         </div>
@@ -655,8 +655,8 @@ export default function Landing() {
       </section>
 
       {/* ── Content → CTA transition strip ── */}
-      <div aria-hidden className="pointer-events-none h-48"
-        style={{ background: 'linear-gradient(to bottom, var(--bridge-canvas), var(--bridge-hero-bg))' }} />
+      <div aria-hidden className="pointer-events-none h-40 w-full"
+        style={{ background: 'linear-gradient(to bottom, var(--bridge-canvas) 0%, rgba(215,145,65,0.09) 16%, rgba(185,100,35,0.22) 28%, rgba(140,65,18,0.44) 40%, rgba(95,42,12,0.68) 52%, rgba(62,26,8,0.88) 64%, #2e1606 76%, #1e0d04 88%, #150803 100%)' }} />
 
       {/* ═══════════════════════════════════════════════════════════════════════
           FINAL CTA — always dark (intentional bookend matching the hero)

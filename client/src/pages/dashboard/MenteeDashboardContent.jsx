@@ -153,7 +153,7 @@ export function MenteeDashboardContent({ dash, activeTab, setActiveTab, logout, 
                     </div>
                     <ArrowUpRight className="ml-auto h-4 w-4 text-[var(--bridge-text-faint)] transition group-hover:text-orange-500" />
                   </Link>
-                  <Link to="/resume-review"
+                  <Link to="/resume"
                     className="group flex items-center gap-3 rounded-xl p-3 transition-all hover:bg-sky-50 dark:hover:bg-sky-500/10">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-500 text-white shadow-sm">
                       <BookOpen className="h-4 w-4" />
