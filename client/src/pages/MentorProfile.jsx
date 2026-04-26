@@ -785,8 +785,8 @@ export default function MentorProfile() {
               </ol>
             </nav>
 
-            {/* Hero content */}
-            <div className="flex flex-col items-center gap-6 text-center lg:flex-row lg:items-center lg:text-left">
+            {/* ── Top row: avatar · name · rate + CTAs ── */}
+            <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:items-center sm:text-left">
 
               {/* Avatar */}
               <div className="relative shrink-0">
@@ -794,14 +794,11 @@ export default function MentorProfile() {
                   style={{ background: 'radial-gradient(circle, rgba(251,146,60,0.5) 0%, transparent 70%)' }} />
                 <div aria-hidden className="absolute -inset-1.5 rounded-[1.4rem] border-gradient-bridge animate-border-bridge opacity-50" />
                 <div className="relative rounded-[1.25rem] ring-2 ring-orange-400/20">
-                  <MentorAvatar
-                    name={mentor.name}
-                    size="xl"
-                    className="h-24 w-24 rounded-[1.25rem] text-3xl shadow-bridge-float sm:h-32 sm:w-32 sm:text-4xl"
-                  />
+                  <MentorAvatar name={mentor.name} size="xl"
+                    className="h-20 w-20 rounded-[1.25rem] text-2xl shadow-bridge-float sm:h-24 sm:w-24 sm:text-3xl" />
                 </div>
                 {mentor.available && (
-                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-emerald-500 px-3 py-1 shadow-lg shadow-emerald-500/30 whitespace-nowrap">
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-0.5 shadow-lg shadow-emerald-500/30 whitespace-nowrap">
                     <span className="relative flex h-1.5 w-1.5">
                       <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
                       <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
@@ -811,122 +808,141 @@ export default function MentorProfile() {
                 )}
               </div>
 
-              {/* Name + title + tags */}
+              {/* Name + title + badges + social */}
               <div className="min-w-0 flex-1">
-                {/* Tier + industry badges */}
-                <div className="mb-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                <div className="mb-2 flex flex-wrap items-center justify-center gap-1.5 sm:justify-start">
                   {mentor.tier && (
-                    <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] ${tierBadgeClasses(mentor.tier)}`}>
+                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.15em] ${tierBadgeClasses(mentor.tier)}`}>
                       {mentor.tier.charAt(0).toUpperCase() + mentor.tier.slice(1)}
                     </span>
                   )}
                   {industryLabel && (
-                    <span className="rounded-full border border-orange-300/50 bg-orange-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-600 dark:border-orange-400/30 dark:bg-orange-500/10 dark:text-orange-300">
+                    <span className="rounded-full border border-orange-300/50 bg-orange-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-orange-600 dark:border-orange-400/30 dark:bg-orange-500/10 dark:text-orange-300">
                       {industryLabel}
                     </span>
                   )}
                   {mentor.calendar_connected && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-200/60 bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-600 dark:border-sky-400/30 dark:bg-sky-500/10 dark:text-sky-300">
-                      <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-sky-200/60 bg-sky-50 px-2.5 py-0.5 text-[10px] font-semibold text-sky-600 dark:border-sky-400/30 dark:bg-sky-500/10 dark:text-sky-300">
+                      <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
                       Calendar synced
                     </span>
                   )}
                 </div>
 
-                <h1 id="profile-heading" className="font-display text-4xl font-black tracking-tight text-[var(--bridge-text)] sm:text-5xl">
+                <h1 id="profile-heading" className="font-display text-3xl font-black tracking-tight text-[var(--bridge-text)] sm:text-4xl">
                   {mentor.name}
                 </h1>
 
                 {mentor.title && (
-                  <p className="mt-2 text-lg text-[var(--bridge-text-secondary)] sm:text-xl">
+                  <p className="mt-1 text-base text-[var(--bridge-text-secondary)]">
                     <span className="font-semibold text-orange-600 dark:text-amber-400">{mentor.title}</span>
                     {mentor.company && <><span className="text-[var(--bridge-text-faint)]"> · </span><span>{mentor.company}</span></>}
                   </p>
                 )}
 
-                {/* Social links */}
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                <div className="mt-2.5 flex flex-wrap items-center justify-center gap-1.5 sm:justify-start">
                   {mentor.linkedin_url && (
                     <a href={mentor.linkedin_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-blue-300/70 hover:bg-blue-50 hover:text-blue-600 dark:hover:border-blue-400/40 dark:hover:bg-blue-500/10 dark:hover:text-blue-300">
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-blue-300/70 hover:bg-blue-50 hover:text-blue-600 dark:hover:border-blue-400/40 dark:hover:bg-blue-500/10 dark:hover:text-blue-300">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3 shrink-0"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
                       LinkedIn
                     </a>
                   )}
                   {mentor.github_url && (
                     <a href={mentor.github_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-[var(--bridge-border-strong)] hover:bg-[var(--bridge-surface-muted)] hover:text-[var(--bridge-text)]">
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5 shrink-0"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-[var(--bridge-border-strong)] hover:bg-[var(--bridge-surface-muted)]">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3 shrink-0"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
                       GitHub
                     </a>
                   )}
                   {mentor.website_url && (
                     <a href={mentor.website_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-orange-300/60 hover:bg-orange-50 hover:text-orange-600 dark:hover:border-orange-400/30 dark:hover:bg-orange-500/10 dark:hover:text-orange-300">
-                      <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5a17.92 17.92 0 0 1-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" /></svg>
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-2.5 py-1 text-[11px] font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-orange-300/60 hover:bg-orange-50 hover:text-orange-600 dark:hover:border-orange-400/30 dark:hover:bg-orange-500/10 dark:hover:text-orange-300">
+                      <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5a17.92 17.92 0 0 1-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" /></svg>
                       Website
                     </a>
                   )}
                 </div>
               </div>
 
-              {/* Stats + pricing + CTA */}
-              <div className="shrink-0 flex flex-col items-center gap-4 lg:items-end">
-                {/* Stat chips */}
-                <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-end">
-                  <div className="flex items-center gap-2 rounded-2xl border border-amber-300/50 bg-amber-50 px-4 py-2.5 shadow-sm dark:border-amber-400/25 dark:bg-amber-400/10">
-                    <svg className="h-4 w-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292Z" /></svg>
-                    <div>
-                      <p className="font-display text-lg font-black tabular-nums text-[var(--bridge-text)] leading-none">
-                        {displayRating > 0 ? displayRating.toFixed(1) : '—'}
-                      </p>
-                      {reviewMeta?.count > 0 && <p className="text-[10px] text-amber-600 dark:text-amber-300">{reviewMeta.count} review{reviewMeta.count !== 1 ? 's' : ''}</p>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2.5 shadow-sm">
-                    <svg className="h-4 w-4 text-[var(--bridge-text-muted)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
-                    <div>
-                      <p className="font-display text-lg font-black tabular-nums text-[var(--bridge-text)] leading-none">{mentor.total_sessions ?? '—'}</p>
-                      <p className="text-[10px] text-[var(--bridge-text-faint)]">sessions</p>
-                    </div>
-                  </div>
-                  {mentor.years_experience != null && (
-                    <div className="flex items-center gap-2 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2.5 shadow-sm">
-                      <svg className="h-4 w-4 text-[var(--bridge-text-muted)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
-                      <div>
-                        <p className="font-display text-lg font-black tabular-nums text-[var(--bridge-text)] leading-none">{mentor.years_experience}</p>
-                        <p className="text-[10px] text-[var(--bridge-text-faint)]">yrs exp</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Rate */}
-                <div className="text-center lg:text-right">
-                  <p className="font-display text-5xl font-black tabular-nums text-gradient-bridge leading-none">
+              {/* Rate + CTAs */}
+              <div className="shrink-0 flex flex-col items-center gap-3 sm:items-end">
+                <div className="text-center sm:text-right">
+                  <p className="font-display text-4xl font-black tabular-nums text-gradient-bridge leading-none">
                     {mentor.session_rate ? `$${mentor.session_rate}` : 'Free'}
                   </p>
-                  <p className="mt-1 text-sm text-[var(--bridge-text-muted)]">per session</p>
+                  <p className="mt-0.5 text-xs text-[var(--bridge-text-muted)]">per session</p>
                 </div>
-
-                {/* CTA buttons — side by side */}
-                <div className="flex flex-wrap items-center justify-center gap-2.5 lg:justify-end">
+                <div className="flex flex-wrap items-center gap-2">
                   {!isOwnMentorProfile && !bookingDisabledForMentor && (
                     <button type="button"
                       onClick={() => bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                      className={`btn-sheen flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-6 py-3 text-sm font-bold text-white shadow-[0_4px_24px_-4px_rgba(234,88,12,0.6)] transition hover:brightness-110 hover:shadow-[0_8px_32px_-4px_rgba(234,88,12,0.75)] ${focusRing}`}>
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                      className={`btn-sheen flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-5 py-2.5 text-sm font-bold text-white shadow-[0_4px_20px_-4px_rgba(234,88,12,0.55)] transition hover:brightness-110 ${focusRing}`}>
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
                       Book a Session
                     </button>
                   )}
                   <button type="button" onClick={() => setShowTiersModal(true)}
-                    className={`flex items-center gap-2 rounded-full border-2 border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-5 py-3 text-sm font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-orange-400/60 hover:bg-orange-50 hover:text-orange-600 dark:hover:border-orange-400/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-300 ${focusRing}`}>
-                    <svg className="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
+                    className={`flex items-center gap-2 rounded-full border-2 border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-orange-400/60 hover:bg-orange-50 hover:text-orange-600 dark:hover:border-orange-400/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-300 ${focusRing}`}>
+                    <svg className="h-3.5 w-3.5 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
                     See Mentor Tiers
                   </button>
                 </div>
               </div>
             </div>
+
+            {/* ── Stats bar — full width below profile row ── */}
+            <div className="mt-5 flex flex-wrap items-stretch divide-x divide-[var(--bridge-border)] overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] shadow-sm">
+              {/* Rating */}
+              <div className="flex flex-1 items-center gap-3 px-5 py-3.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
+                  <svg className="h-4 w-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292Z" /></svg>
+                </div>
+                <div>
+                  <p className="font-display text-xl font-black tabular-nums text-[var(--bridge-text)] leading-none">
+                    {displayRating > 0 ? displayRating.toFixed(1) : '—'}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[var(--bridge-text-muted)]">
+                    {reviewMeta?.count > 0 ? `${reviewMeta.count} review${reviewMeta.count !== 1 ? 's' : ''}` : 'Rating'}
+                  </p>
+                </div>
+              </div>
+              {/* Sessions */}
+              <div className="flex flex-1 items-center gap-3 px-5 py-3.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-500/10">
+                  <svg className="h-4 w-4 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                </div>
+                <div>
+                  <p className="font-display text-xl font-black tabular-nums text-[var(--bridge-text)] leading-none">{mentor.total_sessions ?? '—'}</p>
+                  <p className="mt-0.5 text-[11px] text-[var(--bridge-text-muted)]">Sessions completed</p>
+                </div>
+              </div>
+              {/* Experience */}
+              {mentor.years_experience != null && (
+                <div className="flex flex-1 items-center gap-3 px-5 py-3.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-500/10">
+                    <svg className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                  </div>
+                  <div>
+                    <p className="font-display text-xl font-black tabular-nums text-[var(--bridge-text)] leading-none">{mentor.years_experience} yrs</p>
+                    <p className="mt-0.5 text-[11px] text-[var(--bridge-text-muted)]">Experience</p>
+                  </div>
+                </div>
+              )}
+              {/* Rate */}
+              <div className="flex flex-1 items-center gap-3 px-5 py-3.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10">
+                  <svg className="h-4 w-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                </div>
+                <div>
+                  <p className="font-display text-xl font-black tabular-nums text-gradient-bridge leading-none">
+                    {mentor.session_rate ? `$${mentor.session_rate}` : 'Free'}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[var(--bridge-text-muted)]">Per session</p>
+                </div>
+              </div>
+            </div>
+
           </div>
         </section>
 
