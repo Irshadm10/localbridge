@@ -25,156 +25,6 @@ import { finalizeCheckout } from '../api/stripe';
 const focusRingDark  = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
 const focusRingWhite = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
 
-// ─── Mentor tiers data ────────────────────────────────────────────────────────
-
-const MENTOR_TIERS = [
-  {
-    name: 'Rising',
-    rateRange: '$40–$70',
-    experienceDesc: '0–4 years · Early-career professionals and recent grads who have earned their first real wins.',
-    useCases: ['First job search and resume polish', 'Breaking into competitive entry-level roles', 'Building professional habits and early momentum'],
-    accentFrom: 'from-emerald-500',
-    accentTo: 'to-emerald-400',
-    badgeBg: 'bg-emerald-500/15',
-    badgeText: 'text-emerald-300',
-    badgeBorder: 'border-emerald-500/30',
-    glowColor: 'rgba(16,185,129,0.18)',
-  },
-  {
-    name: 'Established',
-    rateRange: '$75–$120',
-    experienceDesc: '5–9 years · Mid-career contributors with a proven track record and a clear area of focus.',
-    useCases: ['Mid-level to senior career transitions', 'Navigating promotion cycles and leveling up', 'Changing industries or switching functions'],
-    accentFrom: 'from-sky-500',
-    accentTo: 'to-sky-400',
-    badgeBg: 'bg-sky-500/15',
-    badgeText: 'text-sky-300',
-    badgeBorder: 'border-sky-500/30',
-    glowColor: 'rgba(14,165,233,0.18)',
-  },
-  {
-    name: 'Expert',
-    rateRange: '$125–$175',
-    experienceDesc: '10–15 years · Senior leaders with deep functional expertise and meaningful organizational scope.',
-    useCases: ['Senior or staff-level interview preparation', 'Executive communication and cross-functional influence', 'High-stakes career pivots and role expansions'],
-    accentFrom: 'from-violet-500',
-    accentTo: 'to-violet-400',
-    badgeBg: 'bg-violet-500/15',
-    badgeText: 'text-violet-300',
-    badgeBorder: 'border-violet-500/30',
-    glowColor: 'rgba(139,92,246,0.18)',
-  },
-  {
-    name: 'Elite',
-    rateRange: '$180–$250',
-    experienceDesc: '15+ years · C-suite executives and industry-defining practitioners at the top of their fields.',
-    useCases: ['VP and C-suite transition coaching', 'Board-level presence and strategic positioning', 'Legacy career decisions, exits, and portfolio moves'],
-    accentFrom: 'from-amber-500',
-    accentTo: 'to-orange-500',
-    badgeBg: 'bg-gradient-to-r from-amber-500 to-orange-500',
-    badgeText: 'text-white',
-    badgeBorder: '',
-    glowColor: 'rgba(245,158,11,0.22)',
-  },
-];
-
-// ─── Mentor Tiers Modal ────────────────────────────────────────────────────────
-
-function MentorTiersModal({ onClose }) {
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  }, [onClose]);
-
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center sm:p-6"
-      role="dialog" aria-modal="true" aria-labelledby="tiers-modal-title">
-      {/* Backdrop */}
-      <button type="button" className="absolute inset-0 bg-stone-950/75 backdrop-blur-[3px]" aria-label="Close" onClick={onClose} />
-
-      {/* Panel */}
-      <div className="relative flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-[var(--bridge-surface)] shadow-2xl ring-1 ring-[var(--bridge-border)] sm:rounded-3xl">
-
-        {/* Header */}
-        <div className="relative shrink-0 overflow-hidden bg-gradient-to-br from-stone-900 via-stone-900 to-orange-950 px-6 py-5 sm:px-8">
-          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/15 blur-3xl" />
-          <div aria-hidden className="pointer-events-none absolute -left-8 bottom-0 h-32 w-32 rounded-full bg-orange-600/10 blur-2xl" />
-          <div className="relative flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-300/80">Bridge</p>
-              <h2 id="tiers-modal-title" className="mt-1 font-display text-2xl font-black text-white sm:text-3xl">Mentor Tiers</h2>
-              <p className="mt-1.5 max-w-md text-sm leading-relaxed text-stone-400">
-                Every mentor on Bridge is placed in one of four tiers based on experience and expertise.
-              </p>
-            </div>
-            <button type="button" onClick={onClose} aria-label="Close"
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-stone-300 transition hover:bg-white/20 hover:text-white ${focusRingWhite}`}>
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Tiers grid */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {MENTOR_TIERS.map((tier) => (
-              <div key={tier.name} className="group relative overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] p-5 transition hover:border-[var(--bridge-border-strong)] hover:shadow-bridge-card">
-                {/* Subtle glow */}
-                <div aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
-                  style={{ background: `radial-gradient(circle, ${tier.glowColor}, transparent 70%)` }} />
-
-                {/* Top accent bar */}
-                <div aria-hidden className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${tier.accentFrom} ${tier.accentTo} opacity-70`} />
-
-                <div className="relative">
-                  {/* Badge + rate */}
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] border ${tier.badgeBg} ${tier.badgeText} ${tier.badgeBorder}`}>
-                      {tier.name}
-                    </span>
-                    <span className={`font-display text-xl font-black tabular-nums bg-gradient-to-r ${tier.accentFrom} ${tier.accentTo} bg-clip-text text-transparent`}>
-                      {tier.rateRange}
-                    </span>
-                  </div>
-
-                  {/* Experience desc */}
-                  <p className="mb-3 text-xs leading-relaxed text-[var(--bridge-text-muted)]">{tier.experienceDesc}</p>
-
-                  {/* Use cases */}
-                  <ul className="space-y-1.5">
-                    {tier.useCases.map((uc) => (
-                      <li key={uc} className="flex items-start gap-2 text-xs text-[var(--bridge-text-secondary)]">
-                        <svg className={`mt-0.5 h-3.5 w-3.5 shrink-0 bg-gradient-to-r ${tier.accentFrom} ${tier.accentTo} bg-clip-text`} viewBox="0 0 14 14" fill="none">
-                          <circle cx="7" cy="7" r="6" className={`fill-current bg-gradient-to-r ${tier.accentFrom} ${tier.accentTo}`} style={{ fill: `url(#g-${tier.name})` }} />
-                          <defs>
-                            <linearGradient id={`g-${tier.name}`} x1="0" y1="0" x2="14" y2="14" gradientUnits="userSpaceOnUse">
-                              <stop stopColor={tier.name === 'Rising' ? '#10b981' : tier.name === 'Established' ? '#0ea5e9' : tier.name === 'Expert' ? '#8b5cf6' : '#f59e0b'} />
-                              <stop offset="1" stopColor={tier.name === 'Rising' ? '#34d399' : tier.name === 'Established' ? '#38bdf8' : tier.name === 'Expert' ? '#a78bfa' : '#f97316'} />
-                            </linearGradient>
-                          </defs>
-                          <path d="M4.5 7l1.75 1.75L9.5 5.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        {uc}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-4 text-center text-[11px] text-[var(--bridge-text-faint)]">
-            Rates shown are typical ranges. Each mentor sets their own session price.
-          </p>
-        </div>
-      </div>
-    </div>
-  , document.body);
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function tierBadgeClasses(tier) {
@@ -617,7 +467,6 @@ export default function MentorProfile() {
   const [pendingConfirm, setPendingConfirm] = useState(null);
   const [checkoutNotice, setCheckoutNotice] = useState(null);
   const [checkoutError, setCheckoutError]   = useState(null);
-  const [showTiersModal, setShowTiersModal] = useState(false);
   const bookingRef = useRef(null);
 
   // Load mentor + reviews
@@ -882,11 +731,6 @@ export default function MentorProfile() {
                       Book a Session
                     </button>
                   )}
-                  <button type="button" onClick={() => setShowTiersModal(true)}
-                    className={`flex items-center gap-2 rounded-full border-2 border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--bridge-text-secondary)] shadow-sm transition hover:border-orange-400/60 hover:bg-orange-50 hover:text-orange-600 dark:hover:border-orange-400/40 dark:hover:bg-orange-500/10 dark:hover:text-orange-300 ${focusRing}`}>
-                    <svg className="h-3.5 w-3.5 text-orange-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg>
-                    See Mentor Tiers
-                  </button>
                 </div>
               </div>
             </div>
@@ -1233,7 +1077,6 @@ export default function MentorProfile() {
       {pendingConfirm && (
         <ConfirmModal mentor={mentor} user={user} confirmation={pendingConfirm} onClose={() => setPendingConfirm(null)} />
       )}
-      {showTiersModal && <MentorTiersModal onClose={() => setShowTiersModal(false)} />}
     </>
   );
 }

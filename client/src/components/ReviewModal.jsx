@@ -1,7 +1,7 @@
 /**
  * ReviewModal — star rating + optional comment form for post-session mentor reviews.
  *
- * Shown automatically after a Jitsi call ends (via navigate state from VideoCall.jsx)
+ * Shown automatically after a video call ends (via navigate state from VideoCall.jsx)
  * and on-demand via the "Leave a Review" button on completed sessions (5-day window).
  *
  * Props

@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { isMentorAccount } from '../utils/accountRole';
-import { Bell, LogOut, User, Settings, Sparkles, Menu, X, ChevronRight, Zap } from 'lucide-react';
+import { LogOut, User, Settings, Sparkles, Menu, X, ChevronRight, Zap } from 'lucide-react';
+import NotificationPanel from './NotificationPanel';
 
 function getInitials(name = '') {
   return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
@@ -138,18 +139,8 @@ export default function Navbar() {
               ) : user ? (
                 <div className="hidden items-center gap-1 sm:flex">
 
-                  {/* Notification bell */}
-                  <button type="button"
-                    onClick={() => alert('No new notifications.')}
-                    className="relative flex h-9 w-9 items-center justify-center rounded-full text-[var(--bridge-text-muted)] transition hover:bg-[var(--bridge-surface)] hover:text-[var(--bridge-text)]"
-                    aria-label="Notifications">
-                    <Bell className="h-[18px] w-[18px]" />
-                    {/* Pulse dot */}
-                    <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
-                      <span aria-hidden className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-60" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full border border-[var(--bridge-canvas)] bg-orange-500" />
-                    </span>
-                  </button>
+                  {/* Notification panel */}
+                  <NotificationPanel />
 
                   {/* Avatar + dropdown */}
                   <div className="relative ml-0.5">

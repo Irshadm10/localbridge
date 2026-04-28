@@ -60,7 +60,7 @@ Mentorship platform connecting job seekers with established professionals. React
 | scheduled_date | timestamptz | |
 | status | text | enum: `pending` `accepted` `declined` `completed` `cancelled` |
 | message | text | |
-| video_room_url | text | Jitsi: `https://meet.jit.si/bridge-{sessionId}` |
+| video_room_url | text | Room identifier: `bridge-{sessionId}` (set on accept; truthy = "Join Call" visible) |
 | created_at | timestamptz | |
 **RLS**: SELECT mentee or mentor (via mentor_profiles join). INSERT authenticated mentees. UPDATE mentor only. Mentee can cancel own.
 
@@ -131,7 +131,7 @@ Bucket `resumes` (private). RLS: authenticated user can CRUD files prefixed `{us
 
 7. **AI keys in client env** — `VITE_ANTHROPIC_API_KEY` and `VITE_OPENAI_API_KEY` are used directly in client code (not proxied). Be aware of exposure in browser builds.
 
-8. **Video rooms** — URLs are generated server-side in `server/routes/sessions.js` when a session is accepted. Format: `https://meet.jit.si/bridge-{sessionId}`.
+8. **Video rooms** — Custom WebRTC video call at `/session/:sessionId/video`. Signaling via Supabase Realtime channel `video:{sessionId}`. Mentor = caller (sends offer), mentee = callee (sends answer). `video_room_url` is set to `bridge-{sessionId}` on accept (truthy flag to show "Join Call").
 
 9. **Google Calendar OAuth** — Refresh token is stored in `mentor_profiles.google_refresh_token`. OAuth routes live in `server/routes/googleAuth.js`; calendar operations in `server/routes/calendar.js`.
 
@@ -192,7 +192,7 @@ Bucket `resumes` (private). RLS: authenticated user can CRUD files prefixed `{us
 | ResumeReview.jsx | AI resume review interface |
 | Profile.jsx | User profile page |
 | Settings.jsx | User settings |
-| VideoCall.jsx | Jitsi video session |
+| VideoCall.jsx | Custom WebRTC video session (Supabase Realtime signaling) |
 | About.jsx | About page |
 | Pricing.jsx | Pricing tiers |
 
@@ -219,7 +219,7 @@ About, Blog, Careers, Community, Contact, Cookies, FAQ, Help, Privacy, Terms, Tr
 - Mentor discovery: browse, search, filter by industry, sort
 - Mentor profile detail page with reviews
 - Session booking (create, accept/decline, cancel, complete)
-- Jitsi video call rooms (URL auto-generated on session accept)
+- Custom WebRTC video call rooms (peer-to-peer, no 3rd-party service)
 - Favorites (add/remove/list)
 - AI mentor matching (OpenAI ranking)
 - AI resume review (Claude)
