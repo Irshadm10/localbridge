@@ -269,6 +269,10 @@ textarea {
   text-shadow: 0 0 24px var(--bridge-text-glow, rgba(251, 146, 60, 0));
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 *,
 *::before,
 *::after {
