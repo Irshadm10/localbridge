@@ -392,30 +392,17 @@ function SplitText({ text, delay = 0, className = '', charDelay = 28 }) {
   );
 }
 
-/* ─── Floating Nav FAB ───────────────────────────────────────── */
+/* ─── Floating Nav Dock ──────────────────────────────────────── */
 function FloatingDock() {
-  const [visible, setVisible] = useState(false);
-  const [open, setOpen] = useState(false);
-  const menuRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
   const bottom = useFooterOffset(24);
 
-  // Show only after scrolling past the hero
   useEffect(() => {
-    const fn = () => setVisible(window.scrollY > window.innerHeight * 0.88);
-    window.addEventListener('scroll', fn, { passive: true });
-    return () => window.removeEventListener('scroll', fn);
+    const t = setTimeout(() => setMounted(true), 600);
+    return () => clearTimeout(t);
   }, []);
 
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    const fn = (e) => { if (!menuRef.current?.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
-  }, [open]);
-
   const scrollTo = (id) => {
-    setOpen(false);
     if (id === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -429,57 +416,33 @@ function FloatingDock() {
   ];
 
   return (
-    <div ref={menuRef} className="pointer-events-none fixed left-6 z-40 flex flex-col items-start gap-2" style={{ bottom }}>
-      {/* Popup menu — opens above the FAB */}
-      <div
-        className="pointer-events-auto flex flex-col gap-1 rounded-2xl border border-white/[0.09] bg-[#0d0906]/96 p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_80px_rgba(234,88,12,0.12)] backdrop-blur-2xl"
-        style={{
-          opacity: open ? 1 : 0,
-          transform: open ? 'translateY(0) scale(1)' : 'translateY(8px) scale(0.97)',
-          pointerEvents: open ? 'auto' : 'none',
-          transition: 'opacity 200ms ease, transform 220ms cubic-bezier(0.16,1,0.3,1)',
-          transformOrigin: 'bottom left',
-        }}
-        aria-hidden={!open}
+    <div
+      className="pointer-events-none fixed left-1/2 z-40"
+      style={{
+        bottom,
+        transform: `translateX(-50%) translateY(${mounted ? '0px' : '5rem'})`,
+        opacity: mounted ? 1 : 0,
+        transition: 'transform 500ms cubic-bezier(0.16,1,0.3,1), opacity 380ms ease, bottom 150ms ease',
+      }}
+    >
+      <nav
+        aria-label="Page sections"
+        className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#0c0906]/94 px-2 py-2 shadow-[0_20px_70px_rgba(0,0,0,0.75),0_0_90px_rgba(234,88,12,0.14)] backdrop-blur-2xl"
       >
         {items.map((item, i) => (
           <button
             key={i}
             onClick={() => scrollTo(item.id)}
-            className={`w-full whitespace-nowrap rounded-xl px-4 py-2.5 text-left text-[12px] font-semibold transition-all duration-150 ${
+            className={`whitespace-nowrap rounded-full px-4 py-2 text-[11px] font-semibold transition-all duration-200 ${
               item.primary
-                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-[0_0_20px_rgba(234,88,12,0.45)] hover:shadow-[0_0_32px_rgba(234,88,12,0.7)]'
-                : 'text-white/55 hover:bg-white/[0.07] hover:text-white/90'
+                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-[0_0_30px_rgba(234,88,12,0.48)] hover:shadow-[0_0_44px_rgba(234,88,12,0.7)]'
+                : 'text-white/40 hover:bg-white/[0.07] hover:text-white/82'
             }`}
           >
             {item.label}
           </button>
         ))}
-      </div>
-
-      {/* FAB trigger — same pattern as FeedbackFAB */}
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        aria-label="Page navigation"
-        aria-expanded={open}
-        className="pointer-events-auto group btn-sheen relative inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 pl-4 pr-5 py-3 text-sm font-semibold text-white ring-1 ring-white/25 transition-all hover:-translate-y-0.5 hover:brightness-105 active:translate-y-0"
-        style={{
-          boxShadow: '0 12px 36px -8px rgba(234,88,12,0.5)',
-          opacity: visible ? 1 : 0,
-          transform: `translateY(${visible ? '0' : '4rem'})`,
-          pointerEvents: visible ? 'auto' : 'none',
-          transition: 'transform 500ms cubic-bezier(0.16,1,0.3,1), opacity 380ms ease, box-shadow 200ms ease, filter 200ms ease',
-        }}
-      >
-        <span className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/30 backdrop-blur-sm transition group-hover:bg-white/25">
-          {open
-            ? <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            : <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path d="M4 6h16M4 12h8" strokeLinecap="round"/><circle cx="17" cy="17" r="3"/><path d="m19.5 19.5 1.5 1.5" strokeLinecap="round"/></svg>
-          }
-        </span>
-        <span className="relative">{open ? 'Close' : 'Navigate'}</span>
-      </button>
+      </nav>
     </div>
   );
 }
