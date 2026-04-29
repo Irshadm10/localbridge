@@ -112,16 +112,16 @@ textarea {
 /* ── Premium shadow tiers (all elevations read warmth, not just opacity) ────── */
 @utility shadow-bridge-glow {
   box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.6) inset,
-    0 1px 2px rgb(28 25 23 / 0.04),
-    0 8px 22px -6px rgb(234 88 12 / 0.14),
-    0 26px 60px -18px rgb(234 88 12 / 0.16);
+    0 0 0 1px var(--bridge-shadow-ring) inset,
+    0 1px 2px var(--bridge-shadow-soft),
+    0 8px 22px -6px rgb(234 88 12 / 0.18),
+    0 26px 60px -18px rgb(234 88 12 / 0.20);
 }
 
 @utility shadow-bridge-card {
   box-shadow:
-    0 0 0 1px rgb(231 229 228 / 0.8),
-    0 1px 2px rgb(28 25 23 / 0.035),
+    0 0 0 1px var(--bridge-shadow-ring),
+    0 1px 2px var(--bridge-shadow-soft),
     0 6px 14px -6px rgb(28 25 23 / 0.06),
     0 28px 56px -24px rgb(28 25 23 / 0.1);
 }
@@ -129,17 +129,17 @@ textarea {
 /* Heavier float — for hero cards, spotlights, modal-ish surfaces. */
 @utility shadow-bridge-float {
   box-shadow:
-    0 0 0 1px rgb(231 229 228 / 0.9) inset,
-    0 2px 4px rgb(28 25 23 / 0.04),
+    0 0 0 1px var(--bridge-shadow-ring) inset,
+    0 2px 4px var(--bridge-shadow-soft),
     0 12px 28px -10px rgb(28 25 23 / 0.12),
-    0 40px 80px -20px rgb(234 88 12 / 0.18);
+    0 40px 80px -20px rgb(234 88 12 / 0.20);
 }
 
 /* Soft ring + elevation for interactive tiles. */
 @utility shadow-bridge-tile {
   box-shadow:
-    0 0 0 1px rgb(231 229 228 / 0.75),
-    0 1px 2px rgb(28 25 23 / 0.04),
+    0 0 0 1px var(--bridge-shadow-ring),
+    0 1px 2px var(--bridge-shadow-soft),
     0 10px 24px -12px rgb(28 25 23 / 0.12);
 }
 
@@ -469,7 +469,16 @@ html.theme-dark {
   transform-style: preserve-3d;
   transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
   transition: transform 240ms cubic-bezier(0.2, 0.9, 0.32, 1);
+}
+/* will-change only promoted during active tilt interaction, not permanently */
+.tilt-card:hover {
   will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tilt-card {
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 /* Fluid ambient blob (ticker / hero atmospheres) */
@@ -623,15 +632,23 @@ html.theme-dark {
   transform: translateY(-6px);
 }
 
-/* Focus ring preset (consistent across all CTAs) */
+/* Global focus ring — WCAG 2.1 AA, visible on both light and dark canvases */
+*:focus-visible {
+  outline: 2px solid #ea580c;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Focus ring preset (consistent across all CTAs — overrides global with richer shadow ring) */
 @utility ring-bridge {
   outline: none;
 }
 .ring-bridge:focus-visible {
+  outline: 2px solid #ea580c;
+  outline-offset: 3px;
   box-shadow:
-    0 0 0 2px var(--bridge-canvas),
-    0 0 0 4px rgb(251 146 60 / 0.7),
-    0 0 22px rgb(251 146 60 / 0.35);
+    0 0 0 4px rgb(251 146 60 / 0.22),
+    0 0 22px rgb(251 146 60 / 0.28);
 }
 
 /* Marquee edge mask — fades logo strips on left/right */
