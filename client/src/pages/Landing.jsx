@@ -392,39 +392,47 @@ function SplitText({ text, delay = 0, className = '', charDelay = 28 }) {
 }
 
 /* ─── Floating Dock ─────────────────────────────────────────── */
-function FloatingDock({ user }) {
+function FloatingDock() {
   const [visible, setVisible] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   useEffect(() => {
-    if (dismissed) return;
-    const fn = () => {
-      const y = window.scrollY, heroH = window.innerHeight;
-      const nearBottom = y + window.innerHeight > document.documentElement.scrollHeight - 250;
-      setVisible(y > heroH * 0.82 && !nearBottom);
-    };
-    window.addEventListener('scroll', fn, { passive: true });
-    return () => window.removeEventListener('scroll', fn);
-  }, [dismissed]);
+    const t = setTimeout(() => setVisible(true), 700);
+    return () => clearTimeout(t);
+  }, []);
+  const scrollTo = (id) => {
+    if (id === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   const items = [
-    { label: 'Browse Mentors',  href: '/mentors',        route: true  },
-    { label: 'How It Works',    href: '#how-it-works',   route: false },
-    { label: 'Stories',         href: '#outcomes',       route: false },
-    { label: 'Pricing',         href: '/pricing',        route: true  },
-    { label: user ? 'Dashboard →' : 'Get Started →', href: user ? '/dashboard' : '/register', route: true, primary: true },
+    { label: 'Home',         id: 'top'          },
+    { label: 'How It Works', id: 'how-it-works' },
+    { label: 'Mentors',      id: 'mentors'      },
+    { label: 'Outcomes',     id: 'outcomes'     },
+    { label: 'Get Started',  id: 'get-started', primary: true },
   ];
   return (
-    <div aria-hidden={!visible || dismissed} className="fixed bottom-7 left-1/2 z-50 -translate-x-1/2"
-      style={{ transform: `translateX(-50%) translateY(${visible && !dismissed ? 0 : '5.5rem'})`, opacity: visible && !dismissed ? 1 : 0, transition: 'transform 500ms cubic-bezier(0.16,1,0.3,1), opacity 380ms ease', pointerEvents: visible && !dismissed ? 'auto' : 'none' }}>
+    <div
+      className="fixed bottom-7 left-1/2 z-50"
+      style={{
+        transform: `translateX(-50%) translateY(${visible ? 0 : '5.5rem'})`,
+        opacity: visible ? 1 : 0,
+        transition: 'transform 500ms cubic-bezier(0.16,1,0.3,1), opacity 380ms ease',
+        pointerEvents: visible ? 'auto' : 'none',
+      }}
+    >
       <div className="flex items-center gap-1 rounded-full border border-white/[0.08] bg-[#0c0906]/94 px-2 py-2 shadow-[0_20px_70px_rgba(0,0,0,0.75),0_0_90px_rgba(234,88,12,0.14)] backdrop-blur-2xl">
-        {items.map((item, i) => item.route ? (
-          <Link key={i} to={item.href} className={`whitespace-nowrap rounded-full px-4 py-2 text-[11px] font-semibold transition-all duration-200 ${item.primary ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-[0_0_30px_rgba(234,88,12,0.48)] hover:shadow-[0_0_44px_rgba(234,88,12,0.7)]' : 'text-white/40 hover:bg-white/[0.07] hover:text-white/82'}`}>{item.label}</Link>
-        ) : (
-          <a key={i} href={item.href} className="whitespace-nowrap rounded-full px-4 py-2 text-[11px] font-semibold text-white/40 transition hover:bg-white/[0.07] hover:text-white/82">{item.label}</a>
+        {items.map((item, i) => (
+          <button
+            key={i}
+            onClick={() => scrollTo(item.id)}
+            className={`whitespace-nowrap rounded-full px-4 py-2 text-[11px] font-semibold transition-all duration-200 ${
+              item.primary
+                ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-[0_0_30px_rgba(234,88,12,0.48)] hover:shadow-[0_0_44px_rgba(234,88,12,0.7)]'
+                : 'text-white/40 hover:bg-white/[0.07] hover:text-white/82'
+            }`}
+          >
+            {item.label}
+          </button>
         ))}
-        <button onClick={() => setDismissed(true)} aria-label="Dismiss"
-          className="ml-1 flex h-7 w-7 items-center justify-center rounded-full text-white/18 transition hover:bg-white/[0.08] hover:text-white/48">
-          <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </button>
       </div>
     </div>
   );
@@ -638,7 +646,7 @@ export default function Landing() {
         .mask-x { -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%); mask-image:linear-gradient(90deg,transparent 0%,#000 8%,#000 92%,transparent 100%) }
       `}</style>
 
-      <FloatingDock user={user} />
+      <FloatingDock />
 
       {/* ════════════════════════════════════════════════════════
           HERO
@@ -792,15 +800,6 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Scroll hint */}
-          <div className={`mt-14 flex justify-center ${heroLoaded ? 'l-hero-in-4' : 'opacity-0'}`}>
-            <div className="flex flex-col items-center gap-2 opacity-22">
-              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white">Scroll</span>
-              <div className="flex h-8 w-5 items-start justify-center rounded-full border border-white/25 p-1">
-                <div className="h-2 w-1 rounded-full bg-white/60" style={{ animation:'bridge-scale-in 2s ease-in-out infinite alternate' }} />
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -1014,7 +1013,7 @@ export default function Landing() {
       {/* ════════════════════════════════════════════════════════
           MENTOR MARQUEE
       ════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-28 bg-[var(--bridge-canvas)]">
+      <section id="mentors" className="relative overflow-hidden py-28 bg-[var(--bridge-canvas)]">
         <Reveal>
           <div className="mb-14 px-4 text-center">
             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">Our mentors</p>
@@ -1220,7 +1219,7 @@ export default function Landing() {
       {/* ════════════════════════════════════════════════════════
           FINAL CTA
       ════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-40" style={{ backgroundColor:'var(--bridge-hero-bg)' }}>
+      <section id="get-started" className="relative overflow-hidden py-40" style={{ backgroundColor:'var(--bridge-hero-bg)' }}>
         <div aria-hidden className="pointer-events-none absolute inset-0"
           style={{ backgroundImage:'linear-gradient(rgba(234,88,12,0.042) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,0.042) 1px,transparent 1px)', backgroundSize:'72px 72px' }} />
 
