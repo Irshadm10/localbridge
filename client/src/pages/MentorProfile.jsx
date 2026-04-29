@@ -546,6 +546,7 @@ export default function MentorProfile() {
         setPendingConfirm(null); setSelectedType(null);
         if (result.data?.bridge_session_id) {
           navigate(`/intake/${result.data.bridge_session_id}`);
+          return;
         } else {
           setCheckoutNotice('Booking payment successful. Your session request is now in your dashboard.');
         }
