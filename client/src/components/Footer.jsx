@@ -157,7 +157,7 @@ export default function Footer() {
 
           {/* ── Platform ── */}
           <div className="lg:col-span-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-200/65">Platform</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/65">Platform</p>
             <ul className="mt-4 space-y-3">
               {[
                 { label: 'Browse Mentors', to: '/mentors'   },
@@ -173,7 +173,7 @@ export default function Footer() {
 
           {/* ── Company ── */}
           <div className="lg:col-span-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-200/65">Company</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/65">Company</p>
             <ul className="mt-4 space-y-3">
               {[
                 { label: 'About',          to: '/about'     },
@@ -189,7 +189,7 @@ export default function Footer() {
 
           {/* ── Contact ── */}
           <div className="lg:col-span-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-200/65">Get in touch</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/65">Get in touch</p>
             <ul className="mt-4 space-y-4 text-sm">
               <li className="flex items-start gap-3 text-stone-500">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-orange-400/65" aria-hidden />
