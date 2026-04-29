@@ -543,8 +543,12 @@ export default function MentorProfile() {
       if (!result.ok) {
         setCheckoutError(result.error || 'Could not verify booking payment.');
       } else {
-        setCheckoutNotice('Booking payment successful. Your session request is now in your dashboard.');
         setPendingConfirm(null); setSelectedType(null);
+        if (result.data?.bridge_session_id) {
+          navigate(`/intake/${result.data.bridge_session_id}`);
+        } else {
+          setCheckoutNotice('Booking payment successful. Your session request is now in your dashboard.');
+        }
       }
       const next = new URLSearchParams(searchParams);
       next.delete('session_id');

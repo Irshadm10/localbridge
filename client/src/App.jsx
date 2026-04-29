@@ -29,6 +29,7 @@ import Terms from './pages/footer/Terms.jsx';
 import Cookies from './pages/footer/Cookies.jsx';
 import FeedbackFAB from './components/FeedbackFAB';
 import VideoCall from './pages/VideoCall';
+import IntakeCall from './pages/IntakeCall';
 import MentorOnboarding from './pages/MentorOnboarding';
 import DevPortal from './pages/DevPortal/index.jsx';
 
@@ -64,6 +65,7 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/session/:sessionId/video" element={<VideoCall />} />
+          <Route path="/intake/:sessionId" element={<IntakeCall />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/resume" element={<ResumeReview />} />
           <Route path="/about" element={<About />} />

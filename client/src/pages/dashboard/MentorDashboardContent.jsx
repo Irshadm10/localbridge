@@ -14,6 +14,7 @@ import {
 import { formatSessionDate, getAvatarColor, getInitials } from './dashboardUtils';
 import DashboardSettingsPanel from './DashboardSettingsPanel';
 import MentorAvailabilityModal from './MentorAvailabilityModal';
+import IntakeSummaryModal from './IntakeSummaryModal';
 import CalendarConnectButton from '../../components/CalendarConnectButton';
 import { useState, useEffect } from 'react';
 
@@ -23,6 +24,8 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
   const [heroHint, setHeroHint] = useState(null);
   const [calendarBanner, setCalendarBanner] = useState(null);
+  const [intakeOpen, setIntakeOpen] = useState(false);
+  const [intakeData, setIntakeData] = useState({ summary: '', menteeName: '' });
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -126,6 +129,8 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
                     onAccept={(id) => handleStatusUpdate(id, 'accepted')}
                     onDecline={(id) => handleStatusUpdate(id, 'declined')}
                     actionLoading={actionLoading}
+                    intakeSummary={s.intake_summary}
+                    onViewIntake={(_, text) => { setIntakeData({ summary: text, menteeName: s.mentee_name ?? 'Mentee' }); setIntakeOpen(true); }}
                   />
                 ))}
                 {upcomingSessions.filter(s => s.status !== 'pending').length === 0 && (
@@ -188,6 +193,7 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
           setSearchQuery={setSearchQuery}
           handleStatusUpdate={handleStatusUpdate}
           actionLoading={actionLoading}
+          onViewIntake={(s, text) => { setIntakeData({ summary: text, menteeName: s.mentee_name ?? 'Mentee' }); setIntakeOpen(true); }}
         />
       )}
 
@@ -204,6 +210,12 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
       {activeTab === 'settings' && (
         <DashboardSettingsPanel user={user} logout={logout} isMentor mentorProfileId={mentorProfileId} calendarConnected={calendarConnected} />
       )}
+      <IntakeSummaryModal
+        open={intakeOpen}
+        onClose={() => setIntakeOpen(false)}
+        summary={intakeData.summary}
+        menteeName={intakeData.menteeName}
+      />
     </>
   );
 }
@@ -436,7 +448,7 @@ function ActivityFeed({ history, role, total, showAll, onToggle }) {
 }
 
 // ─── MentorSessionsTab ────────────────────────────────────────────────────────
-function MentorSessionsTab({ upcomingSessions, historySessions, searchQuery, setSearchQuery, handleStatusUpdate, actionLoading }) {
+function MentorSessionsTab({ upcomingSessions, historySessions, searchQuery, setSearchQuery, handleStatusUpdate, actionLoading, onViewIntake }) {
   const match = (s) =>
     s.mentee_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.session_type?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -459,6 +471,8 @@ function MentorSessionsTab({ upcomingSessions, historySessions, searchQuery, set
               onAccept={(id) => handleStatusUpdate(id, 'accepted')}
               onDecline={(id) => handleStatusUpdate(id, 'declined')}
               actionLoading={actionLoading}
+              intakeSummary={s.intake_summary}
+              onViewIntake={(_, text) => onViewIntake(s, text)}
             />
           ))}
           {upcomingSessions.length === 0 && <EmptyState message="No upcoming sessions yet." />}
@@ -470,7 +484,10 @@ function MentorSessionsTab({ upcomingSessions, historySessions, searchQuery, set
         <SectionHeading count={historySessions.filter(match).length}>History</SectionHeading>
         <div className="space-y-3">
           {historySessions.filter(match).map((s) => (
-            <SessionCard key={s.id} session={s} isMentor />
+            <SessionCard key={s.id} session={s} isMentor
+              intakeSummary={s.intake_summary}
+              onViewIntake={(_, text) => onViewIntake(s, text)}
+            />
           ))}
           {historySessions.length === 0 && <EmptyState message="No past sessions yet." />}
           {historySessions.length > 0 && historySessions.filter(match).length === 0 && <NoMatch />}

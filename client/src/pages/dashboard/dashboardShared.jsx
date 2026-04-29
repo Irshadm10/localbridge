@@ -95,7 +95,7 @@ export function EmptyState({ message, cta, href, icon: Icon = CalendarDays }) {
 // ─── SessionCard ──────────────────────────────────────────────────────────────
 export function SessionCard({
   session, isMentor = false, mentorProfile, onAccept, onDecline, onCancel,
-  actionLoading, onReview, reviewed,
+  actionLoading, onReview, reviewed, intakeSummary, onViewIntake,
 }) {
   const navigate = useNavigate();
   const type = SESSION_TYPE_MAP[session.session_type];
@@ -163,6 +163,12 @@ export function SessionCard({
 
         {/* Actions */}
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-[var(--bridge-border)] pt-3 sm:border-t-0 sm:pt-0">
+          {isMentor && intakeSummary && (
+            <button type="button" onClick={() => onViewIntake?.(session.id, intakeSummary)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-violet-50 px-4 py-2 text-xs font-bold text-violet-700 transition hover:bg-violet-100 dark:bg-violet-500/10 dark:text-violet-300 dark:hover:bg-violet-500/20">
+              <Sparkles className="h-3.5 w-3.5" />Intake Notes
+            </button>
+          )}
           {showMentorActions && (
             <>
               <button type="button" onClick={() => onAccept(session.id)} disabled={actionLoading === session.id}

@@ -36,6 +36,7 @@ export default async function handler(req, res) {
     const supabase = getSupabaseAdmin();
     const meta = checkoutSession.metadata ?? {};
     let sync = { synced: false, error: 'Unknown type' };
+    let bridgeSessionId = null;
 
     if (meta.type === 'subscription' && supabase) {
       const { data: row } = await supabase
@@ -76,7 +77,7 @@ export default async function handler(req, res) {
         .like('message', `${marker}%`)
         .maybeSingle();
 
-      let bridgeSessionId = existing?.id ?? null;
+      bridgeSessionId = existing?.id ?? null;
 
       if (existing?.id) {
         sync = { synced: true };
@@ -116,7 +117,7 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.json({ ok: true, type: meta.type ?? null, sessionId: checkoutSession.id, ...sync });
+    return res.json({ ok: true, type: meta.type ?? null, sessionId: checkoutSession.id, bridge_session_id: bridgeSessionId, ...sync });
   } catch (error) {
     console.error('Finalize checkout error:', error);
     res.status(500).json({ error: error?.message || 'Could not finalize checkout.' });
