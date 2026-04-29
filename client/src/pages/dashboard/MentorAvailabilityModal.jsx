@@ -70,8 +70,13 @@ export default function MentorAvailabilityModal({ open, onClose, mentorProfileId
         availability_schedule: { weekly: schedule.weekly, timezone: schedule.timezone },
         available: accepting,
       };
-      const { error: uErr } = await supabase.from('mentor_profiles').update(payload).eq('id', mentorProfileId);
+      const { data, error: uErr } = await supabase
+        .from('mentor_profiles')
+        .update(payload)
+        .eq('id', mentorProfileId)
+        .select('id');
       if (uErr) throw uErr;
+      if (!data || data.length === 0) throw new Error('Could not save — permission denied. Your session may have expired.');
       onSaved?.();
       onClose?.();
     } catch (e) {
