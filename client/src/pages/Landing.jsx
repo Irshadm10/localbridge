@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
 import { useAuth } from '../context/useAuth';
 import Reveal from '../components/Reveal';
+import { useFooterOffset } from '../utils/useFooterOffset';
 
 /* ─── Hooks ─────────────────────────────────────────────────── */
 function useMouseParallax() {
@@ -396,6 +397,7 @@ function FloatingDock() {
   const [visible, setVisible] = useState(false);
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
+  const bottom = useFooterOffset(24);
 
   // Show only after scrolling past the hero
   useEffect(() => {
@@ -427,7 +429,7 @@ function FloatingDock() {
   ];
 
   return (
-    <div ref={menuRef} className="pointer-events-none fixed bottom-6 left-6 z-40 flex flex-col items-start gap-2">
+    <div ref={menuRef} className="pointer-events-none fixed left-6 z-40 flex flex-col items-start gap-2" style={{ bottom }}>
       {/* Popup menu — opens above the FAB */}
       <div
         className="pointer-events-auto flex flex-col gap-1 rounded-2xl border border-white/[0.09] bg-[#0d0906]/96 p-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.7),0_0_80px_rgba(234,88,12,0.12)] backdrop-blur-2xl"

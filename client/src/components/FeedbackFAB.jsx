@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { MessageSquareText } from 'lucide-react';
 import FeedbackModal from './FeedbackModal';
+import { useFooterOffset } from '../utils/useFooterOffset';
 
 const fabFocus =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bridge-canvas)] dark:focus-visible:ring-offset-stone-950';
 
 export default function FeedbackFAB() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const bottom = useFooterOffset(24);
 
   return (
     <>
-      <div className="pointer-events-none fixed bottom-6 right-6 z-40">
+      <div className="pointer-events-none fixed right-6 z-40" style={{ bottom }}>
         <button
           type="button"
           onClick={() => setFeedbackOpen(true)}
