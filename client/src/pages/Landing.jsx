@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, useMotionValue, useSpring, useMotionTemplate } from 'motion/react';
 import { useAuth } from '../context/useAuth';
 import Reveal from '../components/Reveal';
 
@@ -114,42 +115,95 @@ const WHY_ROWS = [
   { label: 'Commitment',              dm: 'None',             coaching: 'Multi-session pkg', bridge: 'One session at a time'   },
 ];
 
-/* ─── Particle Canvas ────────────────────────────────────────── */
-function ParticleCanvas() {
+/* ─── Enhanced Particle Canvas ───────────────────────────────── */
+function EnhancedParticleCanvas() {
   const canvasRef = useRef(null);
+  const mouseRef = useRef({ x: -9999, y: -9999 });
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let W = canvas.width = window.innerWidth;
     let H = canvas.height = window.innerHeight;
-    const particles = Array.from({ length: 70 }, () => ({
+    const particles = Array.from({ length: 185 }, () => ({
       x: Math.random() * W, y: Math.random() * H,
-      size: Math.random() * 1.8 + 0.3,
-      speed: Math.random() * 0.35 + 0.08,
-      opacity: Math.random() * 0.45 + 0.08,
-      drift: (Math.random() - 0.5) * 0.25,
+      size: Math.random() * 1.5 + 1.5,
+      speed: Math.random() * 0.28 + 0.06,
+      opacity: Math.random() * 0.38 + 0.07,
+      drift: (Math.random() - 0.5) * 0.22,
+      vx: 0, vy: 0,
     }));
     let id;
+    const DISPERSE_R = 130, DISPERSE_F = 1.0;
     function draw() {
       ctx.clearRect(0, 0, W, H);
+      const { x: mx, y: my } = mouseRef.current;
       particles.forEach(p => {
+        const dx = p.x - mx, dy = p.y - my;
+        const dist = Math.hypot(dx, dy);
+        if (dist < DISPERSE_R && dist > 0) {
+          const f = (DISPERSE_R - dist) / DISPERSE_R * DISPERSE_F;
+          p.vx += (dx / dist) * f; p.vy += (dy / dist) * f;
+        }
+        p.vx *= 0.90; p.vy *= 0.90;
+        p.x += p.drift + p.vx; p.y -= p.speed + p.vy;
+        if (p.y < -4) { p.y = H + 4; p.x = Math.random() * W; }
+        if (p.x < -4) p.x = W + 4;
+        if (p.x > W + 4) p.x = -4;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(251,146,60,${p.opacity})`;
+        ctx.fillStyle = `rgba(234,88,12,${p.opacity})`;
         ctx.fill();
-        p.y -= p.speed; p.x += p.drift;
-        if (p.y < -4) { p.y = H + 4; p.x = Math.random() * W; }
-        if (p.x < -4 || p.x > W + 4) p.x = Math.random() * W;
       });
       id = requestAnimationFrame(draw);
     }
     draw();
+    const onMove = (e) => { mouseRef.current = { x: e.clientX, y: e.clientY }; };
     const resize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; };
+    window.addEventListener('mousemove', onMove, { passive: true });
     window.addEventListener('resize', resize);
-    return () => { cancelAnimationFrame(id); window.removeEventListener('resize', resize); };
+    return () => { cancelAnimationFrame(id); window.removeEventListener('mousemove', onMove); window.removeEventListener('resize', resize); };
   }, []);
-  return <canvas ref={canvasRef} className="pointer-events-none absolute inset-0" style={{ opacity: 0.55 }} />;
+  return <canvas ref={canvasRef} className="pointer-events-none absolute inset-0" style={{ opacity: 0.58 }} />;
+}
+
+/* ─── Spotlight Cursor ───────────────────────────────────────── */
+function SpotlightCursor({ heroRef }) {
+  const [pos, setPos] = useState({ x: -9999, y: -9999 });
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const section = heroRef?.current;
+    if (!section) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let frame;
+    const onMove = (e) => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const rect = section.getBoundingClientRect();
+        setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        setActive(true);
+      });
+    };
+    const onLeave = () => setActive(false);
+    section.addEventListener('mousemove', onMove, { passive: true });
+    section.addEventListener('mouseleave', onLeave);
+    return () => {
+      section.removeEventListener('mousemove', onMove);
+      section.removeEventListener('mouseleave', onLeave);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [heroRef]);
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-[6]"
+      style={{
+        background: 'rgba(5,2,1,0.50)',
+        opacity: active ? 1 : 0,
+        transition: 'opacity 700ms ease',
+        maskImage: `radial-gradient(circle 400px at ${pos.x}px ${pos.y}px, transparent 0%, transparent 28%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%)`,
+        WebkitMaskImage: `radial-gradient(circle 400px at ${pos.x}px ${pos.y}px, transparent 0%, transparent 28%, rgba(0,0,0,0.5) 55%, rgba(0,0,0,0.92) 80%)`,
+      }}
+    />
+  );
 }
 
 /* ─── 3D Portal Rings ───────────────────────────────────────── */
@@ -187,6 +241,91 @@ function Portal3D() {
         background: 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(234,88,12,0.14) 0%, transparent 70%)',
         borderRadius: '50%',
       }} />
+    </div>
+  );
+}
+
+/* ─── Spring 3D Mentor Card ─────────────────────────────────── */
+function Spring3DMentorCard() {
+  const containerRef = useRef(null);
+  const reduced = useRef(
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  const rXMV = useMotionValue(0);
+  const rYMV = useMotionValue(0);
+  const glowX = useMotionValue(50);
+  const glowY = useMotionValue(50);
+  const cfg = { stiffness: 135, damping: 20, mass: 0.55 };
+  const rotateX = useSpring(rXMV, cfg);
+  const rotateY = useSpring(rYMV, cfg);
+  const lightX = useSpring(glowX, cfg);
+  const lightY = useSpring(glowY, cfg);
+  const background = useMotionTemplate`radial-gradient(circle 210px at ${lightX}% ${lightY}%, rgba(234,88,12,0.26) 0%, rgba(251,146,60,0.10) 40%, transparent 65%)`;
+  const onMove = useCallback((e) => {
+    if (reduced.current) return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    rXMV.set((y - 0.5) * -28);
+    rYMV.set((x - 0.5) * 28);
+    glowX.set(x * 100);
+    glowY.set(y * 100);
+  }, [rXMV, rYMV, glowX, glowY]);
+  const onLeave = useCallback(() => {
+    rXMV.set(0); rYMV.set(0); glowX.set(50); glowY.set(50);
+  }, [rXMV, rYMV, glowX, glowY]);
+  return (
+    <div ref={containerRef} style={{ perspective: 900 }} onMouseMove={onMove} onMouseLeave={onLeave}>
+      <motion.div
+        style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
+        className="relative overflow-hidden rounded-2xl border border-white/[0.13] bg-white/[0.055] shadow-[0_32px_80px_rgba(0,0,0,0.62),0_0_0_1px_rgba(255,255,255,0.07)] backdrop-blur-2xl"
+      >
+        <motion.div className="pointer-events-none absolute inset-0 rounded-2xl" style={{ background }} />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent" />
+        <div className="relative p-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-base font-bold text-white shadow-[0_6px_20px_rgba(234,88,12,0.52)]">
+                MC
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[rgba(8,3,1,0.9)]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-200" />
+                </span>
+              </div>
+              <div>
+                <p className="text-[13px] font-bold text-white/92">Maya Chen</p>
+                <p className="text-[11px] text-white/42">Director of Product</p>
+              </div>
+            </div>
+            <div className="rounded-full border border-orange-500/25 bg-orange-500/12 px-3 py-1 text-[9px] font-bold text-orange-300">Linear</div>
+          </div>
+          {/* Tags */}
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {['PM Strategy','Promotion','Roadmapping','OKRs'].map(tag => (
+              <span key={tag} className="rounded-full border border-white/[0.09] bg-white/[0.06] px-2.5 py-0.5 text-[9px] font-medium text-white/55">{tag}</span>
+            ))}
+          </div>
+          {/* Stats */}
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            {[['4.9 ★','Rating'],['86','Sessions'],['$95/hr','Rate']].map(([v,l]) => (
+              <div key={l} className="rounded-xl border border-white/[0.07] bg-white/[0.04] px-3 py-2.5 text-center">
+                <p className="text-sm font-bold text-white/88">{v}</p>
+                <p className="text-[9px] text-white/30">{l}</p>
+              </div>
+            ))}
+          </div>
+          {/* Bio */}
+          <p className="mt-4 text-[11px] text-white/38 leading-relaxed">
+            Former PM at Google → Linear. I help PMs at Series A–C companies nail their strategy and get promoted.
+          </p>
+          {/* CTA */}
+          <button className="mt-5 w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3 text-[11px] font-bold text-white shadow-[0_0_32px_rgba(234,88,12,0.48)] transition hover:shadow-[0_0_48px_rgba(234,88,12,0.72)]">
+            Book a session · $95
+          </button>
+        </div>
+        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-500/35 to-transparent" />
+      </motion.div>
     </div>
   );
 }
@@ -451,6 +590,7 @@ export default function Landing() {
   const mouse = useMouseParallax();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const heroRef = useRef(null);
 
   useEffect(() => {
     const t = setTimeout(() => setHeroLoaded(true), 120);
@@ -503,9 +643,11 @@ export default function Landing() {
       {/* ════════════════════════════════════════════════════════
           HERO
       ════════════════════════════════════════════════════════ */}
-      <section className="relative min-h-screen overflow-hidden" style={{ backgroundColor: 'var(--bridge-hero-bg)' }}>
-        {/* Particle field */}
-        <ParticleCanvas />
+      <section ref={heroRef} className="relative min-h-screen overflow-hidden" style={{ backgroundColor: 'var(--bridge-hero-bg)' }}>
+        {/* Enhanced particle field — 185 particles with mouse dispersion */}
+        <EnhancedParticleCanvas />
+        {/* Spotlight cursor reveal */}
+        <SpotlightCursor heroRef={heroRef} />
 
         {/* Layered grid */}
         <div aria-hidden className="pointer-events-none absolute inset-0"
@@ -534,16 +676,16 @@ export default function Landing() {
         {/* Noise */}
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-bridge-noise opacity-[0.028]" />
 
-        {/* 3D Portal decoration */}
-        <div aria-hidden className="pointer-events-none absolute left-1/2 top-28 -translate-x-1/2 hidden lg:block"
+        {/* 3D Portal — positioned behind right column */}
+        <div aria-hidden className="pointer-events-none absolute right-[4%] top-16 hidden lg:block opacity-60"
           style={{ ...parallaxStyle(-8, -6, 1) }}>
           <Portal3D />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-36 pb-28 sm:px-6 lg:px-8 lg:pt-44">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pt-32 pb-20 sm:px-6 lg:px-8 lg:pt-36">
 
           {/* Live pill */}
-          <div className={`flex justify-center ${heroLoaded ? 'l-hero-in' : 'opacity-0'}`}>
+          <div className={`flex justify-center lg:justify-start ${heroLoaded ? 'l-hero-in' : 'opacity-0'}`}>
             <MagneticWrap strength={0.15}>
               <div className="group inline-flex cursor-default items-center gap-2.5 rounded-full border border-white/[0.09] bg-white/[0.03] px-5 py-2.5 backdrop-blur-xl transition hover:border-orange-500/25 hover:bg-orange-500/[0.06]">
                 <span className="relative flex h-2 w-2">
@@ -555,49 +697,103 @@ export default function Landing() {
             </MagneticWrap>
           </div>
 
-          {/* Headline */}
-          <div className={`mt-10 text-center ${heroLoaded ? 'l-hero-in-1' : 'opacity-0'}`}>
-            <h1 style={{ fontSize: 'clamp(3.6rem,9.5vw,8.5rem)', fontWeight: 900, lineHeight: 0.88, letterSpacing: '-0.025em', color: 'rgba(255,255,255,0.82)' }}>
-              <span className="block" style={{ opacity: 0.72 }}>Your next</span>
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-orange-500"
-                style={{ filter: 'drop-shadow(0 0 80px rgba(234,88,12,0.7))' }}>career move</span>
-              <span className="block" style={{ opacity: 0.86 }}>starts with</span>
-              <span className="font-editorial block italic"
-                style={{ color:'rgba(255,255,255,0.16)', fontSize:'0.82em', letterSpacing:'-0.01em' }}>
-                one conversation.
-              </span>
-            </h1>
-          </div>
+          {/* Two-column layout */}
+          <div className="mt-10 flex flex-col items-center gap-12 lg:flex-row lg:items-center lg:gap-14 xl:gap-20">
 
-          {/* Sub */}
-          <div className={`mt-9 flex justify-center ${heroLoaded ? 'l-hero-in-2' : 'opacity-0'}`}>
-            <p className="max-w-[460px] text-center text-[1.04rem] text-white/38 leading-relaxed">
-              Real mentors. Real sessions. Real outcomes. Skip the cold messages — book a 1-on-1 with someone who's already been where you want to go.
-            </p>
-          </div>
+            {/* ── Left column: headline + CTAs ── */}
+            <div className="flex-1 text-center lg:text-left">
 
-          {/* CTAs */}
-          <div className={`mt-10 flex flex-wrap items-center justify-center gap-4 ${heroLoaded ? 'l-hero-in-3' : 'opacity-0'}`}>
-            <MagneticWrap>
-              <Link to={user ? '/mentors' : '/register'}
-                className="btn-sheen relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-gradient-to-r from-orange-500 via-orange-500 to-amber-500 px-10 py-4 text-[0.92rem] font-bold text-white shadow-[0_0_72px_rgba(234,88,12,0.55)] transition-all hover:shadow-[0_0_100px_rgba(234,88,12,0.82)] hover:scale-[1.04] active:scale-[0.97]">
-                Find your mentor
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                {/* Pulse ring */}
-                <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full"
-                  style={{ animation:'l-pulse-ring 2s ease-out infinite', boxShadow:'0 0 0 0 rgba(234,88,12,0.6)' }} />
-              </Link>
-            </MagneticWrap>
-            <MagneticWrap>
-              <Link to="/mentors"
-                className="border-gradient-bridge animate-border-bridge inline-flex items-center gap-2 rounded-full px-8 py-4 text-[0.92rem] font-semibold text-white/52 transition hover:text-white/85">
-                Browse mentors →
-              </Link>
-            </MagneticWrap>
+              <div className={heroLoaded ? 'l-hero-in-1' : 'opacity-0'}>
+                <h1 style={{ fontSize: 'clamp(3.2rem,8.5vw,7.5rem)', fontWeight: 900, lineHeight: 0.88, letterSpacing: '-0.025em', color: 'rgba(255,255,255,0.82)' }}>
+                  <span className="block" style={{ opacity: 0.72 }}>Your next</span>
+                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-orange-500"
+                    style={{ filter: 'drop-shadow(0 0 80px rgba(234,88,12,0.7))' }}>career move</span>
+                  <span className="block" style={{ opacity: 0.86 }}>starts with</span>
+                  <span className="font-editorial block italic"
+                    style={{ color:'rgba(255,255,255,0.16)', fontSize:'0.82em', letterSpacing:'-0.01em' }}>
+                    one conversation.
+                  </span>
+                </h1>
+              </div>
+
+              <div className={`mt-8 ${heroLoaded ? 'l-hero-in-2' : 'opacity-0'}`}>
+                <p className="mx-auto max-w-[460px] text-[1.04rem] text-white/38 leading-relaxed lg:mx-0 lg:max-w-[480px]">
+                  Real mentors. Real sessions. Real outcomes. Skip the cold messages — book a 1-on-1 with someone who's already been where you want to go.
+                </p>
+              </div>
+
+              <div className={`mt-9 flex flex-wrap items-center justify-center gap-4 lg:justify-start ${heroLoaded ? 'l-hero-in-3' : 'opacity-0'}`}>
+                <MagneticWrap>
+                  <Link to={user ? '/mentors' : '/register'}
+                    className="btn-sheen relative inline-flex items-center gap-3 overflow-hidden rounded-full bg-gradient-to-r from-orange-500 via-orange-500 to-amber-500 px-10 py-4 text-[0.92rem] font-bold text-white shadow-[0_0_72px_rgba(234,88,12,0.55)] transition-all hover:shadow-[0_0_100px_rgba(234,88,12,0.82)] hover:scale-[1.04] active:scale-[0.97]">
+                    Find your mentor
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span aria-hidden className="pointer-events-none absolute inset-0 rounded-full"
+                      style={{ animation:'l-pulse-ring 2s ease-out infinite', boxShadow:'0 0 0 0 rgba(234,88,12,0.6)' }} />
+                  </Link>
+                </MagneticWrap>
+                <MagneticWrap>
+                  <Link to="/mentors"
+                    className="border-gradient-bridge animate-border-bridge inline-flex items-center gap-2 rounded-full px-8 py-4 text-[0.92rem] font-semibold text-white/52 transition hover:text-white/85">
+                    Browse mentors →
+                  </Link>
+                </MagneticWrap>
+              </div>
+
+              <div className={`mt-6 flex flex-wrap justify-center gap-x-5 gap-y-1 lg:justify-start ${heroLoaded ? 'l-hero-in-3' : 'opacity-0'}`}>
+                {['No credit card required','First session guaranteed','Cancel anytime'].map((t,i) => (
+                  <span key={i} className="flex items-center gap-1.5 text-[10px] text-white/22">
+                    {i>0 && <span className="h-1 w-1 rounded-full bg-white/15"/>}
+                    {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Right column: Spring 3D mentor card ── */}
+            <div className={`relative shrink-0 w-full max-w-sm lg:w-[380px] xl:w-[420px] ${heroLoaded ? 'l-hero-in-4' : 'opacity-0'}`}>
+
+              {/* Chip — AI match */}
+              <div className="pointer-events-none absolute -left-8 -top-6 z-20 l-float-a hidden lg:block">
+                <div className="flex items-center gap-2.5 rounded-2xl border border-white/[0.09] bg-[#0b0906]/96 px-4 py-3 backdrop-blur-xl shadow-[0_12px_55px_rgba(234,88,12,0.22)]">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-500 text-sm shadow-[0_4px_14px_rgba(234,88,12,0.45)]">🎯</div>
+                  <div><p className="text-[10px] font-bold text-white">98% AI Match</p><p className="text-[9px] text-white/30">PM Strategy · Maya Chen</p></div>
+                </div>
+              </div>
+
+              {/* Chip — offer */}
+              <div className="pointer-events-none absolute -right-6 -top-3 z-20 l-float-b hidden lg:block">
+                <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-500/16 bg-[#0b0906]/96 px-4 py-3 backdrop-blur-xl shadow-[0_12px_55px_rgba(16,185,129,0.18)]">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-sm shadow-[0_4px_14px_rgba(16,185,129,0.45)]">🎉</div>
+                  <div><p className="text-[10px] font-bold text-emerald-400">Offer accepted</p><p className="text-[9px] text-white/30">+32% comp · Tyler N.</p></div>
+                </div>
+              </div>
+
+              {/* Chip — booking live */}
+              <div className="pointer-events-none absolute -left-10 bottom-8 z-20 l-float-a hidden lg:block" style={{ animationDelay:'-3s' }}>
+                <div className="flex items-center gap-2.5 rounded-2xl border border-white/[0.07] bg-[#0b0906]/96 px-4 py-3 backdrop-blur-xl">
+                  <span className="relative flex h-2.5 w-2.5 shrink-0">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-70" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-400" />
+                  </span>
+                  <p className="text-[10px] font-bold text-white/55">3 people booking now</p>
+                </div>
+              </div>
+
+              {/* Chip — rating */}
+              <div className="pointer-events-none absolute -right-8 bottom-4 z-20 l-float-b hidden lg:block" style={{ animationDelay:'-5s' }}>
+                <div className="flex items-center gap-2.5 rounded-2xl border border-amber-500/16 bg-[#0b0906]/96 px-4 py-3 backdrop-blur-xl">
+                  <span className="text-sm">⭐</span>
+                  <div><p className="text-[10px] font-bold text-amber-400">4.9 / 5 avg</p><p className="text-[9px] text-white/30">from 4,800+ sessions</p></div>
+                </div>
+              </div>
+
+              <Spring3DMentorCard />
+            </div>
           </div>
 
           {/* Scroll hint */}
-          <div className={`mt-9 flex justify-center ${heroLoaded ? 'l-hero-in-3' : 'opacity-0'}`}>
+          <div className={`mt-14 flex justify-center ${heroLoaded ? 'l-hero-in-4' : 'opacity-0'}`}>
             <div className="flex flex-col items-center gap-2 opacity-22">
               <span className="text-[8px] font-black uppercase tracking-[0.3em] text-white">Scroll</span>
               <div className="flex h-8 w-5 items-start justify-center rounded-full border border-white/25 p-1">
@@ -605,53 +801,50 @@ export default function Landing() {
               </div>
             </div>
           </div>
-
-          {/* Hero product + floating chips */}
-          <div className={`relative mx-auto mt-16 max-w-5xl ${heroLoaded ? 'l-hero-in-4' : 'opacity-0'}`}>
-
-            {/* Chip — AI match */}
-            <div className="pointer-events-none absolute -left-5 top-4 z-20 hidden xl:block l-float-a">
-              <div className="flex items-center gap-2.5 rounded-2xl border border-white/[0.09] bg-[#0b0906]/96 px-4 py-3 backdrop-blur-xl shadow-[0_12px_55px_rgba(234,88,12,0.22)]">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-500 text-sm shadow-[0_4px_14px_rgba(234,88,12,0.45)]">🎯</div>
-                <div><p className="text-[10px] font-bold text-white">98% AI Match</p><p className="text-[9px] text-white/30">PM Strategy · Maya Chen</p></div>
-              </div>
-            </div>
-
-            {/* Chip — offer */}
-            <div className="pointer-events-none absolute -right-5 top-8 z-20 hidden xl:block l-float-b">
-              <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-500/16 bg-[#0b0906]/96 px-4 py-3 backdrop-blur-xl shadow-[0_12px_55px_rgba(16,185,129,0.18)]">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-sm shadow-[0_4px_14px_rgba(16,185,129,0.45)]">🎉</div>
-                <div><p className="text-[10px] font-bold text-emerald-400">Offer accepted</p><p className="text-[9px] text-white/30">+32% comp · Tyler N.</p></div>
-              </div>
-            </div>
-
-            {/* Chip — booking live */}
-            <div className="pointer-events-none absolute -left-10 bottom-14 z-20 hidden xl:block l-float-a" style={{ animationDelay: '-3s' }}>
-              <div className="flex items-center gap-2.5 rounded-2xl border border-white/[0.07] bg-[#0b0906]/96 px-4 py-3 backdrop-blur-xl">
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-70" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-400" />
-                </span>
-                <p className="text-[10px] font-bold text-white/55">3 people booking now</p>
-              </div>
-            </div>
-
-            {/* Chip — rating */}
-            <div className="pointer-events-none absolute -right-12 bottom-20 z-20 hidden xl:block l-float-b" style={{ animationDelay: '-5s' }}>
-              <div className="flex items-center gap-2.5 rounded-2xl border border-amber-500/16 bg-[#0b0906]/96 px-4 py-3 backdrop-blur-xl">
-                <span className="text-sm">⭐</span>
-                <div><p className="text-[10px] font-bold text-amber-400">4.9 / 5 avg</p><p className="text-[9px] text-white/30">from 4,800+ sessions</p></div>
-              </div>
-            </div>
-
-            <ProductScene />
-          </div>
         </div>
       </section>
 
       {/* Hero fade-out */}
       <div aria-hidden className="pointer-events-none -mt-1 h-48 w-full"
         style={{ background:'linear-gradient(to bottom,#150803 0%,#1c0c05 12%,#281408 24%,#381c0e 36%,rgba(62,26,8,0.9) 50%,rgba(95,42,12,0.65) 62%,rgba(145,68,20,0.38) 74%,rgba(195,110,40,0.14) 86%,var(--bridge-canvas) 100%)' }} />
+
+      {/* ════════════════════════════════════════════════════════
+          PRODUCT PREVIEW — app flow walkthrough
+      ════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden py-20 bg-[var(--bridge-canvas)]">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <Reveal>
+            <div className="mb-10 text-center">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">See it in action</p>
+              <h2 className="mt-3 font-display text-2xl font-black tracking-tight text-[var(--bridge-text)] sm:text-3xl">
+                From search to session in <span className="text-gradient-bridge">under a minute</span>
+              </h2>
+            </div>
+          </Reveal>
+          <div className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-center">
+            <Reveal delay={60}>
+              <div className="space-y-5">
+                {[
+                  { n:'01', title:'Describe your goal', desc:'Tell our AI what you want — "land a PM role at a Series B" or "get promoted to Staff." It surfaces the exact mentors most likely to help.' },
+                  { n:'02', title:'Pick from ranked matches', desc:'Real bios, honest reviews, exact rates — all visible before you commit. No surprises, no back-and-forth.' },
+                  { n:'03', title:'Book and get unstuck', desc:'Real-time availability, built-in video room. Session confirmed in under 30 seconds.' },
+                ].map((s,i) => (
+                  <div key={i} className="flex items-start gap-4">
+                    <span className="shrink-0 font-display text-2xl font-black leading-none text-transparent bg-clip-text bg-gradient-to-br from-orange-500/50 to-amber-400/30">{s.n}</span>
+                    <div>
+                      <h3 className="text-sm font-bold text-[var(--bridge-text)]">{s.title}</h3>
+                      <p className="mt-1 text-[13px] text-[var(--bridge-text-muted)] leading-relaxed">{s.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+            <Reveal delay={120}>
+              <ProductScene />
+            </Reveal>
+          </div>
+        </div>
+      </section>
 
       {/* ════════════════════════════════════════════════════════
           ACTIVITY TICKER
