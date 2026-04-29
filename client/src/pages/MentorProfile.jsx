@@ -900,35 +900,35 @@ export default function MentorProfile() {
             {/* Main column */}
             <div className="space-y-6 lg:col-span-2">
 
-              {/* Bio */}
-              <div className="group relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card transition hover:border-orange-300/30 sm:p-8">
+              {/* Bio + Expertise */}
+              <div className="group relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] shadow-bridge-card transition hover:border-orange-300/30">
                 <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-600 dark:text-orange-400">About</p>
-                <h2 className="mt-1.5 font-display text-xl font-semibold text-[var(--bridge-text)] sm:text-2xl">Their story</h2>
-                <div className="mt-5 border-l-[3px] border-orange-400/40 pl-5">
-                  <p className="whitespace-pre-line text-base leading-relaxed text-[var(--bridge-text-secondary)] sm:text-lg">
-                    {mentor.bio?.trim() || 'No bio yet — book a session and ask what you would normally read here.'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Expertise */}
-              <div className="group relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-7 shadow-bridge-card transition hover:border-orange-300/30 sm:p-8">
-                <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-600 dark:text-orange-400">Focus areas</p>
-                <h2 className="mt-1.5 font-display text-xl font-semibold text-[var(--bridge-text)] sm:text-2xl">Expertise</h2>
-                {mentor.expertise?.length > 0 ? (
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    {mentor.expertise.map((tag) => (
-                      <span key={tag}
-                        className="rounded-full border border-orange-200/60 bg-orange-50/60 px-3.5 py-1.5 text-sm font-medium text-orange-900 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300">
-                        {tag}
-                      </span>
-                    ))}
+                <div className="p-7 sm:p-8">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-600 dark:text-orange-400">About</p>
+                  <h2 className="mt-1.5 font-display text-xl font-semibold text-[var(--bridge-text)] sm:text-2xl">Their story</h2>
+                  <div className="mt-5 border-l-[3px] border-orange-400/40 pl-5">
+                    <p className="whitespace-pre-line text-base leading-relaxed text-[var(--bridge-text-secondary)] sm:text-lg">
+                      {mentor.bio?.trim() || 'No bio yet — book a session and ask what you would normally read here.'}
+                    </p>
                   </div>
-                ) : (
-                  <p className="mt-4 text-sm text-[var(--bridge-text-muted)]">No focus areas listed yet.</p>
-                )}
+                </div>
+                <div className="mx-7 border-t border-[var(--bridge-border)] sm:mx-8" />
+                <div className="p-7 sm:p-8">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-orange-600 dark:text-orange-400">Focus areas</p>
+                  <h2 className="mt-1.5 font-display text-xl font-semibold text-[var(--bridge-text)] sm:text-2xl">Expertise</h2>
+                  {mentor.expertise?.length > 0 ? (
+                    <div className="mt-5 flex flex-wrap gap-2">
+                      {mentor.expertise.map((tag) => (
+                        <span key={tag}
+                          className="rounded-full border border-orange-200/60 bg-orange-50/60 px-3.5 py-1.5 text-sm font-medium text-orange-900 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-4 text-sm text-[var(--bridge-text-muted)]">No focus areas listed yet.</p>
+                  )}
+                </div>
               </div>
 
               {/* Work experience */}
@@ -1026,48 +1026,99 @@ export default function MentorProfile() {
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
 
-                {/* Mini stats card */}
-                <div className="rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-faint)]">Quick stats</p>
-                  <dl className="mt-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <dt className="text-sm text-[var(--bridge-text-muted)]">Rating</dt>
-                      <dd className="flex items-center gap-1.5">
-                        <StarRow rating={displayRating} />
-                        <span className="text-sm font-bold tabular-nums text-[var(--bridge-text)]">{displayRating > 0 ? displayRating.toFixed(1) : '—'}</span>
-                      </dd>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-[var(--bridge-border)] pt-3">
-                      <dt className="text-sm text-[var(--bridge-text-muted)]">Total sessions</dt>
-                      <dd className="text-sm font-bold tabular-nums text-[var(--bridge-text)]">{mentor.total_sessions ?? '—'}</dd>
-                    </div>
-                    {mentor.years_experience != null && (
-                      <div className="flex items-center justify-between border-t border-[var(--bridge-border)] pt-3">
-                        <dt className="text-sm text-[var(--bridge-text-muted)]">Experience</dt>
-                        <dd className="text-sm font-bold tabular-nums text-[var(--bridge-text)]">{mentor.years_experience} yrs</dd>
+                {/* Booking CTA card */}
+                {!isOwnMentorProfile && !bookingDisabledForMentor && (
+                  <div className="relative overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card">
+                    <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/40 to-transparent" />
+                    <div className="mb-5 flex items-end justify-between">
+                      <div>
+                        <p className="font-display text-3xl font-black tabular-nums text-gradient-bridge leading-none">
+                          {mentor.session_rate ? `$${mentor.session_rate}` : 'Free'}
+                        </p>
+                        <p className="mt-0.5 text-xs text-[var(--bridge-text-muted)]">per session</p>
                       </div>
-                    )}
-                    {industryLabel && (
-                      <div className="flex items-center justify-between border-t border-[var(--bridge-border)] pt-3">
-                        <dt className="text-sm text-[var(--bridge-text-muted)]">Industry</dt>
-                        <dd className="text-sm font-bold text-[var(--bridge-text)]">{industryLabel}</dd>
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between border-t border-[var(--bridge-border)] pt-3">
-                      <dt className="text-sm text-[var(--bridge-text-muted)]">Availability</dt>
-                      <dd>
-                        {mentor.available ? (
-                          <span className="inline-flex items-center gap-1.5 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse-soft" />
-                            Open
-                          </span>
-                        ) : (
-                          <span className="text-sm font-bold text-[var(--bridge-text-muted)]">Closed</span>
-                        )}
-                      </dd>
+                      {mentor.available ? (
+                        <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse-soft" />
+                          Available
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-[var(--bridge-surface-muted)] px-3 py-1.5 text-[11px] font-bold text-[var(--bridge-text-muted)]">
+                          Unavailable
+                        </span>
+                      )}
                     </div>
-                  </dl>
+                    <button
+                      type="button"
+                      onClick={() => bookingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      className={`btn-sheen w-full flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-5 py-3 text-sm font-bold text-white shadow-[0_4px_20px_-4px_rgba(234,88,12,0.55)] transition hover:brightness-110 ${focusRing}`}
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                      Book a Session
+                    </button>
+                    {!user && (
+                      <p className="mt-3 text-center text-[11px] text-[var(--bridge-text-faint)]">
+                        <Link to="/login" state={{ from: `/mentors/${id}` }} className="font-semibold text-orange-500 hover:text-orange-400">Sign in</Link> to complete your booking
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Session types card */}
+                <div className="overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-faint)]">What they offer</p>
+                  <ul className="mt-4 space-y-1">
+                    {SESSION_TYPES.map((type) => (
+                      <li key={type.key} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500">
+                          <SessionTypeIcon typeKey={type.key} className="h-4 w-4" />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[var(--bridge-text)]">{type.name}</p>
+                          <p className="text-xs text-[var(--bridge-text-muted)]">{type.duration}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
+
+                {/* At a glance */}
+                <div className="overflow-hidden rounded-[1.75rem] border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--bridge-text-faint)]">At a glance</p>
+                  <div className="mt-4 space-y-4">
+                    {(mentor.years_experience != null || industryLabel) && (
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sky-500/10">
+                          <svg className="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                        </span>
+                        <div className="min-w-0">
+                          {mentor.years_experience != null && (
+                            <p className="text-sm font-semibold text-[var(--bridge-text)]">{mentor.years_experience} yrs experience</p>
+                          )}
+                          {industryLabel && <p className="text-xs text-[var(--bridge-text-muted)]">{industryLabel}</p>}
+                        </div>
+                      </div>
+                    )}
+                    {mentor.expertise?.length > 0 && (
+                      <div className="border-t border-[var(--bridge-border)] pt-4">
+                        <p className="mb-2.5 text-[11px] text-[var(--bridge-text-muted)]">Top skills</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {mentor.expertise.slice(0, 4).map((tag) => (
+                            <span key={tag} className="rounded-full border border-orange-200/60 bg-orange-50/60 px-2.5 py-1 text-[11px] font-medium text-orange-900 dark:border-orange-400/20 dark:bg-orange-500/10 dark:text-orange-300">
+                              {tag}
+                            </span>
+                          ))}
+                          {mentor.expertise.length > 4 && (
+                            <span className="rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-2.5 py-1 text-[11px] font-medium text-[var(--bridge-text-muted)]">
+                              +{mentor.expertise.length - 4} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
               </div>
             </aside>
           </div>
