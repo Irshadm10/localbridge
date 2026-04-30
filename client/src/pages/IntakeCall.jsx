@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Mic, MicOff, CheckCircle2, Loader2 } from 'lucide-react'
 import supabase from '../api/supabase'
-import { generateFollowUp, generateSummary, speakText } from '../api/intake'
 import { useAuth } from '../context/useAuth'
 
 const QUESTIONS = {
@@ -54,27 +53,19 @@ export default function IntakeCall() {
   const [phase, setPhase] = useState('main') // main | followup
   const [interimText, setInterimText] = useState('')
 
-  const recognitionRef = useRef(null)
-
-  // SpeechRecognition setup
-  useEffect(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) {
-      setPageState('no_support')
-      return
-    }
-    const rec = new SR()
-    rec.continuous = false
-    rec.interimResults = true
-    rec.lang = 'en-US'
-    recognitionRef.current = rec
-  }, [])
+  // WebRTC
+  const pcRef = useRef(null)
+  const dcRef = useRef(null)
+  const localStreamRef = useRef(null)
+  const transcriptRef = useRef([])
+  const [isConnecting, setIsConnecting] = useState(false)
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      recognitionRef.current?.abort()
-      window.speechSynthesis.cancel()
+      localStreamRef.current?.getTracks().forEach(t => t.stop())
+      pcRef.current?.close()
+      window.speechSynthesis?.cancel()
     }
   }, [])
 
@@ -108,81 +99,157 @@ export default function IntakeCall() {
     load().catch(() => navigate('/dashboard'))
   }, [authLoading, user, sessionId, navigate, pageState])
 
-  function listenForAnswer() {
-    return new Promise((resolve) => {
-      const rec = recognitionRef.current
-      if (!rec) { resolve(''); return }
-
-      setFlowState('listening')
-      setInterimText('')
-
-      let finalAnswer = ''
-
-      rec.onresult = (event) => {
-        let interim = ''
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const text = event.results[i][0].transcript
-          if (event.results[i].isFinal) finalAnswer += text + ' '
-          else interim = text
-        }
-        setInterimText(finalAnswer + interim)
-      }
-
-      rec.onerror = () => resolve(finalAnswer.trim() || '[no response]')
-      rec.onend = () => resolve(finalAnswer.trim() || '[no response]')
-
-      try { rec.start() } catch { resolve('[no response]') }
-    })
-  }
-
-  async function runIntakeFlow() {
-    const sessionType = sessionData.session_type
-    const questions = QUESTIONS[sessionType] ?? QUESTIONS.career_advice
-    const collected = []
+  async function startRealtimeSession() {
+    setIsConnecting(true)
+    setFlowState('speaking') // 'speaking' = session is live
 
     try {
-      for (let i = 0; i < questions.length; i++) {
-        setCurrentQuestionIndex(i)
-        setCurrentQuestion(questions[i])
-        setPhase('main')
-        setInterimText('')
+      // 1. Fetch ephemeral token from our backend
+      const res = await fetch('/api/realtime-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionType: sessionData.session_type,
+          sessionId: sessionId,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to get realtime session token')
+      const data = await res.json()
+      const ephemeralKey = data.client_secret?.value
+      if (!ephemeralKey) throw new Error('No ephemeral key returned')
 
-        // Speak question, wait for it to finish, then listen
-        setFlowState('speaking')
-        await speakText(questions[i])
+      // 2. Set up WebRTC peer connection
+      const pc = new RTCPeerConnection()
+      pcRef.current = pc
 
-        const mainAnswer = await listenForAnswer()
+      // 3. Play assistant audio in an audio element
+      const audioEl = document.createElement('audio')
+      audioEl.autoplay = true
+      pc.ontrack = (e) => { audioEl.srcObject = e.streams[0] }
 
-        // Check for follow-up
-        setFlowState('processing')
-        let followUp = null
-        try { followUp = await generateFollowUp(sessionType, questions[i], mainAnswer) } catch { /* skip */ }
+      // 4. Add microphone track
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      localStreamRef.current = stream
+      stream.getTracks().forEach(track => pc.addTrack(track, stream))
 
-        if (followUp) {
-          setPhase('followup')
-          setCurrentQuestion(followUp)
-          setInterimText('')
+      // 5. Set up data channel for events
+      const dc = pc.createDataChannel('oai-events')
+      dcRef.current = dc
 
-          setFlowState('speaking')
-          await speakText(followUp)
+      dc.onmessage = (e) => {
+        let event
+        try { event = JSON.parse(e.data) } catch { return }
+        handleRealtimeEvent(event)
+      }
 
-          const followUpAnswer = await listenForAnswer()
+      // 6. Create SDP offer and get answer from OpenAI
+      const offer = await pc.createOffer()
+      await pc.setLocalDescription(offer)
 
-          collected.push({ question: questions[i], answer: mainAnswer })
-          collected.push({ question: followUp, answer: followUpAnswer })
-        } else {
-          collected.push({ question: questions[i], answer: mainAnswer })
+      const sdpRes = await fetch(
+        'https://api.openai.com/v1/realtime?model=gpt-realtime-1.5',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            'Content-Type': 'application/sdp',
+          },
+          body: offer.sdp,
         }
+      )
+      if (!sdpRes.ok) throw new Error('WebRTC SDP exchange failed')
+      const answerSdp = await sdpRes.text()
+      await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp })
 
-        setFlowState('processing')
-      }
+      setIsConnecting(false)
+    } catch (err) {
+      setErrorMessage(err?.message ?? 'Could not start voice session')
+      setFlowState('error')
+      setIsConnecting(false)
+    }
+  }
 
-      // Generate and save summary
-      let summary = ''
-      try { summary = await generateSummary(sessionType, collected) } catch {
-        summary = collected.map(t => `Q: ${t.question}\nA: ${t.answer}`).join('\n\n')
-      }
+  function handleRealtimeEvent(event) {
+    // Capture assistant transcript
+    if (
+      event.type === 'response.audio_transcript.done' &&
+      event.transcript
+    ) {
+      transcriptRef.current.push({ role: 'assistant', text: event.transcript })
+    }
 
+    // Capture user transcript
+    if (
+      event.type === 'conversation.item.input_audio_transcription.completed' &&
+      event.transcript
+    ) {
+      transcriptRef.current.push({ role: 'user', text: event.transcript })
+      setInterimText(event.transcript)
+    }
+
+    // Handle complete_intake function call
+    if (
+      event.type === 'response.function_call_arguments.done' &&
+      event.name === 'complete_intake'
+    ) {
+      endSessionAndSummarise()
+    }
+  }
+
+  async function endSessionAndSummarise() {
+    // Stop all tracks and close connection
+    localStreamRef.current?.getTracks().forEach(t => t.stop())
+    pcRef.current?.close()
+
+    setFlowState('processing')
+
+    try {
+      const transcript = transcriptRef.current
+      const sessionType = sessionData.session_type
+
+      // Build summary via standard OpenAI chat completion
+      const formatted = transcript
+        .map(t => `${t.role === 'assistant' ? 'Bridge' : 'Mentee'}: ${t.text}`)
+        .join('\n')
+
+      const summaryRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          max_tokens: 500,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are generating a mentor briefing from a voice intake interview transcript. ' +
+                'Write in third person about the mentee. Be specific and actionable. ' +
+                'Use plain text only, no markdown, no bullet symbols.',
+            },
+            {
+              role: 'user',
+              content:
+                `Session type: ${sessionType}\n\n` +
+                `Transcript:\n${formatted}\n\n` +
+                'Generate a mentor briefing in this exact format:\n\n' +
+                'MENTOR BRIEFING\n' +
+                'Session type: [session type]\n\n' +
+                'Who the mentee is: [2-3 sentences on background and situation]\n\n' +
+                'What they want from this session: [1-2 sentences on goal]\n\n' +
+                'Key challenges: [2-3 sentences on specific problems raised]\n\n' +
+                'What to focus on: [1-2 sentences of direct guidance for the mentor]',
+            },
+          ],
+        }),
+      })
+
+      const summaryData = await summaryRes.json()
+      const summary = summaryData.choices?.[0]?.message?.content?.trim() ?? ''
+
+      // Save to Supabase sessions table
       await supabase
         .from('sessions')
         .update({ intake_summary: summary, intake_completed: true })
@@ -190,7 +257,7 @@ export default function IntakeCall() {
 
       setFlowState('complete')
     } catch (err) {
-      setErrorMessage(err?.message ?? 'Something went wrong.')
+      setErrorMessage(err?.message ?? 'Failed to save intake summary')
       setFlowState('error')
     }
   }
@@ -275,14 +342,17 @@ export default function IntakeCall() {
   const isListening = flowState === 'listening'
   const isBusy = flowState === 'speaking' || flowState === 'processing'
   const isIdle = flowState === 'idle'
+  const isLive = flowState === 'speaking' || flowState === 'listening'
 
-  const stateLabel = {
-    idle: 'Tap to speak',
-    speaking: 'Speaking...',
-    listening: 'Listening...',
-    processing: 'Processing...',
-    error: 'Error',
-  }[flowState] ?? ''
+  const stateLabel = isConnecting
+    ? 'Connecting...'
+    : {
+        idle: 'Tap to speak',
+        speaking: 'Session live',
+        listening: 'Listening...',
+        processing: 'Processing...',
+        error: 'Error',
+      }[flowState] ?? ''
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bridge-canvas)' }}>
@@ -337,17 +407,21 @@ export default function IntakeCall() {
 
           {/* Mic button */}
           <div className="flex flex-col items-center gap-3 mb-6">
-            {isIdle ? (
+            {isConnecting ? (
+              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: 'var(--bridge-border)' }}>
+                <Loader2 size={32} className="text-amber-400 animate-spin" />
+              </div>
+            ) : isIdle ? (
               <button
-                onClick={runIntakeFlow}
+                onClick={startRealtimeSession}
                 className="relative w-20 h-20 rounded-full flex items-center justify-center bg-amber-500 hover:bg-amber-400 shadow-lg transition-all"
               >
                 <Mic size={32} className="text-white" />
               </button>
-            ) : isListening ? (
+            ) : isLive ? (
               <button
-                onClick={() => recognitionRef.current?.stop()}
-                title="Tap to finish speaking"
+                onClick={endSessionAndSummarise}
+                title="Tap to end session"
                 className="relative w-20 h-20 rounded-full flex items-center justify-center bg-amber-500 shadow-lg shadow-amber-500/40"
               >
                 <span className="absolute inset-0 rounded-full bg-amber-400 animate-ping opacity-40" />
@@ -383,7 +457,7 @@ export default function IntakeCall() {
                 interimText
               ) : (
                 <span style={{ color: 'var(--bridge-text-muted)' }}>
-                  {isListening ? 'Waiting for speech…' : isBusy ? ' ' : ''}
+                  {isListening ? 'Waiting for speech…' : isBusy ? ' ' : ''}
                 </span>
               )}
             </div>
