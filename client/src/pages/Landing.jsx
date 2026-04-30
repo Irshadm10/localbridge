@@ -148,16 +148,36 @@ function useScrollProgress(){
 
 /* ─── Intro Loader — cinematic brand reveal (CSS-driven) ─────── */
 function IntroLoader(){
-  const[done,setDone]=useState(()=>typeof window!=='undefined'&&!!sessionStorage.getItem('bridge_intro_seen'));
+  const[done,setDone]=useState(false);
+  const[mounted,setMounted]=useState(false);
 
   useEffect(()=>{
-    if(done)return;
+    setMounted(true);
+    try{
+      const seen=sessionStorage.getItem('bridge_intro_seen');
+      if(seen==='1'){
+        setDone(true);
+        return;
+      }
+    }catch(e){
+      setDone(true);
+      return;
+    }
+  },[]);
+
+  useEffect(()=>{
+    if(!mounted||done)return;
     const prevBody=document.body.style.overflow;
     const prevHtml=document.documentElement.style.overflow;
     document.body.style.overflow='hidden';
     document.documentElement.style.overflow='hidden';
-    const finish=()=>{sessionStorage.setItem('bridge_intro_seen','1');setDone(true);};
-    const timer=setTimeout(finish,2950);
+    const finish=()=>{
+      try{
+        sessionStorage.setItem('bridge_intro_seen','1');
+      }catch(e){}
+      setDone(true);
+    };
+    const timer=setTimeout(finish,3800);
     const skip=()=>{clearTimeout(timer);finish();};
     window.addEventListener('keydown',skip,{once:true});
     return()=>{
@@ -166,182 +186,205 @@ function IntroLoader(){
       document.body.style.overflow=prevBody;
       document.documentElement.style.overflow=prevHtml;
     };
-  },[done]);
+  },[mounted,done]);
 
   if(done)return null;
 
-  const dismiss=()=>{sessionStorage.setItem('bridge_intro_seen','1');setDone(true);};
+  const dismiss=()=>{
+    try{
+      sessionStorage.setItem('bridge_intro_seen','1');
+    }catch(e){}
+    setDone(true);
+  };
   const BRIDGE=['B','R','I','D','G','E'];
-  // Letters assemble outward from center
-  const STAGGER=[0.18,0.10,0.03,0.00,0.07,0.14];
-  const SPARK_BURST=1.15;
-  const SPARKS=Array.from({length:24},(_,i)=>{
-    const a=(i/24)*Math.PI*2;
-    const d=160+((i*47)%120);
-    return{tx:Math.cos(a)*d,ty:Math.sin(a)*d*0.85,delay:(i%5)*0.018};
-  });
-  // Liquid metal gradient — chrome/holographic with brand warmth
+  const STAGGER=[0,0.06,0.12,0.18,0.24,0.30];
   const CHROME='linear-gradient(160deg,#ffffff 0%,#fef3c7 18%,#fcd34d 35%,#fb923c 55%,#ea580c 75%,#9a3412 100%)';
+  
+  // Particle system
+  const PARTICLES=Array.from({length:60},(_,i)=>{
+    const angle=(i/60)*Math.PI*2;
+    const radius=80+Math.random()*120;
+    return{
+      angle,
+      radius,
+      speed:0.5+Math.random()*0.8,
+      size:2+Math.random()*3,
+      delay:Math.random()*0.8,
+    };
+  });
 
   return createPortal(
     <div onClick={dismiss}
       className="fixed inset-0 z-[10000] flex flex-col items-center justify-center cursor-pointer select-none overflow-hidden"
       style={{
-        background:'radial-gradient(ellipse 90% 70% at 50% 50%,#180a05 0%,#0a0503 45%,#000 85%)',
-        animation:'introOut 0.7s cubic-bezier(.55,0,.2,1) 2.35s forwards',
+        background:'radial-gradient(ellipse 120% 80% at 50% 50%,#1a0d08 0%,#0d0704 40%,#000 100%)',
+        animation:'introOut 0.8s cubic-bezier(.55,0,.2,1) 3.2s forwards',
       }}>
       <style>{`
-        @keyframes introOut{0%{opacity:1;transform:scale(1);filter:blur(0);}55%{opacity:0.55;transform:scale(1.08);filter:blur(6px);}100%{opacity:0;transform:scale(1.18);filter:blur(18px);visibility:hidden;}}
-        @keyframes introStageOut{0%{opacity:1;transform:scale(1);filter:blur(0);}100%{opacity:0;transform:scale(1.4);filter:blur(14px);}}
-        @keyframes introExitFlash{0%{opacity:0;}40%{opacity:0.55;}100%{opacity:0;}}
-        @keyframes introOrbIn{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5);}100%{opacity:1;transform:translate(-50%,-50%) scale(1);}}
-        @keyframes introOrbDrift{0%{transform:translate(-50%,-50%) translate(0,0);}50%{transform:translate(-50%,-50%) translate(3vmin,-2vmin);}100%{transform:translate(-50%,-50%) translate(0,0);}}
-        @keyframes introHeroIn{0%{opacity:0;transform:scale(0.5);filter:blur(24px);}60%{opacity:1;filter:blur(0);}100%{opacity:1;transform:scale(1);filter:blur(0);}}
-        @keyframes introHeroMorph{0%{opacity:1;transform:scale(1);filter:blur(0);}100%{opacity:0;transform:scale(0.32);filter:blur(8px);}}
-        @keyframes introLetterAssemble{0%{opacity:0;transform:scale(0.2);filter:blur(14px);}60%{opacity:1;}100%{opacity:1;transform:scale(1);filter:blur(0);}}
-        @keyframes introSpark{0%{opacity:0;transform:translate(0,0) scale(0);}20%{opacity:1;transform:translate(calc(var(--tx) * 0.4),calc(var(--ty) * 0.4)) scale(1.6);}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);}}
-        @keyframes introShockwave{0%{opacity:0;transform:scale(0.2);}25%{opacity:0.85;}100%{opacity:0;transform:scale(2.6);}}
-        @keyframes introFlash{0%,100%{opacity:0;}15%{opacity:0.4;}50%{opacity:0;}}
-        @keyframes introScale{0%{opacity:0;transform:scaleX(0);}100%{opacity:1;transform:scaleX(1);}}
-        @keyframes introTaglineIn{0%{opacity:0;transform:scale(0.96);filter:blur(6px);}100%{opacity:1;transform:scale(1);filter:blur(0);}}
+        @keyframes introOut{0%{opacity:1;transform:scale(1);filter:blur(0);}50%{opacity:0.6;transform:scale(1.05);filter:blur(4px);}100%{opacity:0;transform:scale(1.12);filter:blur(12px);visibility:hidden;}}
+        @keyframes introStageOut{0%{opacity:1;transform:scale(1) perspective(1000px) rotateX(0deg);filter:blur(0);}100%{opacity:0;transform:scale(1.3) perspective(1000px) rotateX(15deg);filter:blur(16px);}}
+        @keyframes introExitFlash{0%{opacity:0;}30%{opacity:0.6;}100%{opacity:0;}}
+        @keyframes introOrbIn{0%{opacity:0;transform:translate(-50%,-50%) scale(0) rotate(0deg);}100%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(360deg);}}
+        @keyframes introOrbDrift{0%{transform:translate(-50%,-50%) translate(0,0) rotate(0deg);}25%{transform:translate(-50%,-50%) translate(4vmin,-3vmin) rotate(90deg);}50%{transform:translate(-50%,-50%) translate(-2vmin,2vmin) rotate(180deg);}75%{transform:translate(-50%,-50%) translate(3vmin,-1vmin) rotate(270deg);}100%{transform:translate(-50%,-50%) translate(0,0) rotate(360deg);}}
+        @keyframes introHeroIn{0%{opacity:0;transform:scale(0.1) rotateX(90deg) rotateY(45deg) rotateZ(-30deg) translateZ(-200px);filter:blur(40px);}40%{opacity:1;transform:scale(1.2) rotateX(-10deg) rotateY(-15deg) rotateZ(10deg) translateZ(50px);filter:blur(0);}60%{transform:scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateZ(0px);}100%{opacity:1;transform:scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg) translateZ(0px);filter:blur(0);}}
+        @keyframes introHeroMorph{0%{opacity:1;transform:scale(1) rotateX(0deg) rotateY(0deg) rotateZ(0deg);filter:blur(0);}30%{opacity:1;transform:scale(1.8) rotateX(20deg) rotateY(-20deg) rotateZ(10deg);filter:blur(2px);}60%{opacity:0.8;transform:scale(2.5) rotateX(45deg) rotateY(-45deg) rotateZ(30deg);filter:blur(8px);}100%{opacity:0;transform:scale(4) rotateX(90deg) rotateY(-90deg) rotateZ(60deg);filter:blur(24px);}}
+        @keyframes introLetter3D{0%{opacity:0;transform:translate3d(var(--sx),var(--sy),-800px) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) scale(0.05);filter:blur(30px);}25%{opacity:1;filter:blur(0);}40%{transform:translate3d(calc(var(--sx)*0.4),calc(var(--sy)*0.4),0px) rotateX(calc(var(--rx)*0.3)) rotateY(calc(var(--ry)*0.3)) rotateZ(calc(var(--rz)*0.3)) scale(1.15);}55%{transform:translate3d(calc(var(--sx)*0.15),calc(var(--sy)*0.15),0px) rotateX(calc(var(--rx)*0.08)) rotateY(calc(var(--ry)*0.08)) rotateZ(calc(var(--rz)*0.08)) scale(1.02);}70%{transform:translate3d(calc(var(--sx)*0.05),calc(var(--sy)*0.05),0px) rotateX(calc(var(--rx)*0.02)) rotateY(calc(var(--ry)*0.02)) rotateZ(calc(var(--rz)*0.02)) scale(1);}100%{opacity:1;transform:translate3d(0,0,0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);filter:blur(0);}}
+        @keyframes introParticle{0%{opacity:0;transform:translate(-50%,-50%) rotate(0deg) scale(0);}20%{opacity:1;transform:translate(calc(var(--px)),calc(var(--py))) rotate(180deg) scale(1);}50%{opacity:0.8;transform:translate(calc(var(--px)*1.5),calc(var(--py)*1.5)) rotate(360deg) scale(0.8);}100%{opacity:0;transform:translate(calc(var(--px)*2.5),calc(var(--py)*2.5)) rotate(720deg) scale(0);}}
+        @keyframes introShockwave{0%{opacity:0;transform:scale(0.1) rotate(0deg);border-width:8px;}20%{opacity:1;transform:scale(0.5) rotate(45deg);border-width:4px;}100%{opacity:0;transform:scale(3) rotate(180deg);border-width:0px;}}
+        @keyframes introFlash{0%,100%{opacity:0;}10%{opacity:0.5;}30%{opacity:0.2;}50%{opacity:0;}}
+        @keyframes introScale{0%{opacity:0;transform:scaleX(0) rotateY(90deg);}100%{opacity:1;transform:scaleX(1) rotateY(0deg);}}
+        @keyframes introTaglineIn{0%{opacity:0;transform:scale(0.9) translateY(30px) rotateX(-20deg);filter:blur(8px);}50%{opacity:1;filter:blur(0);}70%{transform:scale(1.02) translateY(-5px) rotateX(5deg);}100%{opacity:1;transform:scale(1) translateY(0) rotateX(0deg);filter:blur(0);}}
+        @keyframes introGlitch{0%,100%{transform:translate(0);}20%{transform:translate(-2px,2px);}40%{transform:translate(2px,-2px);}60%{transform:translate(-1px,-1px);}80%{transform:translate(1px,1px);}}
+        @keyframes introChromatic{0%,100%{filter:drop-shadow(0 0 0 transparent);}25%{filter:drop-shadow(-2px 0 0 rgba(255,0,0,0.5)) drop-shadow(2px 0 0 rgba(0,255,255,0.5));}50%{filter:drop-shadow(0 0 0 transparent);}75%{filter:drop-shadow(-1px 0 0 rgba(255,0,0,0.3)) drop-shadow(1px 0 0 rgba(0,255,255,0.3));}}
         @media (prefers-reduced-motion: reduce){*{animation-duration:0.01ms!important;animation-iteration-count:1!important;}}
       `}</style>
 
-      {/* Three drifting gradient orbs — minimal, purposeful */}
+      {/* Deep space background with nebula */}
+      <div aria-hidden className="absolute inset-0 pointer-events-none"
+        style={{
+          background:'radial-gradient(ellipse 150% 100% at 30% 50%,rgba(234,88,12,0.08) 0%,transparent 50%),radial-gradient(ellipse 120% 80% at 70% 50%,rgba(251,146,60,0.06) 0%,transparent 50%)',
+        }}/>
+
+      {/* Animated gradient orbs with rotation */}
       {[
-        {x:'30%',y:'35%',c:'rgba(234,88,12,.32)',s:'46vmin',d:'14s'},
-        {x:'70%',y:'65%',c:'rgba(251,146,60,.26)',s:'52vmin',d:'18s'},
-        {x:'50%',y:'50%',c:'rgba(251,191,36,.20)',s:'62vmin',d:'22s'},
+        {x:'25%',y:'30%',c:'rgba(234,88,12,.28)',s:'52vmin',d:'18s',delay:0},
+        {x:'75%',y:'70%',c:'rgba(251,146,60,.22)',s:'58vmin',d:'22s',delay:0.1},
+        {x:'50%',y:'50%',c:'rgba(251,191,36,.18)',s:'68vmin',d:'26s',delay:0.2},
       ].map((o,i)=>(
         <div key={i} aria-hidden className="absolute rounded-full pointer-events-none"
           style={{
             left:o.x,top:o.y,width:o.s,height:o.s,
             background:`radial-gradient(circle,${o.c} 0%,transparent 70%)`,
-            filter:'blur(50px)',
+            filter:'blur(60px)',
             opacity:0,
-            animation:`introOrbIn 0.9s cubic-bezier(.22,1,.36,1) ${0.05+i*0.06}s forwards, introOrbDrift ${o.d} ease-in-out ${0.9+i*0.06}s infinite`,
+            animation:`introOrbIn 1s cubic-bezier(.22,1,.36,1) ${0.08+o.delay}s forwards, introOrbDrift ${o.d} ease-in-out ${1+o.delay}s infinite`,
           }}/>
       ))}
 
-      {/* Frosted-glass conic gradient — holographic titanium feel */}
-      <div aria-hidden className="absolute inset-[-15%] pointer-events-none"
+      {/* Particle system */}
+      {PARTICLES.map((p,i)=>(
+        <div key={i} aria-hidden className="absolute rounded-full pointer-events-none"
+          style={{
+            left:'50%',top:'50%',
+            width:`${p.size}px`,height:`${p.size}px`,
+            background:i%3===0?'#fbbf24':i%3===1?'#fb923c':'#f97316',
+            boxShadow:`0 0 ${p.size*2}px ${i%3===0?'rgba(251,191,36,.8)':i%3===1?'rgba(251,146,60,.8)':'rgba(249,115,22,.8)'}`,
+            opacity:0,
+            '--px':`${Math.cos(p.angle)*p.radius}px`,'--py':`${Math.sin(p.angle)*p.radius}px`,
+            animation:`introParticle ${1.2+p.speed}s cubic-bezier(.22,1,.36,1) ${0.3+p.delay}s forwards`,
+          }}/>
+      ))}
+
+      {/* Holographic conic gradient */}
+      <div aria-hidden className="absolute inset-[-20%] pointer-events-none"
         style={{
-          background:'conic-gradient(from 90deg at 50% 50%,transparent 0deg,rgba(234,88,12,.05) 80deg,transparent 160deg,rgba(251,191,36,.04) 240deg,transparent 320deg,transparent 360deg)',
+          background:'conic-gradient(from 45deg at 50% 50%,transparent 0deg,rgba(234,88,12,.08) 60deg,transparent 120deg,rgba(251,191,36,.06) 180deg,transparent 240deg,rgba(251,146,60,.05) 300deg,transparent 360deg)',
           opacity:0,
           mixBlendMode:'screen',
-          animation:'introOrbIn 1.2s ease 0.3s forwards',
+          animation:'introOrbIn 1.4s ease 0.4s forwards',
         }}/>
 
-      {/* Vignette for depth */}
+      {/* Vignette */}
       <div aria-hidden className="absolute inset-0 pointer-events-none"
         style={{
-          background:'radial-gradient(ellipse 90% 75% at 50% 50%,transparent 50%,rgba(0,0,0,.8) 100%)',
+          background:'radial-gradient(ellipse 100% 80% at 50% 50%,transparent 40%,rgba(0,0,0,.9) 100%)',
         }}/>
 
-      {/* Flash at the moment of transformation */}
+      {/* Transformation flash */}
       <div aria-hidden className="absolute inset-0 pointer-events-none"
         style={{
-          background:'radial-gradient(circle 36vmin at 50% 50%,rgba(255,237,213,.45) 0%,rgba(251,191,36,.18) 35%,transparent 65%)',
+          background:'radial-gradient(circle 40vmin at 50% 50%,rgba(255,247,237,.5) 0%,rgba(251,191,36,.25) 30%,transparent 60%)',
           opacity:0,
-          animation:`introFlash 0.7s cubic-bezier(.22,1,.36,1) ${SPARK_BURST}s forwards`,
+          animation:`introFlash 0.6s cubic-bezier(.22,1,.36,1) 1.2s forwards`,
         }}/>
 
-      {/* Exit flash — brief light pulse during transition out */}
+      {/* Exit flash */}
       <div aria-hidden className="absolute inset-0 pointer-events-none"
         style={{
-          background:'radial-gradient(circle 50vmin at 50% 50%,rgba(255,237,213,.45) 0%,rgba(251,191,36,.18) 35%,transparent 70%)',
+          background:'radial-gradient(circle 55vmin at 50% 50%,rgba(255,247,237,.5) 0%,rgba(251,191,36,.25) 30%,transparent 65%)',
           opacity:0,
-          animation:'introExitFlash 0.7s cubic-bezier(.55,0,.2,1) 2.35s forwards',
+          animation:'introExitFlash 0.8s cubic-bezier(.55,0,.2,1) 3.2s forwards',
         }}/>
 
-      {/* Center stage */}
+      {/* Center stage with 3D perspective */}
       <div className="relative z-10 flex flex-col items-center"
-        style={{animation:'introStageOut 0.7s cubic-bezier(.55,0,.2,1) 2.35s forwards',willChange:'transform,opacity,filter'}}>
-        <div className="relative flex items-center justify-center" style={{width:'clamp(280px,42vw,520px)',height:'clamp(200px,28vw,320px)'}}>
+        style={{animation:'introStageOut 0.8s cubic-bezier(.55,0,.2,1) 3.2s forwards',willChange:'transform,opacity,filter',perspective:'1200px'}}>
+        <div className="relative flex items-center justify-center" style={{width:'clamp(300px,44vw,540px)',height:'clamp(220px,30vw,340px)'}}>
 
-          {/* Shockwave rings at transformation */}
-          <div aria-hidden className="absolute rounded-full"
-            style={{
-              width:'28%',height:'28%',
-              border:'2px solid rgba(251,191,36,.85)',
-              boxShadow:'0 0 40px rgba(234,88,12,.55), inset 0 0 28px rgba(251,191,36,.25)',
-              opacity:0,
-              animation:`introShockwave 0.95s cubic-bezier(.22,1,.36,1) ${SPARK_BURST}s forwards`,
-            }}/>
-          <div aria-hidden className="absolute rounded-full"
-            style={{
-              width:'28%',height:'28%',
-              border:'1px solid rgba(234,88,12,.65)',
-              opacity:0,
-              animation:`introShockwave 1.15s cubic-bezier(.22,1,.36,1) ${SPARK_BURST+0.1}s forwards`,
-            }}/>
-
-          {/* Sparks burst outward at the morph moment */}
-          {SPARKS.map((s,i)=>(
-            <span key={i} aria-hidden className="absolute rounded-full"
+          {/* Shockwave rings */}
+          {[0,0.08,0.16].map((delay,i)=>(
+            <div key={i} aria-hidden className="absolute rounded-full pointer-events-none"
               style={{
-                width:i%4===0?'4px':'2px',height:i%4===0?'4px':'2px',
-                background:i%3===0?'#fbbf24':'#fb923c',
-                boxShadow:`0 0 ${i%4===0?16:10}px ${i%3===0?'rgba(251,191,36,.95)':'rgba(251,146,60,.9)'}`,
+                width:'32%',height:'32%',
+                border:`${3-i}px solid ${i===0?'rgba(251,191,36,.9)':i===1?'rgba(234,88,12,.7)':'rgba(251,146,60,.5)'}`,
+                boxShadow:`0 0 ${40-i*8}px rgba(234,88,12,.5), inset 0 0 ${30-i*6}px rgba(251,191,36,.2)`,
                 opacity:0,
-                '--tx':`${s.tx}px`,'--ty':`${s.ty}px`,
-                animation:`introSpark 1.1s cubic-bezier(.22,1,.36,1) ${SPARK_BURST+s.delay}s forwards`,
+                animation:`introShockwave ${1.1+i*0.15}s cubic-bezier(.22,1,.36,1) ${1.2+delay}s forwards`,
               }}/>
           ))}
 
-          {/* Hero B — chrome/liquid-metal, scales in then morphs into BRIDGE */}
+          {/* Hero B with 3D rotation */}
           <span aria-hidden className="absolute font-display font-black leading-none pointer-events-none"
             style={{
-              fontSize:'clamp(6.5rem,16vw,12rem)',
+              fontSize:'clamp(7rem,17vw,13rem)',
               background:CHROME,
               WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent',
-              filter:'drop-shadow(0 0 50px rgba(234,88,12,.7)) drop-shadow(0 2px 0 rgba(255,255,255,.15))',
+              filter:'drop-shadow(0 0 60px rgba(234,88,12,.8)) drop-shadow(0 3px 0 rgba(255,255,255,.2))',
               opacity:0,
-              animation:`introHeroIn 0.85s cubic-bezier(.22,1,.36,1) 0.15s forwards, introHeroMorph 0.55s cubic-bezier(.6,0,.4,1) ${SPARK_BURST}s forwards`,
+              animation:`introHeroIn 0.95s cubic-bezier(.22,1,.36,1) 0.2s forwards, introHeroMorph 0.65s cubic-bezier(.6,0,.4,1) 1.2s forwards, introChromatic 0.3s ease 1.15s forwards`,
               willChange:'transform,opacity,filter',
             }}>B</span>
 
-          {/* BRIDGE word — letters assemble in place from center outward */}
+          {/* BRIDGE letters with 3D explosion */}
           <div className="absolute font-display font-black leading-none flex items-baseline"
-            style={{fontSize:'clamp(2.4rem,6.6vw,5.2rem)'}}>
-            {BRIDGE.map((ch,i)=>(
-              <span key={i} style={{
-                background:CHROME,
-                WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent',
-                filter:`drop-shadow(0 0 ${22+(i===0?12:0)}px rgba(234,88,12,.55)) drop-shadow(0 1px 0 rgba(255,255,255,.12))`,
-                display:'inline-block',
-                opacity:0,
-                animation:`introLetterAssemble 0.7s cubic-bezier(.22,1,.36,1) ${SPARK_BURST+0.18+STAGGER[i]}s forwards`,
-                willChange:'transform,opacity,filter',
-              }}>{ch}</span>
-            ))}
+            style={{fontSize:'clamp(2.6rem,7vw,5.6rem)',perspective:'1200px'}}>
+            {BRIDGE.map((ch,i)=>{
+              const offset=i-2.5;
+              const sx=`${offset*140}px`;
+              const sy=`${Math.abs(offset)*70}px`;
+              const rx=`${offset*30}deg`;
+              const ry=`${offset*-35}deg`;
+              const rz=`${offset*20}deg`;
+              return(
+                <span key={i} style={{
+                  background:CHROME,
+                  WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent',
+                  filter:`drop-shadow(0 0 ${25+(i===0?15:0)}px rgba(234,88,12,.6)) drop-shadow(0 2px 0 rgba(255,255,255,.15))`,
+                  display:'inline-block',
+                  opacity:0,
+                  '--sx':sx,'--sy':sy,'--rx':rx,'--ry':ry,'--rz':rz,
+                  animation:`introLetter3D 1s cubic-bezier(.22,1,.36,1) ${1.5+STAGGER[i]}s forwards, introGlitch 0.4s ease ${1.8+STAGGER[i]}s forwards`,
+                  willChange:'transform,opacity,filter',
+                }}>{ch}</span>
+              );
+            })}
           </div>
         </div>
 
-        {/* Frosted-glass tagline pill */}
-        <div className="mt-7 px-5 py-2 rounded-full"
+        {/* Tagline pill */}
+        <div className="mt-8 px-6 py-2.5 rounded-full"
           style={{
-            background:'rgba(255,255,255,0.04)',
-            border:'1px solid rgba(255,255,255,0.08)',
-            backdropFilter:'blur(14px)',
-            WebkitBackdropFilter:'blur(14px)',
+            background:'rgba(255,255,255,0.05)',
+            border:'1px solid rgba(255,255,255,0.1)',
+            backdropFilter:'blur(16px)',
+            WebkitBackdropFilter:'blur(16px)',
             opacity:0,
-            animation:'introTaglineIn 0.6s cubic-bezier(.22,1,.36,1) 2.05s forwards',
+            animation:'introTaglineIn 0.7s cubic-bezier(.22,1,.36,1) 2.4s forwards',
           }}>
-          <p className="text-center font-display font-semibold uppercase text-white/75"
-            style={{fontSize:'clamp(0.55rem,1vw,0.72rem)',letterSpacing:'0.36em'}}>
+          <p className="text-center font-display font-semibold uppercase text-white/80"
+            style={{fontSize:'clamp(0.58rem,1.1vw,0.76rem)',letterSpacing:'0.38em'}}>
             Mentorship. Networking. Outcomes.
           </p>
         </div>
 
-        {/* Subtle accent line */}
-        <div className="mt-5 overflow-hidden" style={{height:'1px',width:'clamp(140px,20vw,220px)',background:'rgba(255,255,255,0.05)'}}>
+        {/* Accent line */}
+        <div className="mt-6 overflow-hidden" style={{height:'1.5px',width:'clamp(150px,22vw,240px)',background:'rgba(255,255,255,0.06)'}}>
           <div style={{
             height:'100%',
-            background:'linear-gradient(90deg,transparent,rgba(234,88,12,.85) 35%,rgba(251,191,36,.95) 50%,rgba(234,88,12,.85) 65%,transparent)',
+            background:'linear-gradient(90deg,transparent,rgba(234,88,12,.9) 30%,rgba(251,191,36,1) 50%,rgba(234,88,12,.9) 70%,transparent)',
             transformOrigin:'left',
             opacity:0,
-            animation:'introScale 0.7s cubic-bezier(.22,1,.36,1) 2.2s forwards',
+            animation:'introScale 0.8s cubic-bezier(.22,1,.36,1) 2.55s forwards',
           }}/>
         </div>
       </div>
