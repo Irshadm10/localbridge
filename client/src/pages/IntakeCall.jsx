@@ -125,6 +125,8 @@ export default function IntakeCall() {
       // 3. Play assistant audio in an audio element
       const audioEl = document.createElement('audio')
       audioEl.autoplay = true
+      audioEl.setAttribute('playsinline', '')
+      document.body.appendChild(audioEl)
       pc.ontrack = (e) => { audioEl.srcObject = e.streams[0] }
 
       // 4. Add microphone track
@@ -200,6 +202,7 @@ export default function IntakeCall() {
     // Stop all tracks and close connection
     localStreamRef.current?.getTracks().forEach(t => t.stop())
     pcRef.current?.close()
+    document.querySelectorAll('audio[playsinline]').forEach(el => el.remove())
 
     setFlowState('processing')
 
