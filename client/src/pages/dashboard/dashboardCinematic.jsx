@@ -23,7 +23,14 @@ const CSS = `
 @keyframes bDashSpark{from{transform:scaleY(0)}to{transform:scaleY(var(--bd-h,1))}}
 .bd-spark-bar{transform-origin:bottom;animation:bDashSpark .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--bd-d,0ms)}
 .bd-grain{position:absolute;inset:0;pointer-events:none;mix-blend-mode:overlay;opacity:.06;background-image:radial-gradient(circle at 1px 1px,#fff 1px,transparent 0);background-size:3px 3px}
-@media (prefers-reduced-motion: reduce){.bd-aurora,.bd-shine::after,.bd-rise,.bd-goal-glow,.bd-spark-bar{animation:none!important}}
+@keyframes bDashPulseRing{0%{box-shadow:0 0 0 0 rgba(234,88,12,.55),0 0 0 0 rgba(251,191,36,.35)}70%{box-shadow:0 0 0 14px rgba(234,88,12,0),0 0 0 22px rgba(251,191,36,0)}100%{box-shadow:0 0 0 0 rgba(234,88,12,0),0 0 0 0 rgba(251,191,36,0)}}
+.bd-pulse-ring{animation:bDashPulseRing 2.4s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes bDashNameShimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.bd-name-shimmer{background-image:linear-gradient(110deg,transparent 0%,transparent 35%,rgba(255,255,255,.55) 50%,transparent 65%,transparent 100%);background-size:200% 100%;background-repeat:no-repeat;-webkit-background-clip:text;background-clip:text;animation:bDashNameShimmer 4.8s ease-in-out infinite}
+@keyframes bDashStatusShine{0%{transform:translateX(-120%) skewX(-18deg)}55%,100%{transform:translateX(220%) skewX(-18deg)}}
+.bd-status-shine{position:relative;overflow:hidden}
+.bd-status-shine::after{content:'';position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(110deg,transparent 0%,rgba(255,255,255,.55) 50%,transparent 100%);animation:bDashStatusShine 3.2s cubic-bezier(.2,.6,.2,1) infinite;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.bd-aurora,.bd-shine::after,.bd-rise,.bd-goal-glow,.bd-spark-bar,.bd-pulse-ring,.bd-name-shimmer,.bd-status-shine::after{animation:none!important}}
 `;
 
 function ensureStyles() {

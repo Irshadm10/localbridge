@@ -144,43 +144,172 @@ function useScrollProgress(){
   return p;
 }
 
-/* ─── Intro Loader — cinematic brand reveal ─────────────────── */
+/* ─── Intro Loader — cinematic brand reveal (CSS-driven) ─────── */
 function IntroLoader(){
-  const[done,setDone]=useState(false);
+  const[done,setDone]=useState(()=>typeof window!=='undefined'&&!!sessionStorage.getItem('bridge_intro_seen'));
+
   useEffect(()=>{
-    if(typeof window==='undefined')return;
-    if(sessionStorage.getItem('bridge_intro_seen')){setDone(true);return;}
-    const t=setTimeout(()=>{sessionStorage.setItem('bridge_intro_seen','1');setDone(true);},1750);
-    return()=>clearTimeout(t);
-  },[]);
-  return(
-    <AnimatePresence>
-      {!done&&(
-        <motion.div className="fixed inset-0 z-[10000] flex items-center justify-center" style={{background:'#060302'}}
-          initial={{opacity:1}} exit={{opacity:0,transition:{duration:0.7,ease:[0.22,1,0.36,1]}}}>
-          <div aria-hidden className="absolute inset-0 pointer-events-none" style={{background:'radial-gradient(circle at 50% 50%,rgba(234,88,12,.18),transparent 60%)'}}/>
-          <div className="relative flex flex-col items-center gap-6">
-            <motion.div initial={{scale:0,rotate:-90}} animate={{scale:1,rotate:0}} transition={{duration:0.9,ease:[0.16,1,0.3,1]}} className="relative">
-              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-orange-500 via-amber-400 to-orange-500 shadow-[0_0_80px_rgba(234,88,12,.7)] flex items-center justify-center">
-                <span className="font-display text-3xl font-black text-white">B</span>
-              </div>
-              <motion.div className="absolute inset-0 rounded-2xl border border-orange-500/40"
-                animate={{scale:[1,1.6,1.6],opacity:[1,0,0]}} transition={{duration:1.5,repeat:Infinity,ease:'easeOut'}}/>
-            </motion.div>
-            <div className="overflow-hidden">
-              <motion.p initial={{y:30,opacity:0}} animate={{y:0,opacity:1}} transition={{delay:0.4,duration:0.7,ease:[0.16,1,0.3,1]}}
-                className="font-display text-sm font-black uppercase tracking-[0.4em] text-white/80">Bridge</motion.p>
-            </div>
-            <div className="h-px w-32 bg-white/10 overflow-hidden">
-              <motion.div initial={{x:'-100%'}} animate={{x:'100%'}} transition={{duration:1.2,delay:0.5,ease:'linear'}}
-                className="h-full w-1/2 bg-gradient-to-r from-transparent via-orange-400 to-transparent"/>
+    if(done)return;
+    const prevBody=document.body.style.overflow;
+    const prevHtml=document.documentElement.style.overflow;
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
+    const finish=()=>{sessionStorage.setItem('bridge_intro_seen','1');setDone(true);};
+    const timer=setTimeout(finish,5600);
+    const skip=()=>{clearTimeout(timer);finish();};
+    window.addEventListener('keydown',skip,{once:true});
+    return()=>{
+      clearTimeout(timer);
+      window.removeEventListener('keydown',skip);
+      document.body.style.overflow=prevBody;
+      document.documentElement.style.overflow=prevHtml;
+    };
+  },[done]);
+
+  if(done)return null;
+
+  const dismiss=()=>{sessionStorage.setItem('bridge_intro_seen','1');setDone(true);};
+  const LETTERS=['B','R','I','D','G','E'];
+  const WORDS='Where careers take their next leap.'.split(' ');
+  const PARTICLES=Array.from({length:24},(_,i)=>{
+    const a=(i/24)*Math.PI*2;const d=240+(i%3)*40;
+    return{tx:Math.cos(a)*d,ty:Math.sin(a)*d,big:i%3===0,gold:i%4===0};
+  });
+
+  return createPortal(
+    <div onClick={dismiss}
+      className="fixed inset-0 z-[10000] flex flex-col items-center justify-center cursor-pointer select-none overflow-hidden"
+      style={{background:'radial-gradient(ellipse at center,#0a0503 0%,#000 70%)',animation:'introOut 0.85s cubic-bezier(.22,1,.36,1) 5.0s forwards'}}>
+      <style>{`
+        @keyframes introOut{to{opacity:0;visibility:hidden;filter:blur(16px);}}
+        @keyframes introBars{to{transform:scaleY(0);}}
+        @keyframes introEdge{to{transform:scaleX(1);}}
+        @keyframes introBloom{to{opacity:1;}}
+        @keyframes introBin{0%{opacity:0;transform:scale(0.04) rotateX(-80deg) rotateY(25deg);}100%{opacity:1;transform:scale(1) rotateX(0) rotateY(0);}}
+        @keyframes introBout{0%{opacity:1;transform:scale(1);filter:blur(0);}40%{transform:scale(1.4);}100%{opacity:0;transform:scale(6);filter:blur(20px);}}
+        @keyframes introRing{0%{opacity:0;transform:scale(0.3);}30%{opacity:0.55;}100%{opacity:0;transform:scale(3.5);}}
+        @keyframes introSpin{to{transform:rotate(360deg);}}
+        @keyframes introBurst{0%{opacity:1;transform:translate(0,0) scale(1.6);}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);}}
+        @keyframes introLetter{0%{opacity:0;transform:translateY(-60px) rotateX(90deg);filter:blur(16px);}100%{opacity:1;transform:translateY(0) rotateX(0);filter:blur(0);}}
+        @keyframes introLine{to{transform:scaleX(1);}}
+        @keyframes introWord{0%{opacity:0;transform:translateY(8px);filter:blur(8px);}100%{opacity:1;transform:translateY(0);filter:blur(0);}}
+        @keyframes introScan{0%{transform:scaleX(0);opacity:0;}50%{transform:scaleX(1.5);opacity:1;}100%{transform:scaleX(0);opacity:0;}}
+      `}</style>
+
+      {/* Letterbox bars */}
+      <div aria-hidden className="absolute top-0 inset-x-0 bg-black z-10"
+        style={{height:'12vh',transformOrigin:'top',animation:'introBars 1.1s cubic-bezier(.22,1,.36,1) 0.2s forwards'}}/>
+      <div aria-hidden className="absolute bottom-0 inset-x-0 bg-black z-10"
+        style={{height:'12vh',transformOrigin:'bottom',animation:'introBars 1.1s cubic-bezier(.22,1,.36,1) 0.2s forwards'}}/>
+
+      {/* Ambient bloom */}
+      <div aria-hidden className="absolute inset-0 pointer-events-none"
+        style={{background:'radial-gradient(ellipse 55% 45% at 50% 52%,rgba(234,88,12,.32) 0%,rgba(180,60,8,.08) 45%,transparent 70%)',opacity:0,animation:'introBloom 1.8s ease 0.3s forwards'}}/>
+
+      {/* Edge accent lines */}
+      <div aria-hidden className="absolute top-0 inset-x-0 h-px"
+        style={{background:'linear-gradient(90deg,transparent,rgba(234,88,12,.7) 40%,rgba(251,191,36,.95) 50%,rgba(234,88,12,.7) 60%,transparent)',transform:'scaleX(0)',transformOrigin:'center',animation:'introEdge 1.3s cubic-bezier(.22,1,.36,1) 0.4s forwards'}}/>
+      <div aria-hidden className="absolute bottom-0 inset-x-0 h-px"
+        style={{background:'linear-gradient(90deg,transparent,rgba(234,88,12,.7) 40%,rgba(251,191,36,.95) 50%,rgba(234,88,12,.7) 60%,transparent)',transform:'scaleX(0)',transformOrigin:'center',animation:'introEdge 1.3s cubic-bezier(.22,1,.36,1) 0.55s forwards'}}/>
+
+      {/* Horizontal scan flash on explosion */}
+      <div aria-hidden className="absolute inset-x-0 z-30 pointer-events-none"
+        style={{top:'50%',height:'2px',background:'linear-gradient(90deg,transparent,rgba(251,191,36,.95) 50%,transparent)',transform:'scaleX(0)',transformOrigin:'center',animation:'introScan 0.7s ease 1.7s forwards'}}/>
+
+      {/* Center stage */}
+      <div className="relative z-10 flex flex-col items-center" style={{perspective:'1200px'}}>
+        <div className="relative flex items-center justify-center" style={{width:'clamp(220px,32vw,360px)',height:'clamp(220px,32vw,360px)'}}>
+
+          {/* Pulse rings */}
+          {[0,1,2,3].map(i=>(
+            <div key={i} aria-hidden className="absolute rounded-full"
+              style={{
+                width:`${48+i*22}%`,height:`${48+i*22}%`,
+                border:'1px solid rgba(234,88,12,0.45)',
+                boxShadow:'0 0 20px rgba(234,88,12,.15) inset',
+                opacity:0,
+                animation:`introRing 2.4s ease ${0.4+i*0.1}s forwards, introSpin ${10-i*2}s linear ${0.4+i*0.1}s infinite`,
+              }}/>
+          ))}
+
+          {/* Particle burst */}
+          {PARTICLES.map((p,i)=>(
+            <span key={i} aria-hidden className="absolute rounded-full"
+              style={{
+                width:p.big?'4px':'2.5px',height:p.big?'4px':'2.5px',
+                background:p.gold?'#fbbf24':'#ea580c',
+                boxShadow:`0 0 12px ${p.gold?'rgba(251,191,36,.95)':'rgba(234,88,12,.95)'}`,
+                opacity:0,
+                '--tx':`${p.tx}px`,'--ty':`${p.ty}px`,
+                animation:`introBurst 1.3s cubic-bezier(.16,1,.3,1) 1.7s forwards`,
+              }}/>
+          ))}
+
+          {/* The giant B (drops in, then explodes) */}
+          <div className="absolute inset-0 flex items-center justify-center"
+            style={{
+              opacity:0,
+              animation:'introBin 0.95s cubic-bezier(.16,1,.3,1) 0.2s forwards, introBout 0.85s cubic-bezier(.4,0,1,1) 1.7s forwards',
+            }}>
+            <span className="font-display font-black leading-none"
+              style={{
+                fontSize:'clamp(8rem,20vw,15rem)',
+                background:'linear-gradient(160deg,#fff9f5 0%,#fde68a 30%,#fb923c 65%,#ea580c 100%)',
+                WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent',
+                filter:'drop-shadow(0 0 55px rgba(234,88,12,.85)) drop-shadow(0 0 20px rgba(251,191,36,.6))',
+              }}>B</span>
+          </div>
+
+          {/* BRIDGE letters cascade */}
+          <div className="absolute inset-0 flex items-center justify-center" style={{perspective:'1000px'}}>
+            <div className="flex items-center" style={{gap:'clamp(1px,0.5vw,5px)'}}>
+              {LETTERS.map((ch,i)=>(
+                <span key={i} className="font-display font-black leading-none"
+                  style={{
+                    fontSize:'clamp(2.8rem,7.5vw,6rem)',
+                    background:'linear-gradient(175deg,#fff9f5 0%,#fde68a 35%,#fb923c 70%,#c2410c 100%)',
+                    WebkitBackgroundClip:'text',backgroundClip:'text',color:'transparent',
+                    filter:'drop-shadow(0 0 32px rgba(234,88,12,.6))',
+                    opacity:0,
+                    animation:`introLetter 0.7s cubic-bezier(.16,1,.3,1) ${2.5+i*0.07}s forwards`,
+                  }}>{ch}</span>
+              ))}
             </div>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+
+        {/* Divider line */}
+        <div className="relative mt-8 overflow-hidden bg-white/10" style={{height:'1px',width:'clamp(180px,28vw,300px)'}}>
+          <div style={{
+            position:'absolute',inset:0,
+            background:'linear-gradient(90deg,transparent,rgba(234,88,12,.85) 30%,rgba(251,191,36,.95) 50%,rgba(234,88,12,.85) 70%,transparent)',
+            transform:'scaleX(0)',transformOrigin:'left',
+            animation:'introLine 0.9s cubic-bezier(.22,1,.36,1) 3.0s forwards',
+          }}/>
+        </div>
+
+        {/* Tagline — word by word blur-in */}
+        <p className="mt-5 flex flex-wrap justify-center gap-x-[0.45em] gap-y-1 px-8 text-center font-display font-semibold uppercase text-white/70"
+          style={{fontSize:'clamp(0.58rem,1.2vw,0.75rem)',letterSpacing:'0.35em',maxWidth:'36ch'}}>
+          {WORDS.map((w,i)=>(
+            <span key={i} style={{
+              opacity:0,display:'inline-block',
+              animation:`introWord 0.5s cubic-bezier(.16,1,.3,1) ${3.4+i*0.09}s forwards`,
+            }}>{w}</span>
+          ))}
+        </p>
+
+        {/* Skip cue */}
+        <span className="mt-12 text-[8px] font-bold uppercase tracking-[0.4em] text-white/25"
+          style={{opacity:0,animation:'introWord 0.7s ease 2.0s forwards'}}>
+          tap or press any key to skip
+        </span>
+      </div>
+    </div>,
+    document.body
   );
 }
+
 
 /* ─── Scroll Progress Bar ───────────────────────────────────── */
 function ScrollProgressBar(){
@@ -242,49 +371,38 @@ function BrandStrip(){
 
 /* ─── Outcomes — dense bento grid ───────────────────────────── */
 function OutcomesScroller(){
-  // Bento spans: 6 cards in an asymmetric grid. lg cols=6.
-  const SPANS=['lg:col-span-3 lg:row-span-2','lg:col-span-3','lg:col-span-3','lg:col-span-2','lg:col-span-2','lg:col-span-2'];
   return(
-    <section id="outcomes" className="relative overflow-hidden py-24"
-      style={{background:'linear-gradient(180deg,var(--bridge-canvas) 0%,#160a04 8%,#0d0603 100%)'}}>
-      <div aria-hidden className="pointer-events-none absolute inset-0"
-        style={{backgroundImage:'linear-gradient(rgba(234,88,12,.036) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,.036) 1px,transparent 1px)',backgroundSize:'88px 88px'}}/>
-      <div aria-hidden className="b-blob pointer-events-none absolute left-1/2 top-1/2 h-[820px] w-[820px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-14"
-        style={{background:'radial-gradient(circle,rgba(234,88,12,.5) 0%,transparent 65%)'}}/>
+    <section id="outcomes" className="relative overflow-hidden py-24 bg-[var(--bridge-canvas)]">
       <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8">
         <Rev>
-          <div className="mb-12 grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.32em] text-orange-400">Real outcomes · {OUTCOMES.length} stories</p>
-              <h2 className="mt-3 font-display font-black leading-[0.94] tracking-[-0.025em] text-white" style={{fontSize:'clamp(2.4rem,6vw,5rem)'}}>
-                People who <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-amber-300 to-orange-500">got unstuck</span>.
+              <p className="text-[10px] font-black uppercase tracking-[0.32em] text-[var(--bridge-accent)]">Real outcomes</p>
+              <h2 className="mt-2 font-display font-black tracking-[-0.02em] text-[var(--bridge-text)]" style={{fontSize:'clamp(1.8rem,4vw,3rem)'}}>
+                People who got <span className="text-gradient-bridge">unstuck</span>.
               </h2>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-emerald-500/22 bg-emerald-500/[0.06] px-4 py-2 text-[11px] font-bold text-emerald-300">
-              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-65"/><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400"/></span>
+            <div className="flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2 text-[11px] font-bold text-[var(--bridge-text-muted)]">
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-65"/><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"/></span>
               <span>97% would recommend</span>
             </div>
           </div>
         </Rev>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:auto-rows-[260px]">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {OUTCOMES.map((o,i)=>(
-            <Rev key={i} delay={i*70} className={SPANS[i]||'lg:col-span-2'}>
-              <Tilt n={3} className={`group relative h-full overflow-hidden rounded-3xl border bg-[var(--bridge-surface)] p-7 lg:p-8 shadow-bridge-card hover:shadow-bridge-glow transition-all ${i===0?'border-orange-500/24 shadow-bridge-glow':'border-[var(--bridge-border)] hover:border-orange-500/30'}`}>
-                {i===0&&<div aria-hidden className="pointer-events-none absolute inset-0" style={{background:'radial-gradient(ellipse 60% 70% at 100% 0%,rgba(234,88,12,.10),transparent 70%)'}}/>}
-                <div aria-hidden className="pointer-events-none absolute -top-8 -left-3 font-editorial font-black leading-none text-orange-500/[0.06] select-none" style={{fontSize:i===0?'14rem':'9rem'}}>&ldquo;</div>
-                <div className="relative z-10 flex h-full flex-col">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex gap-0.5">{[0,1,2,3,4].map(k=><svg key={k} className="h-3.5 w-3.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}</div>
-                    <div className={`rounded-full border border-emerald-500/22 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-black text-emerald-300 whitespace-nowrap`}>{o.result}</div>
-                  </div>
-                  <p className={`flex-1 text-[var(--bridge-text)] leading-relaxed ${i===0?'text-lg lg:text-xl':'text-[13px] lg:text-sm'}`}>&ldquo;{o.quote}&rdquo;</p>
-                  <div className="mt-5 flex items-center gap-3 pt-4 border-t border-[var(--bridge-border)]">
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${AVATAR_GRAD[o.tone]} text-[10px] font-bold text-white shadow-md`}>{o.name.split(' ').map(n=>n[0]).join('')}</div>
-                    <div className="min-w-0 flex-1"><p className="truncate text-[12px] font-bold text-[var(--bridge-text)]">{o.name}</p><p className="truncate text-[10px] text-[var(--bridge-text-faint)]">{o.role}</p></div>
-                    <span className="text-[10px] font-black text-orange-400 whitespace-nowrap">{o.metric}</span>
-                  </div>
+            <Rev key={i} delay={i*60}>
+              <div className="group relative flex flex-col h-full overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/28 hover:shadow-bridge-glow transition-all">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex gap-0.5">{[0,1,2,3,4].map(k=><svg key={k} className="h-3 w-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}</div>
+                  <span className="rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-2.5 py-1 text-[9px] font-bold text-[var(--bridge-text-muted)] whitespace-nowrap">{o.result}</span>
                 </div>
-              </Tilt>
+                <p className="flex-1 text-[13px] text-[var(--bridge-text-muted)] leading-relaxed">&ldquo;{o.quote}&rdquo;</p>
+                <div className="mt-5 flex items-center gap-3 pt-4 border-t border-[var(--bridge-border)]">
+                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${AVATAR_GRAD[o.tone]} text-[10px] font-bold text-white`}>{o.name.split(' ').map(n=>n[0]).join('')}</div>
+                  <div className="min-w-0 flex-1"><p className="truncate text-[12px] font-bold text-[var(--bridge-text)]">{o.name}</p><p className="truncate text-[10px] text-[var(--bridge-text-faint)]">{o.role}</p></div>
+                  <span className="text-[10px] font-semibold text-[var(--bridge-accent)] whitespace-nowrap">{o.metric}</span>
+                </div>
+              </div>
             </Rev>
           ))}
         </div>
@@ -350,7 +468,11 @@ function Rev({children,delay=0,className=''}){
 function FloatingDock(){
   const[on,setOn]=useState(false);
   const bRef=useFooterOffset(24);
-  useEffect(()=>{const t=setTimeout(()=>setOn(true),800);return()=>clearTimeout(t);},[]);
+  useEffect(()=>{
+    const fn=()=>{setOn(window.scrollY>window.innerHeight*0.85);};
+    window.addEventListener('scroll',fn,{passive:true});fn();
+    return()=>window.removeEventListener('scroll',fn);
+  },[]);
   const go=id=>{if(id==='top'){window.scrollTo({top:0,behavior:'smooth'});return;}
     document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});};
   const items=[{l:'Home',id:'top'},{l:'How It Works',id:'how'},{l:'Mentors',id:'mentors'},{l:'Outcomes',id:'outcomes'},{l:'Get Started',id:'start',p:true}];
@@ -506,6 +628,15 @@ export default function Landing(){
   const[ready,setReady]=useState(false);
   const heroRef=useRef(null);
   const headRef=useRef(null);
+  const[isDark,setIsDark]=useState(()=>typeof window!=='undefined'&&document.documentElement.classList.contains('theme-dark'));
+
+  useEffect(()=>{
+    const check=()=>setIsDark(document.documentElement.classList.contains('theme-dark'));
+    check();
+    const mo=new MutationObserver(check);
+    mo.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+    return()=>mo.disconnect();
+  },[]);
 
   useEffect(()=>{const t=setTimeout(()=>setReady(true),60);return()=>clearTimeout(t);},[]);
 
@@ -562,142 +693,91 @@ export default function Landing(){
       <CustomCursor/>
       <IntroLoader/>
       <ScrollProgressBar/>
-      <StickyCTABar user={user}/>
       <FloatingDock/>
 
       {/* ══════════════════════════════════════════
-          HERO — WebGL background, massive type
+          BRAND TRUST STRIP — above hero
       ══════════════════════════════════════════ */}
-      <section ref={heroRef} className="relative min-h-screen overflow-hidden" style={{backgroundColor:'#060302'}}>
-        <WebGLBg/>
-
-        {/* Scan line */}
-        <div aria-hidden className="b-scan pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-70"
-          style={{background:'linear-gradient(90deg,transparent 0%,rgba(234,88,12,.6) 35%,rgba(251,191,36,.55) 50%,rgba(234,88,12,.6) 65%,transparent 100%)'}}/>
-        {/* Noise */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-bridge-noise opacity-[0.022]"/>
-        {/* Grid */}
-        <div aria-hidden className="pointer-events-none absolute inset-0"
-          style={{backgroundImage:'linear-gradient(rgba(234,88,12,.042) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,.042) 1px,transparent 1px)',backgroundSize:'88px 88px'}}/>
-        {/* Bottom vignette */}
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-60"
-          style={{background:'linear-gradient(to bottom,transparent,#060302)'}}/>
-
-        {/* Top utility bar: live badge + 5-star rating */}
-        <div className="relative z-10 mx-auto max-w-7xl px-5 pt-10 sm:px-8">
-          <div className="flex items-center justify-between gap-4">
-            <div className={`inline-flex items-center gap-2.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5 backdrop-blur-xl transition-all duration-700 ${ready?'opacity-100 translate-y-0':'opacity-0 -translate-y-4'}`}>
-              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-65"/><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.9)]"/></span>
-              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/45">Live · 2,400+ vetted</span>
-            </div>
-            <div className={`hidden md:flex items-center gap-3 transition-all duration-700 delay-200 ${ready?'opacity-100 translate-y-0':'opacity-0 -translate-y-4'}`}>
-              <div className="flex items-center gap-1.5">{[0,1,2,3,4].map(i=><svg key={i} className="h-3 w-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}</div>
-              <span className="text-[11px] font-semibold text-white/55"><span className="text-white/85 font-bold">4.9</span> · 4,800+ sessions</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-7xl px-5 pt-20 pb-28 sm:px-8 lg:pt-28">
-          {/* Headline — shimmer kinetic */}
-          <div className="lg:max-w-5xl" ref={headRef} style={{perspective:'1000px',overflow:'hidden'}}>
-            <h1 className="font-display font-black leading-[0.84] tracking-[-0.038em] text-white/92"
-              style={{fontSize:'clamp(3.6rem,10vw,9.5rem)'}}>
-              <span data-w className="block">Your next</span>
-              <span data-w className="block shimmer-text"
-                style={{filter:'drop-shadow(0 0 100px rgba(234,88,12,.7))'}}>
-                career move
-              </span>
-              <span data-w className="block">starts with</span>
-              <span data-w className="block font-editorial italic text-white/16" style={{fontSize:'0.78em'}}>one conversation.</span>
-            </h1>
-          </div>
-
-          {/* Sub + CTAs */}
-          <div className={`mt-10 grid lg:grid-cols-[1fr_auto] lg:items-end gap-8 transition-all duration-1000 delay-500 ${ready?'opacity-100 translate-y-0':'opacity-0 translate-y-6'}`}>
-            <div>
-              <p className="max-w-md text-[1.05rem] leading-relaxed" style={{color:'rgba(255,255,255,.35)'}}>
-                Real mentors. Real sessions. Real outcomes. Skip the cold messages — book a 1-on-1 with someone who's already walked your path.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Mag>
-                  <Link to={user?'/mentors':'/register'} data-cursor="Start"
-                    className="b-pulse btn-sheen inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-9 py-4 text-[0.95rem] font-bold text-white shadow-[0_0_80px_rgba(234,88,12,.6)] transition-all hover:scale-[1.05] hover:shadow-[0_0_110px_rgba(234,88,12,.85)] active:scale-[0.97]">
-                    Find your mentor
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  </Link>
-                </Mag>
-                <Mag>
-                  <Link to="/mentors" data-cursor="Browse"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/[0.10] bg-white/[0.04] px-8 py-4 text-[0.95rem] font-semibold backdrop-blur-sm transition-all hover:border-white/[0.18] hover:bg-white/[0.07]"
-                    style={{color:'rgba(255,255,255,.55)'}}>
-                    Browse mentors →
-                  </Link>
-                </Mag>
-              </div>
-              <div className="mt-5 flex flex-wrap gap-x-5 gap-y-1">
-                {['No credit card required','First session guaranteed','Cancel anytime'].map((t,i)=>(
-                  <span key={i} className="flex items-center gap-2 text-[10px]" style={{color:'rgba(255,255,255,.28)'}}>
-                    {i>0&&<span className="h-1 w-1 rounded-full bg-white/15"/>}{t}
-                  </span>
-                ))}
-              </div>
-              {/* Above-the-fold trust testimonial */}
-              <div className="mt-10 flex items-start gap-4 max-w-md rounded-2xl border border-white/[0.06] bg-white/[0.025] backdrop-blur-xl p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-xs font-bold text-white">PS</div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1 mb-1">{[0,1,2,3,4].map(i=><svg key={i} className="h-2.5 w-2.5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}</div>
-                  <p className="text-[12px] text-white/55 leading-relaxed">"One session saved me <span className="font-bold text-white/85">six months</span> of second-guessing. Banking → PM in 8 weeks."</p>
-                  <p className="mt-1.5 text-[10px] font-bold text-white/30">Priya S. · Ex-Analyst, now PM</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Floating mentor card + chips */}
-            <div className="relative hidden lg:block w-[360px] xl:w-[400px] shrink-0">
-              {/* AI match chip */}
-              <div className="b-float pointer-events-none absolute -left-10 -top-6 z-20">
-                <div className="flex items-center gap-2.5 rounded-2xl border border-white/[0.08] bg-[#0c0906]/96 px-4 py-3 backdrop-blur-xl shadow-[0_12px_50px_rgba(234,88,12,.22)]">
-                  <span className="text-sm">🎯</span>
-                  <div><p className="text-[10px] font-bold text-white">98% AI Match</p><p className="text-[9px] text-white/28">Maya Chen · PM Strategy</p></div>
-                </div>
-              </div>
-              {/* Offer chip */}
-              <div className="b-float-b pointer-events-none absolute -right-8 -top-4 z-20">
-                <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-500/14 bg-[#0c0906]/96 px-4 py-3 backdrop-blur-xl">
-                  <span className="text-sm">🎉</span>
-                  <div><p className="text-[10px] font-bold text-emerald-400">Offer accepted</p><p className="text-[9px] text-white/28">+32% comp · Tyler N.</p></div>
-                </div>
-              </div>
-              {/* Live chip */}
-              <div className="b-float pointer-events-none absolute -left-12 bottom-6 z-20" style={{animationDelay:'-3s'}}>
-                <div className="flex items-center gap-2.5 rounded-2xl border border-white/[0.07] bg-[#0c0906]/96 px-4 py-3 backdrop-blur-xl">
-                  <span className="relative flex h-2.5 w-2.5 shrink-0"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-65"/><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-400"/></span>
-                  <p className="text-[10px] font-bold text-white/50">3 people booking now</p>
-                </div>
-              </div>
-              {/* Rating chip */}
-              <div className="b-float-b pointer-events-none absolute -right-10 bottom-2 z-20" style={{animationDelay:'-5s'}}>
-                <div className="flex items-center gap-2.5 rounded-2xl border border-amber-500/14 bg-[#0c0906]/96 px-4 py-3 backdrop-blur-xl">
-                  <span className="text-sm">⭐</span>
-                  <div><p className="text-[10px] font-bold text-amber-400">4.9 / 5 avg</p><p className="text-[9px] text-white/28">4,800+ sessions</p></div>
-                </div>
-              </div>
-              {/* Glass mentor card */}
-              <HeroMentorCard/>
-            </div>
-          </div>
+      <section className="relative border-b border-[var(--bridge-border)] bg-[var(--bridge-canvas)] py-8">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <p className="mb-5 text-center text-[10px] font-black uppercase tracking-[0.32em] text-[var(--bridge-text-faint)]">
+            Mentors from the world's best companies
+          </p>
+          <BrandStrip/>
         </div>
       </section>
 
       {/* ══════════════════════════════════════════
-          BRAND TRUST STRIP
+          HERO — WebGL background, massive type
       ══════════════════════════════════════════ */}
-      <section className="relative border-y border-[var(--bridge-border)] bg-[var(--bridge-canvas)] py-10">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <p className="mb-6 text-center text-[10px] font-black uppercase tracking-[0.32em] text-[var(--bridge-text-faint)]">
-            Mentors from the world's best companies
-          </p>
-          <BrandStrip/>
+      <section ref={heroRef} className="relative min-h-screen overflow-hidden" style={{backgroundColor:isDark?'#060302':'var(--bridge-canvas)'}}>
+        {isDark&&<WebGLBg/>}
+        {isDark&&<div aria-hidden className="b-scan pointer-events-none absolute inset-x-0 top-0 h-[2px] opacity-70"
+          style={{background:'linear-gradient(90deg,transparent 0%,rgba(234,88,12,.6) 35%,rgba(251,191,36,.55) 50%,rgba(234,88,12,.6) 65%,transparent 100%)'}}/>}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-bridge-noise opacity-[0.015]"/>
+        {isDark&&<div aria-hidden className="pointer-events-none absolute inset-0"
+          style={{backgroundImage:'linear-gradient(rgba(234,88,12,.042) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,.042) 1px,transparent 1px)',backgroundSize:'88px 88px'}}/>}
+        {isDark&&<div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-60"
+          style={{background:'linear-gradient(to bottom,transparent,#060302)'}}/>}
+
+        {/* Top utility bar: live badge + 5-star rating */}
+        <div className="relative z-10 mx-auto max-w-7xl px-5 pt-10 sm:px-8">
+          <div className="flex items-center justify-between gap-4">
+            <div className={`inline-flex items-center gap-2.5 rounded-full border px-4 py-1.5 backdrop-blur-xl transition-all duration-700 ${isDark?'border-white/[0.08] bg-white/[0.03]':'border-[var(--bridge-border)] bg-[var(--bridge-surface)]'} ${ready?'opacity-100 translate-y-0':'opacity-0 -translate-y-4'}`}>
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-65"/><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.9)]"/></span>
+              <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${isDark?'text-white/45':'text-[var(--bridge-text-muted)]'}`}>Live · 2,400+ vetted</span>
+            </div>
+            <div className={`hidden md:flex items-center gap-3 transition-all duration-700 delay-200 ${ready?'opacity-100 translate-y-0':'opacity-0 -translate-y-4'}`}>
+              <div className="flex items-center gap-1.5">{[0,1,2,3,4].map(i=><svg key={i} className="h-3 w-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}</div>
+              <span className={`text-[11px] font-semibold ${isDark?'text-white/55':'text-[var(--bridge-text-secondary)]'}`}><span className={`font-bold ${isDark?'text-white/85':'text-[var(--bridge-text)]'}`}>4.9</span> · 4,800+ sessions</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-5 pt-16 pb-28 sm:px-8 lg:pt-24">
+          {/* Headline — full width grand entrance */}
+          <div ref={headRef} style={{perspective:'1000px',overflow:'hidden'}}>
+            <h1 className={`font-display font-black leading-[0.84] tracking-[-0.038em] text-center ${isDark?'text-white/92':'text-[var(--bridge-text)]'}`}
+              style={{fontSize:'clamp(3.6rem,12vw,11.5rem)'}}>
+              <span data-w className="block">Your next</span>
+              <span data-w className={`block ${isDark?'shimmer-text':'text-gradient-bridge'}`}
+                style={isDark?{filter:'drop-shadow(0 0 100px rgba(234,88,12,.7))'}:{}}>
+                career move
+              </span>
+              <span data-w className="block">starts with</span>
+              <span data-w className={`block font-editorial italic ${isDark?'text-white/16':'text-[var(--bridge-text-faint)]'}`} style={{fontSize:'0.78em'}}>one conversation.</span>
+            </h1>
+          </div>
+
+          {/* Description + CTAs — centered below headline */}
+          <div className={`mt-12 flex flex-col items-center text-center transition-all duration-1000 delay-500 ${ready?'opacity-100 translate-y-0':'opacity-0 translate-y-6'}`}>
+            <p className="max-w-2xl text-[1.1rem] leading-relaxed text-[var(--bridge-text-muted)]">
+              Real mentors. Real sessions. Real outcomes. Skip the cold messages — book a 1-on-1 with someone who's already walked your path.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <Mag>
+                <Link to={user?'/mentors':'/register'} data-cursor="Start"
+                  className="b-pulse btn-sheen inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-9 py-4 text-[0.95rem] font-bold text-white shadow-[0_0_40px_rgba(234,88,12,.45)] transition-all hover:scale-[1.05] hover:shadow-[0_0_70px_rgba(234,88,12,.7)] active:scale-[0.97]">
+                  Find your mentor
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </Link>
+              </Mag>
+              <Mag>
+                <Link to="/mentors" data-cursor="Browse"
+                  className={`inline-flex items-center gap-2 rounded-full border px-8 py-4 text-[0.95rem] font-semibold transition-all ${isDark?'border-white/[0.10] bg-white/[0.04] hover:border-white/[0.18] hover:bg-white/[0.07]':'border-[var(--bridge-border-strong)] bg-[var(--bridge-surface)] hover:border-orange-500/40 hover:shadow-bridge-card'}`}
+                  style={{color:isDark?'rgba(255,255,255,.55)':'var(--bridge-text)'}}>
+                  Browse mentors →
+                </Link>
+              </Mag>
+            </div>
+            <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-1">
+              {['No credit card required','First session guaranteed','Cancel anytime'].map((t,i)=>(
+                <span key={i} className="flex items-center gap-2 text-[10px] text-[var(--bridge-text-faint)]">
+                  {i>0&&<span className="h-1 w-1 rounded-full bg-[var(--bridge-border-strong)]"/>}{t}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -723,198 +803,83 @@ export default function Landing(){
       </div>
 
       {/* ══════════════════════════════════════════
-          EDITORIAL — "Cold outreach is dead."
-      ══════════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-24 bg-[var(--bridge-canvas)]">
-        <div aria-hidden className="pointer-events-none absolute inset-0"
-          style={{background:'radial-gradient(ellipse 50% 60% at 50% 50%,rgba(234,88,12,.05),transparent 70%)'}}/>
-        <div className="relative z-10 mx-auto max-w-5xl px-5 sm:px-8">
-          <Rev>
-            <div className="border-l-2 border-orange-500/40 pl-8">
-              <p className="text-[10px] font-black uppercase tracking-[0.32em] text-orange-500 mb-4">The problem</p>
-              <p className="font-display font-black tracking-tight text-[var(--bridge-text)]"
-                style={{fontSize:'clamp(2rem,5vw,4rem)',lineHeight:1.05}}>
-                Cold outreach<br/>
-                <span className="text-gradient-bridge">doesn't work.</span><br/>
-                Generic coaches<br/>
-                <span className="font-editorial italic text-[var(--bridge-text-muted)]" style={{fontSize:'0.92em'}}>haven't been there.</span>
-              </p>
-              <p className="mt-6 max-w-lg text-base text-[var(--bridge-text-muted)] leading-relaxed">
-                LinkedIn DMs get a ~10% reply rate. Career coaches rarely have your specific background. You need someone who's made the exact transition you're trying to make — and will actually respond.
-              </p>
-            </div>
-          </Rev>
-
-          {/* Two-col before/after */}
-          <div className="mt-14 grid gap-4 sm:grid-cols-2">
-            <Rev delay={0}>
-              <Tilt n={4} className="group relative overflow-hidden rounded-3xl border border-red-500/14 bg-[var(--bridge-surface)] p-7">
-                <div aria-hidden className="pointer-events-none absolute inset-0 rounded-3xl" style={{background:'radial-gradient(ellipse 70% 50% at 50% 0%,rgba(239,68,68,.05),transparent 70%)'}}/>
-                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-red-500/18 bg-red-500/7 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-red-500">
-                  <span className="h-1.5 w-1.5 rounded-full bg-red-500"/> Without Bridge
-                </div>
-                <div className="space-y-3">
-                  {['Cold LinkedIn DMs — ~10% reply','Unverified coaches, hidden pricing','Generic advice that doesn\'t fit','Forced 3-month package lock-ins'].map((t,i)=>(
-                    <div key={i} className="flex items-center gap-3 text-[13px] text-[var(--bridge-text-muted)]">
-                      <svg className="h-4 w-4 shrink-0 text-red-400/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" strokeLinecap="round"/></svg>
-                      <span className="line-through decoration-red-400/40">{t}</span>
-                    </div>
-                  ))}
-                </div>
-              </Tilt>
-            </Rev>
-            <Rev delay={100}>
-              <Tilt n={4} className="group relative overflow-hidden rounded-3xl border border-orange-500/24 bg-[var(--bridge-surface)] p-7 shadow-bridge-glow">
-                <div aria-hidden className="pointer-events-none absolute inset-0 rounded-3xl" style={{background:'radial-gradient(ellipse 70% 50% at 50% 0%,rgba(234,88,12,.1),transparent 70%)'}}/>
-                <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-orange-500/24 bg-orange-500/9 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">
-                  <span className="relative flex h-1.5 w-1.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-55"/><span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-400"/></span> With Bridge
-                </div>
-                <div className="space-y-3">
-                  {['AI matches in seconds — guaranteed response','Vetted pros only, rates shown upfront','Structured sessions, exact-fit expertise','One session at a time, zero lock-in'].map((t,i)=>(
-                    <div key={i} className="flex items-center gap-3 text-[13px] text-[var(--bridge-text-secondary)]">
-                      <svg className="h-4 w-4 shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      {t}
-                    </div>
-                  ))}
-                </div>
-              </Tilt>
-            </Rev>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
           STATS — cinematic bento with hero stat
       ══════════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-28"
-        style={{background:'linear-gradient(180deg,var(--bridge-canvas) 0%,#0d0703 12%,#080503 100%)'}}>
-        <div aria-hidden className="b-blob pointer-events-none absolute left-1/3 top-1/2 h-[820px] w-[820px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-25"
-          style={{background:'radial-gradient(circle,rgba(234,88,12,.55) 0%,transparent 65%)'}}/>
-        <div aria-hidden className="pointer-events-none absolute inset-0"
-          style={{backgroundImage:'linear-gradient(rgba(234,88,12,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(234,88,12,.04) 1px,transparent 1px)',backgroundSize:'88px 88px'}}/>
+      <section className="relative overflow-hidden py-28 bg-[var(--bridge-canvas)]">
         <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-8">
           <Rev>
             <div className="mb-12 flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.32em] text-orange-500">By the numbers</p>
-                <h2 className="mt-3 font-display text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
+                <p className="text-[10px] font-black uppercase tracking-[0.32em] text-[var(--bridge-accent)]">By the numbers</p>
+                <h2 className="mt-3 font-display text-3xl font-black tracking-tight text-[var(--bridge-text)] sm:text-4xl lg:text-5xl">
                   A platform people <span className="text-gradient-bridge">actually use</span>
                 </h2>
               </div>
-              <p className="max-w-xs text-[12px] leading-relaxed text-white/40">No vanity metrics. Just signal: people show up, book again, and recommend.</p>
+              <p className="max-w-xs text-[12px] leading-relaxed text-[var(--bridge-text-muted)]">No vanity metrics. Just signal: people show up, book again, and recommend.</p>
             </div>
           </Rev>
 
-          {/* Bento: hero stat (lg col-span-2 row-span-2) + 3 stats + spotlight bar */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:auto-rows-[176px]">
             <Rev delay={0} className="col-span-2 lg:row-span-2">
-              <Tilt n={4} className="group relative h-full overflow-hidden rounded-3xl border border-orange-500/22 bg-gradient-to-br from-[#1a0a04] to-[#0a0402] p-7 sm:p-9 shadow-bridge-glow">
-                <div aria-hidden className="pointer-events-none absolute inset-0" style={{background:'radial-gradient(ellipse 60% 80% at 100% 100%,rgba(234,88,12,.15),transparent 70%)'}}/>
-                <div aria-hidden className="b-blob pointer-events-none absolute -bottom-20 -right-20 h-72 w-72 rounded-full opacity-50" style={{background:'radial-gradient(circle,rgba(234,88,12,.32) 0%,transparent 65%)'}}/>
+              <Tilt n={4} className="group relative h-full overflow-hidden rounded-3xl border border-orange-500/22 bg-[var(--bridge-surface)] p-7 sm:p-9 shadow-bridge-glow">
+                <div aria-hidden className="pointer-events-none absolute inset-0" style={{background:'radial-gradient(ellipse 60% 80% at 100% 100%,rgba(234,88,12,.08),transparent 70%)'}}/>
                 <div className="relative flex h-full flex-col justify-between gap-6">
                   <div className="flex items-center gap-2">
                     <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-55"/><span className="relative inline-flex h-2 w-2 rounded-full bg-orange-400"/></span>
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-400">Mentor network</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--bridge-accent)]">Mentor network</p>
                   </div>
-                  <StatCell target={2400} suffix="+" label="Vetted mentors across 60+ industries" accent="from-orange-400 via-amber-300 to-orange-500"/>
+                  <StatCell target={2400} suffix="+" label="Vetted mentors across 60+ industries" accent="from-orange-500 to-amber-400"/>
                   <div className="flex items-center gap-3">
-                    <div className="flex -space-x-2">{['MC','JR','EV','MK'].map((i,k)=>(<div key={i} className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0c0906] bg-gradient-to-br ${['from-amber-400 to-orange-500','from-orange-400 to-rose-500','from-rose-400 to-pink-500','from-emerald-400 to-teal-500'][k]} text-[9px] font-bold text-white`}>{i}</div>))}</div>
-                    <p className="text-[11px] text-white/45"><span className="font-bold text-white/85">12 new</span> joined this week</p>
+                    <div className="flex -space-x-2">{['MC','JR','EV','MK'].map((i,k)=>(<div key={i} className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-[var(--bridge-surface)] bg-gradient-to-br ${['from-amber-400 to-orange-500','from-orange-400 to-rose-500','from-rose-400 to-pink-500','from-emerald-400 to-teal-500'][k]} text-[9px] font-bold text-white`}>{i}</div>))}</div>
+                    <p className="text-[11px] text-[var(--bridge-text-muted)]"><span className="font-bold text-[var(--bridge-text)]">12 new</span> joined this week</p>
                   </div>
                 </div>
               </Tilt>
             </Rev>
             <Rev delay={120}>
-              <Tilt n={3} className="relative h-full overflow-hidden rounded-3xl border border-white/[0.07] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-amber-500/30 hover:shadow-bridge-glow">
-                <div aria-hidden className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100" style={{background:'radial-gradient(ellipse 70% 50% at 50% 0%,rgba(251,191,36,.08),transparent 70%)'}}/>
+              <Tilt n={3} className="relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/30 hover:shadow-bridge-glow">
                 <div className="relative flex h-full flex-col justify-between">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-amber-400/80">Total bookings</p>
-                  <StatCell target={4800} suffix="+" label="Sessions booked" accent="from-amber-500 to-orange-400"/>
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--bridge-text-muted)]">Total bookings</p>
+                  <StatCell target={4800} suffix="+" label="Sessions booked" accent="from-orange-500 to-amber-400"/>
                 </div>
               </Tilt>
             </Rev>
             <Rev delay={200}>
-              <Tilt n={3} className="relative h-full overflow-hidden rounded-3xl border border-white/[0.07] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-rose-400/30 hover:shadow-bridge-glow">
+              <Tilt n={3} className="relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/30 hover:shadow-bridge-glow">
                 <div className="relative flex h-full flex-col justify-between">
-                  <div className="flex items-center gap-1">{[0,1,2,3,4].map(i=><svg key={i} className="h-3 w-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}</div>
-                  <StatCell target={4.9} suffix="/5" label="Average rating" accent="from-rose-400 to-orange-500" decimal/>
+                  <div className="flex items-center gap-1">{[0,1,2,3,4].map(i=><svg key={i} className="h-3 w-3 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>)}</div>
+                  <StatCell target={4.9} suffix="/5" label="Average rating" accent="from-orange-500 to-amber-400" decimal/>
                 </div>
               </Tilt>
             </Rev>
             <Rev delay={280}>
-              <Tilt n={3} className="relative h-full overflow-hidden rounded-3xl border border-white/[0.07] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-emerald-500/30 hover:shadow-bridge-glow">
+              <Tilt n={3} className="relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/30 hover:shadow-bridge-glow">
                 <div className="relative flex h-full flex-col justify-between">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-400/80">Net Promoter</p>
-                  <StatCell target={97} suffix="%" label="Would recommend" accent="from-emerald-400 to-teal-500"/>
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--bridge-text-muted)]">Recommend</p>
+                  <StatCell target={97} suffix="%" label="Would recommend" accent="from-orange-500 to-amber-400"/>
                 </div>
               </Tilt>
             </Rev>
             <Rev delay={360}>
-              <Tilt n={3} className="relative h-full overflow-hidden rounded-3xl border border-white/[0.07] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-sky-500/30 hover:shadow-bridge-glow">
+              <Tilt n={3} className="relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/30 hover:shadow-bridge-glow">
                 <div className="relative flex h-full flex-col justify-between">
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-sky-400/80">Median response</p>
-                  <StatCell target={11} suffix=" min" label="Avg time to first reply" accent="from-sky-400 to-blue-500"/>
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--bridge-text-muted)]">Response time</p>
+                  <StatCell target={11} suffix=" min" label="Avg time to first reply" accent="from-orange-500 to-amber-400"/>
                 </div>
               </Tilt>
             </Rev>
           </div>
 
-          {/* Spotlight bar — milestone strip */}
           <Rev delay={420}>
-            <div className="mt-4 grid grid-cols-2 gap-3 rounded-3xl border border-white/[0.06] bg-white/[0.025] px-5 py-5 backdrop-blur-xl sm:grid-cols-4 sm:gap-6 sm:px-8">
+            <div className="mt-4 grid grid-cols-2 gap-3 rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-5 py-5 sm:grid-cols-4 sm:gap-6 sm:px-8">
               {[{k:'$2.1M+',v:'in offer increases unlocked'},{k:'47',v:'industries covered'},{k:'92%',v:'rebook within 30 days'},{k:'24/7',v:'global mentor coverage'}].map((s,i)=>(
-                <div key={i} className="flex flex-col gap-1 border-b border-white/[0.05] pb-3 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-3 last:border-0">
-                  <p className="font-display text-2xl font-black tabular-nums text-white sm:text-3xl">{s.k}</p>
-                  <p className="text-[11px] text-white/40 leading-tight">{s.v}</p>
+                <div key={i} className="flex flex-col gap-1 border-b border-[var(--bridge-border)] pb-3 sm:border-b-0 sm:border-r sm:pb-0 sm:pr-3 last:border-0">
+                  <p className="font-display text-2xl font-black tabular-nums text-[var(--bridge-text)] sm:text-3xl">{s.k}</p>
+                  <p className="text-[11px] text-[var(--bridge-text-muted)] leading-tight">{s.v}</p>
                 </div>
               ))}
             </div>
           </Rev>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
-          APP PREVIEW — bento grid
-      ══════════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-24 bg-[var(--bridge-canvas)]">
-        <div className="mx-auto max-w-6xl px-5 sm:px-8">
-          <Rev>
-            <div className="mb-14 text-center">
-              <p className="text-[10px] font-black uppercase tracking-[0.32em] text-orange-500">See it in action</p>
-              <h2 className="mt-4 font-display text-3xl font-black tracking-tight text-[var(--bridge-text)] sm:text-4xl lg:text-5xl">
-                From goal to session<br/><span className="text-gradient-bridge">in under a minute</span>
-              </h2>
-            </div>
-          </Rev>
-
-          {/* Bento: large preview left, 3 steps right */}
-          <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr]">
-            <Rev delay={50}>
-              <div className="h-full">
-                <AppPreview/>
-              </div>
-            </Rev>
-            <div className="flex flex-col gap-4">
-              {[
-                {n:'01',icon:'🔍',title:'Describe your goal',desc:'Plain English. Our AI ranks 2,400+ mentors by relevance to your exact situation in seconds.',accent:'from-orange-500 to-amber-400'},
-                {n:'02',icon:'👤',title:'Pick your mentor',desc:'Real bios, honest reviews, exact rates — all visible before you commit. Zero surprises.',accent:'from-amber-400 to-orange-400'},
-                {n:'03',icon:'📅',title:'Book and get unstuck',desc:'Real-time availability. Built-in video room. Session live in 30 seconds.',accent:'from-emerald-400 to-teal-500'},
-              ].map((s,i)=>(
-                <Rev key={i} delay={80+i*80}>
-                  <Tilt n={4} className="group flex items-start gap-4 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-5 shadow-bridge-card hover:border-orange-500/28 hover:shadow-bridge-glow transition-all">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-lg ring-1 ring-orange-500/14">{s.icon}</div>
-                    <div>
-                      <div className="flex items-baseline gap-2">
-                        <span className={`font-display text-xs font-black text-transparent bg-clip-text bg-gradient-to-r ${s.accent} opacity-60 group-hover:opacity-100 transition-opacity`}>{s.n}</span>
-                        <h3 className="text-sm font-bold text-[var(--bridge-text)]">{s.title}</h3>
-                      </div>
-                      <p className="mt-1 text-[12px] text-[var(--bridge-text-muted)] leading-relaxed">{s.desc}</p>
-                    </div>
-                  </Tilt>
-                </Rev>
-              ))}
-            </div>
-          </div>
         </div>
       </section>
 
@@ -1016,14 +981,10 @@ export default function Landing(){
       ══════════════════════════════════════════ */}
       <OutcomesScroller/>
 
-      <div aria-hidden className="pointer-events-none h-20 w-full" style={{background:'linear-gradient(to bottom,#0d0603,var(--bridge-canvas))'}}/>
-
       {/* ══════════════════════════════════════════
           MANIFESTO — dense bento (replaces principles + features)
       ══════════════════════════════════════════ */}
       <section className="relative overflow-hidden py-24 bg-[var(--bridge-canvas)]">
-        <div aria-hidden className="pointer-events-none absolute inset-0"
-          style={{background:'radial-gradient(ellipse 55% 40% at 50% 100%,rgba(234,88,12,.06),transparent 68%)'}}/>
         <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-8">
           <Rev>
             <div className="mb-12 grid gap-6 sm:grid-cols-[1fr_auto] sm:items-end">
@@ -1037,107 +998,90 @@ export default function Landing(){
             </div>
           </Rev>
 
-          {/* Asymmetric bento grid */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-6 lg:auto-rows-[200px]">
-            {/* Hero card — AI matching */}
-            <Rev delay={0} className="col-span-2 lg:col-span-3 lg:row-span-2">
-              <Tilt n={4} className="group relative h-full overflow-hidden rounded-3xl border border-orange-500/22 bg-gradient-to-br from-[var(--bridge-surface)] via-[var(--bridge-surface)] to-orange-500/[0.04] p-7 sm:p-9 shadow-bridge-glow">
-                <div aria-hidden className="pointer-events-none absolute inset-0" style={{background:'radial-gradient(ellipse 60% 70% at 100% 0%,rgba(234,88,12,.12),transparent 70%)'}}/>
-                <div aria-hidden className="b-blob pointer-events-none absolute -top-16 -right-16 h-64 w-64 rounded-full opacity-40" style={{background:'radial-gradient(circle,rgba(234,88,12,.32) 0%,transparent 65%)'}}/>
-                <div className="relative flex h-full flex-col justify-between gap-6">
+          {/* Featured promise — full width */}
+          <Rev delay={0}>
+            <Tilt n={3} className="group relative overflow-hidden rounded-3xl border border-orange-500/22 bg-[var(--bridge-surface)] p-7 sm:p-9 shadow-bridge-glow mb-4">
+              <div aria-hidden className="pointer-events-none absolute inset-0" style={{background:'radial-gradient(ellipse 50% 70% at 100% 0%,rgba(234,88,12,.08),transparent 70%)'}}/>
+              <div className="relative grid gap-6 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/22 bg-orange-500/8 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[var(--bridge-accent)] mb-4">
+                    <span className="h-1.5 w-1.5 rounded-full bg-orange-400"/> The filter
+                  </div>
+                  <h3 className="font-display text-2xl font-black leading-tight text-[var(--bridge-text)] sm:text-3xl">
+                    Only people who've <span className="text-gradient-bridge">done your job</span>.
+                  </h3>
+                  <p className="mt-3 max-w-xl text-sm leading-relaxed text-[var(--bridge-text-muted)]">Every mentor has lived the exact role you're targeting. We filter on outcome, not credentials. No generic coaches, no unverified bios.</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5 sm:max-w-[220px]">
+                  {['PMs at Series B+','EMs at hyperscalers','RNs → UX','VPs of Sales','Founders post-YC','Top studios'].map(t=>(
+                    <span key={t} className="rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-2.5 py-1 text-[10px] font-medium text-[var(--bridge-text-muted)]">{t}</span>
+                  ))}
+                </div>
+              </div>
+            </Tilt>
+          </Rev>
+
+          {/* 5 supporting cards — clean uniform grid */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Rev delay={80}>
+              <Tilt n={3} className="group relative h-full overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/28 hover:shadow-bridge-glow transition-all">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--bridge-surface-muted)] text-xl ring-1 ring-[var(--bridge-border)]">⚡</div>
                   <div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/22 bg-orange-500/8 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">
-                      <span className="h-1.5 w-1.5 rounded-full bg-orange-400"/> Featured promise
-                    </div>
-                    <h3 className="mt-5 font-display text-2xl font-black leading-tight text-[var(--bridge-text)] sm:text-3xl lg:text-4xl">
-                      Only people who've <span className="text-gradient-bridge">done your job</span>.
-                    </h3>
-                    <p className="mt-4 max-w-md text-sm leading-relaxed text-[var(--bridge-text-muted)] sm:text-base">Every mentor has lived the exact role you're targeting. We filter on outcome, not credentials. No generic coaches, no unverified bios.</p>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {['PMs at Series B+','EMs at hyperscalers','RNs → UX','VPs of Sales','Founders post-YC','Designers at top studios'].map(t=>(
-                      <span key={t} className="rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/50 px-2.5 py-1 text-[10px] font-medium text-[var(--bridge-text-muted)]">{t}</span>
-                    ))}
-                  </div>
-                </div>
-              </Tilt>
-            </Rev>
-            {/* One session at a time */}
-            <Rev delay={80} className="col-span-2 lg:col-span-3">
-              <Tilt n={3} className="group relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 sm:p-7 shadow-bridge-card hover:border-orange-500/28 hover:shadow-bridge-glow">
-                <div className="relative flex h-full items-start gap-5">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-xl ring-1 ring-amber-500/15">⚡</div>
-                  <div className="flex flex-1 flex-col justify-between gap-3">
-                    <div>
-                      <h3 className="text-base font-bold text-[var(--bridge-text)] sm:text-lg">One session at a time</h3>
-                      <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--bridge-text-muted)]">No packages. No subscriptions. Pay for exactly what you need.</p>
-                    </div>
-                    <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--bridge-text-faint)]">
+                    <h3 className="text-sm font-bold text-[var(--bridge-text)]">One session at a time</h3>
+                    <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--bridge-text-muted)]">No packages, no lock-ins. Pay for exactly what you need.</p>
+                    <div className="mt-3 flex items-center gap-2 text-[10px] font-bold text-[var(--bridge-text-faint)]">
                       <span className="line-through opacity-50">3-month pkg</span>
-                      <svg className="h-3 w-3 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      <span className="text-orange-500">1 hour</span>
+                      <svg className="h-3 w-3 text-[var(--bridge-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <span className="text-[var(--bridge-accent)]">1 hour</span>
                     </div>
                   </div>
                 </div>
               </Tilt>
             </Rev>
-            {/* Pricing transparency */}
-            <Rev delay={140} className="col-span-1 lg:col-span-2">
-              <Tilt n={3} className="group relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-emerald-500/28 hover:shadow-bridge-glow">
-                <div className="relative flex h-full flex-col justify-between">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-lg ring-1 ring-emerald-500/15">💵</div>
+            <Rev delay={140}>
+              <Tilt n={3} className="group relative h-full overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/28 hover:shadow-bridge-glow transition-all">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--bridge-surface-muted)] text-xl ring-1 ring-[var(--bridge-border)]">💵</div>
                   <div>
                     <h3 className="text-sm font-bold text-[var(--bridge-text)]">Price on every profile</h3>
-                    <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--bridge-text-muted)]">No "contact us for pricing" opacity.</p>
+                    <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--bridge-text-muted)]">No "contact us for pricing" opacity. Rates are front and center.</p>
                   </div>
                 </div>
               </Tilt>
             </Rev>
-            {/* Unfiltered reviews */}
-            <Rev delay={200} className="col-span-1 lg:col-span-1">
-              <Tilt n={3} className="group relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-rose-500/28 hover:shadow-bridge-glow">
-                <div className="relative flex h-full flex-col justify-between gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-500/10 text-lg ring-1 ring-rose-500/15">💬</div>
+            <Rev delay={200}>
+              <Tilt n={3} className="group relative h-full overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/28 hover:shadow-bridge-glow transition-all">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--bridge-surface-muted)] text-xl ring-1 ring-[var(--bridge-border)]">💬</div>
                   <div>
-                    <h3 className="text-sm font-bold text-[var(--bridge-text)]">Unfiltered</h3>
-                    <p className="mt-1 text-[11px] leading-relaxed text-[var(--bridge-text-muted)]">All reviews, good and brutal.</p>
+                    <h3 className="text-sm font-bold text-[var(--bridge-text)]">Unfiltered reviews</h3>
+                    <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--bridge-text-muted)]">All reviews published — good and critical. No curation.</p>
                   </div>
                 </div>
               </Tilt>
             </Rev>
-            {/* Built-in video */}
-            <Rev delay={260} className="col-span-2 lg:col-span-3">
-              <Tilt n={3} className="group relative h-full overflow-hidden rounded-3xl border border-sky-500/18 bg-[var(--bridge-surface)] p-6 sm:p-7 shadow-bridge-card hover:border-sky-500/35 hover:shadow-bridge-glow">
-                <div aria-hidden className="pointer-events-none absolute inset-0" style={{background:'radial-gradient(ellipse 70% 60% at 100% 50%,rgba(56,189,248,.06),transparent 70%)'}}/>
-                <div className="relative flex h-full items-start gap-5">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-xl ring-1 ring-sky-500/15">🎥</div>
-                  <div className="flex flex-1 flex-col justify-between gap-3">
-                    <div>
-                      <h3 className="text-base font-bold text-[var(--bridge-text)] sm:text-lg">Built-in video, zero friction</h3>
-                      <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--bridge-text-muted)]">Custom room auto-generated per session. No Zoom links, no scheduling back-and-forth.</p>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-xl border border-sky-500/18 bg-sky-500/[0.04] px-3 py-2 text-[11px] text-[var(--bridge-text-secondary)]">
-                      <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-65"/><span className="relative inline-flex h-2 w-2 rounded-full bg-sky-400"/></span>
-                      <span className="font-bold text-[var(--bridge-text)]">bridge.app/room/maya-tyler-7842</span>
-                      <span className="ml-auto text-[10px] text-[var(--bridge-text-faint)]">auto-created</span>
-                    </div>
+            <Rev delay={260}>
+              <Tilt n={3} className="group relative h-full overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/28 hover:shadow-bridge-glow transition-all">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--bridge-surface-muted)] text-xl ring-1 ring-[var(--bridge-border)]">🎥</div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--bridge-text)]">Built-in video, zero friction</h3>
+                    <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--bridge-text-muted)]">Custom room auto-generated per session. No Zoom links needed.</p>
                   </div>
                 </div>
               </Tilt>
             </Rev>
-            {/* Structured formats */}
-            <Rev delay={320} className="col-span-2 lg:col-span-3">
-              <Tilt n={3} className="group relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 sm:p-7 shadow-bridge-card hover:border-violet-500/28 hover:shadow-bridge-glow">
-                <div className="relative flex h-full items-start gap-5">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-xl ring-1 ring-violet-500/15">🎯</div>
-                  <div className="flex flex-1 flex-col gap-3">
-                    <div>
-                      <h3 className="text-base font-bold text-[var(--bridge-text)] sm:text-lg">Sessions with a structure</h3>
-                      <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--bridge-text-muted)]">Four named formats so you walk in knowing what you'll walk out with.</p>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
+            <Rev delay={320} className="sm:col-span-1 lg:col-span-2">
+              <Tilt n={3} className="group relative h-full overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card hover:border-orange-500/28 hover:shadow-bridge-glow transition-all">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--bridge-surface-muted)] text-xl ring-1 ring-[var(--bridge-border)]">🎯</div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[var(--bridge-text)]">Sessions with a structure</h3>
+                    <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--bridge-text-muted)]">Four named formats so you walk in knowing what you'll walk out with.</p>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
                       {['Career Advice','Interview Prep','Resume Review','Networking'].map(t=>(
-                        <span key={t} className="rounded-full border border-violet-500/15 bg-violet-500/[0.06] px-2.5 py-0.5 text-[10px] font-semibold text-violet-500 dark:text-violet-300">{t}</span>
+                        <span key={t} className="rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--bridge-text-muted)]">{t}</span>
                       ))}
                     </div>
                   </div>

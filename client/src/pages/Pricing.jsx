@@ -547,18 +547,21 @@ export default function Pricing() {
                         }`}
                       />
 
-                      {tier.badge ? (
-                        <span className="bd-status-shine absolute right-4 top-4 z-[1] inline-flex items-center gap-1.5 overflow-hidden rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-[0_8px_22px_-4px_rgba(234,88,12,0.55)]">
-                          <span className="h-1.5 w-1.5 rounded-full bg-white/95 animate-pulse-soft" />
-                          {tier.badge}
-                        </span>
-                      ) : null}
-
+                      <div className="relative z-[1] flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h2 className="font-display text-xl font-black tracking-tight text-[var(--bridge-text)] sm:text-2xl">{tier.name}</h2>
+                          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-600 dark:text-orange-400">
+                            {tier.tagline}
+                          </p>
+                        </div>
+                        {tier.badge ? (
+                          <span className="bd-status-shine shrink-0 inline-flex items-center gap-1.5 overflow-hidden rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-[0_8px_22px_-4px_rgba(234,88,12,0.55)]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-white/95 animate-pulse-soft" />
+                            {tier.badge}
+                          </span>
+                        ) : null}
+                      </div>
                       <div className="relative z-[1]">
-                        <h2 className="font-display text-xl font-black tracking-tight text-[var(--bridge-text)] sm:text-2xl">{tier.name}</h2>
-                        <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-600 dark:text-orange-400">
-                          {tier.tagline}
-                        </p>
 
                         <p className="mt-5 flex flex-wrap items-baseline gap-x-1.5">
                           <span className="font-display text-[3rem] font-black tabular-nums tracking-[-0.03em] leading-none text-[var(--bridge-text)]">
@@ -601,36 +604,30 @@ export default function Pricing() {
 
                       <div className="relative z-[1] mt-7">
                         {tier.href ? (
-                          <Magnetic strength={tier.primary ? 0.18 : 0.12}>
-                            <Link
-                              to={tier.href}
-                              data-cursor={tier.cta}
-                              className={`block w-full rounded-full py-3 text-center text-sm font-black transition-all ${
-                                tier.primary
-                                  ? 'btn-sheen bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white shadow-[0_12px_32px_-6px_rgba(234,88,12,0.6)] ring-1 ring-white/15 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-8px_rgba(234,88,12,0.8)]'
-                                  : user
-                                  ? 'border-2 border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-muted)] text-[var(--bridge-text-secondary)] hover:-translate-y-0.5 hover:border-orange-400/60 hover:bg-[var(--bridge-surface-raised)]'
-                                  : 'border-2 border-[var(--bridge-border)] bg-[var(--bridge-surface-raised)] text-[var(--bridge-text)] hover:-translate-y-0.5 hover:border-orange-400/60 hover:shadow-md'
-                              } ${focusRing}`}
-                            >
-                              {tier.cta}
-                            </Link>
-                          </Magnetic>
+                          <Link
+                            to={tier.href}
+                            data-cursor={tier.cta}
+                            className={`block w-full rounded-full py-3 text-center text-sm font-black transition-all duration-200 ${
+                              tier.primary
+                                ? 'btn-sheen bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white shadow-[0_12px_32px_-6px_rgba(234,88,12,0.6)] ring-1 ring-white/15 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-8px_rgba(234,88,12,0.8)]'
+                                : 'border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-raised)] text-[var(--bridge-text-secondary)] hover:border-orange-500/50 hover:text-[var(--bridge-text)] hover:bg-[var(--bridge-surface-raised)] hover:-translate-y-0.5'
+                            } ${focusRing}`}
+                          >
+                            {tier.cta}
+                          </Link>
                         ) : (
-                          <Magnetic strength={tier.primary ? 0.18 : 0.12}>
-                            <button
-                              type="button"
-                              onClick={tier.onClick}
-                              data-cursor={tier.cta}
-                              className={`w-full rounded-full py-3 text-sm font-black transition-all ${
-                                tier.primary
-                                  ? 'btn-sheen bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white shadow-[0_12px_32px_-6px_rgba(234,88,12,0.6)] ring-1 ring-white/15 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-8px_rgba(234,88,12,0.8)]'
-                                  : 'border-2 border-[var(--bridge-border)] bg-[var(--bridge-surface-raised)] text-[var(--bridge-text)] hover:-translate-y-0.5 hover:border-orange-400/60 hover:shadow-md'
-                              } ${focusRing}`}
-                            >
-                              {tier.cta}
-                            </button>
-                          </Magnetic>
+                          <button
+                            type="button"
+                            onClick={tier.onClick}
+                            data-cursor={tier.cta}
+                            className={`w-full rounded-full py-3 text-sm font-black transition-all duration-200 ${
+                              tier.primary
+                                ? 'btn-sheen bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white shadow-[0_12px_32px_-6px_rgba(234,88,12,0.6)] ring-1 ring-white/15 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-8px_rgba(234,88,12,0.8)]'
+                                : 'border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-raised)] text-[var(--bridge-text-secondary)] hover:border-orange-500/50 hover:text-[var(--bridge-text)] hover:-translate-y-0.5'
+                            } ${focusRing}`}
+                          >
+                            {tier.cta}
+                          </button>
                         )}
                       </div>
                     </div>
