@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Mic, MicOff, CheckCircle2, Loader2 } from 'lucide-react'
 import supabase from '../api/supabase'
-import { generateFollowUp, generateSummary, speakText } from '../api/intake'
 import { useAuth } from '../context/useAuth'
 
 const QUESTIONS = {
@@ -54,28 +53,37 @@ export default function IntakeCall() {
   const [phase, setPhase] = useState('main') // main | followup
   const [interimText, setInterimText] = useState('')
 
-  const recognitionRef = useRef(null)
-
-  // SpeechRecognition setup
-  useEffect(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) {
-      setPageState('no_support')
-      return
-    }
-    const rec = new SR()
-    rec.continuous = false
-    rec.interimResults = true
-    rec.lang = 'en-US'
-    recognitionRef.current = rec
-  }, [])
+  // WebRTC
+  const pcRef = useRef(null)
+  const dcRef = useRef(null)
+  const localStreamRef = useRef(null)
+  const transcriptRef = useRef([])
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [transcriptItems, setTranscriptItems] = useState([])
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      recognitionRef.current?.abort()
-      window.speechSynthesis.cancel()
+      localStreamRef.current?.getTracks().forEach(t => t.stop())
+      pcRef.current?.close()
+      window.speechSynthesis?.cancel()
     }
+  }, [])
+
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = `
+      @keyframes orbPulse {
+        from { transform: scale(0.95); opacity: 0.6; }
+        to { transform: scale(1.15); opacity: 1; }
+      }
+      @keyframes orbBreath {
+        from { transform: scale(0.92); }
+        to { transform: scale(1.08); }
+      }
+    `
+    document.head.appendChild(style)
+    return () => style.remove()
   }, [])
 
   // Auth + session fetch
@@ -108,81 +116,187 @@ export default function IntakeCall() {
     load().catch(() => navigate('/dashboard'))
   }, [authLoading, user, sessionId, navigate, pageState])
 
-  function listenForAnswer() {
-    return new Promise((resolve) => {
-      const rec = recognitionRef.current
-      if (!rec) { resolve(''); return }
-
-      setFlowState('listening')
-      setInterimText('')
-
-      let finalAnswer = ''
-
-      rec.onresult = (event) => {
-        let interim = ''
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const text = event.results[i][0].transcript
-          if (event.results[i].isFinal) finalAnswer += text + ' '
-          else interim = text
-        }
-        setInterimText(finalAnswer + interim)
-      }
-
-      rec.onerror = () => resolve(finalAnswer.trim() || '[no response]')
-      rec.onend = () => resolve(finalAnswer.trim() || '[no response]')
-
-      try { rec.start() } catch { resolve('[no response]') }
-    })
-  }
-
-  async function runIntakeFlow() {
-    const sessionType = sessionData.session_type
-    const questions = QUESTIONS[sessionType] ?? QUESTIONS.career_advice
-    const collected = []
+  async function startRealtimeSession() {
+    setIsConnecting(true)
+    setFlowState('speaking') // 'speaking' = session is live
 
     try {
-      for (let i = 0; i < questions.length; i++) {
-        setCurrentQuestionIndex(i)
-        setCurrentQuestion(questions[i])
-        setPhase('main')
-        setInterimText('')
+      // 1. Fetch ephemeral token from our backend
+      const res = await fetch('/api/realtime-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionType: sessionData.session_type,
+          sessionId: sessionId,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to get realtime session token')
+      const data = await res.json()
+      const ephemeralKey = data.client_secret?.value
+      if (!ephemeralKey) throw new Error('No ephemeral key returned')
 
-        // Speak question, wait for it to finish, then listen
-        setFlowState('speaking')
-        await speakText(questions[i])
+      // 2. Set up WebRTC peer connection
+      const pc = new RTCPeerConnection()
+      pcRef.current = pc
 
-        const mainAnswer = await listenForAnswer()
-
-        // Check for follow-up
-        setFlowState('processing')
-        let followUp = null
-        try { followUp = await generateFollowUp(sessionType, questions[i], mainAnswer) } catch { /* skip */ }
-
-        if (followUp) {
-          setPhase('followup')
-          setCurrentQuestion(followUp)
-          setInterimText('')
-
-          setFlowState('speaking')
-          await speakText(followUp)
-
-          const followUpAnswer = await listenForAnswer()
-
-          collected.push({ question: questions[i], answer: mainAnswer })
-          collected.push({ question: followUp, answer: followUpAnswer })
-        } else {
-          collected.push({ question: questions[i], answer: mainAnswer })
+      pc.oniceconnectionstatechange = () => {
+        if (
+          pc.iceConnectionState === 'disconnected' ||
+          pc.iceConnectionState === 'failed'
+        ) {
+          setErrorMessage('Connection dropped. Please try again.')
+          setFlowState('error')
         }
-
-        setFlowState('processing')
       }
 
-      // Generate and save summary
-      let summary = ''
-      try { summary = await generateSummary(sessionType, collected) } catch {
-        summary = collected.map(t => `Q: ${t.question}\nA: ${t.answer}`).join('\n\n')
+      // 3. Play assistant audio in an audio element
+      const audioEl = document.createElement('audio')
+      audioEl.autoplay = true
+      audioEl.setAttribute('playsinline', '')
+      document.body.appendChild(audioEl)
+      pc.ontrack = (e) => { audioEl.srcObject = e.streams[0] }
+
+      // 4. Add microphone track
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      localStreamRef.current = stream
+      stream.getTracks().forEach(track => pc.addTrack(track, stream))
+
+      // 5. Set up data channel for events
+      const dc = pc.createDataChannel('oai-events')
+      dcRef.current = dc
+
+      dc.onmessage = (e) => {
+        let event
+        try { event = JSON.parse(e.data) } catch { return }
+        handleRealtimeEvent(event)
       }
 
+      dc.addEventListener('open', () => {
+        dc.send(JSON.stringify({
+          type: 'session.update',
+          session: {
+            instructions: null
+          }
+        }))
+        dc.send(JSON.stringify({
+          type: 'response.create',
+          response: {
+            modalities: ['audio', 'text']
+          }
+        }))
+      })
+
+      // 6. Create SDP offer and get answer from OpenAI
+      const offer = await pc.createOffer()
+      await pc.setLocalDescription(offer)
+
+      const sdpRes = await fetch(
+        'https://api.openai.com/v1/realtime?model=gpt-realtime-1.5',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${ephemeralKey}`,
+            'Content-Type': 'application/sdp',
+          },
+          body: offer.sdp,
+        }
+      )
+      if (!sdpRes.ok) throw new Error('WebRTC SDP exchange failed')
+      const answerSdp = await sdpRes.text()
+      await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp })
+
+      setIsConnecting(false)
+    } catch (err) {
+      setErrorMessage(err?.message ?? 'Could not start voice session')
+      setFlowState('error')
+      setIsConnecting(false)
+    }
+  }
+
+  function handleRealtimeEvent(event) {
+    // Capture assistant transcript
+    if (
+      event.type === 'response.audio_transcript.done' &&
+      event.transcript
+    ) {
+      transcriptRef.current.push({ role: 'assistant', text: event.transcript })
+      setTranscriptItems(prev => [...prev, { role: 'assistant', text: event.transcript }])
+    }
+
+    // Capture user transcript
+    if (
+      event.type === 'conversation.item.input_audio_transcription.completed' &&
+      event.transcript
+    ) {
+      transcriptRef.current.push({ role: 'user', text: event.transcript })
+      setTranscriptItems(prev => [...prev, { role: 'user', text: event.transcript }])
+      setInterimText(event.transcript)
+    }
+
+    // Handle complete_intake function call
+    if (
+      event.type === 'response.function_call_arguments.done' &&
+      event.name === 'complete_intake'
+    ) {
+      endSessionAndSummarise()
+    }
+  }
+
+  async function endSessionAndSummarise() {
+    // Stop all tracks and close connection
+    localStreamRef.current?.getTracks().forEach(t => t.stop())
+    pcRef.current?.close()
+    document.querySelectorAll('audio[playsinline]').forEach(el => el.remove())
+
+    setFlowState('processing')
+
+    try {
+      const transcript = transcriptRef.current
+      const sessionType = sessionData.session_type
+
+      // Build summary via standard OpenAI chat completion
+      const formatted = transcript
+        .map(t => `${t.role === 'assistant' ? 'Bridge' : 'Mentee'}: ${t.text}`)
+        .join('\n')
+
+      const summaryRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          max_tokens: 500,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are generating a mentor briefing from a voice intake interview transcript. ' +
+                'Write in third person about the mentee. Be specific and actionable. ' +
+                'Use plain text only, no markdown, no bullet symbols.',
+            },
+            {
+              role: 'user',
+              content:
+                `Session type: ${sessionType}\n\n` +
+                `Transcript:\n${formatted}\n\n` +
+                'Generate a mentor briefing in this exact format:\n\n' +
+                'MENTOR BRIEFING\n' +
+                'Session type: [session type]\n\n' +
+                'Who the mentee is: [2-3 sentences on background and situation]\n\n' +
+                'What they want from this session: [1-2 sentences on goal]\n\n' +
+                'Key challenges: [2-3 sentences on specific problems raised]\n\n' +
+                'What to focus on: [1-2 sentences of direct guidance for the mentor]',
+            },
+          ],
+        }),
+      })
+
+      const summaryData = await summaryRes.json()
+      const summary = summaryData.choices?.[0]?.message?.content?.trim() ?? ''
+
+      // Save to Supabase sessions table
       await supabase
         .from('sessions')
         .update({ intake_summary: summary, intake_completed: true })
@@ -190,7 +304,7 @@ export default function IntakeCall() {
 
       setFlowState('complete')
     } catch (err) {
-      setErrorMessage(err?.message ?? 'Something went wrong.')
+      setErrorMessage(err?.message ?? 'Failed to save intake summary')
       setFlowState('error')
     }
   }
@@ -275,15 +389,183 @@ export default function IntakeCall() {
   const isListening = flowState === 'listening'
   const isBusy = flowState === 'speaking' || flowState === 'processing'
   const isIdle = flowState === 'idle'
+  const isLive = flowState === 'speaking' || flowState === 'listening'
 
-  const stateLabel = {
-    idle: 'Tap to speak',
-    speaking: 'Speaking...',
-    listening: 'Listening...',
-    processing: 'Processing...',
-    error: 'Error',
-  }[flowState] ?? ''
+  const stateLabel = isConnecting
+    ? 'Connecting...'
+    : {
+        idle: 'Tap to speak',
+        speaking: 'Session live',
+        listening: 'Listening...',
+        processing: 'Processing...',
+        error: 'Error',
+      }[flowState] ?? ''
 
+  // Connecting loading screen
+  if (isConnecting) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center"
+        style={{ background: 'var(--bridge-canvas)' }}>
+        <div className="relative flex items-center justify-center mb-8">
+          <div className="absolute w-24 h-24 rounded-full border border-amber-400/20 animate-ping" />
+          <div className="absolute w-16 h-16 rounded-full border border-amber-400/40 animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+            <Mic size={20} className="text-amber-400" />
+          </div>
+        </div>
+        <p className="text-sm font-semibold tracking-widest uppercase text-amber-400 mb-2">
+          Connecting to Bridge AI
+        </p>
+        <p className="text-xs" style={{ color: 'var(--bridge-text-muted)' }}>
+          Setting up your voice session...
+        </p>
+      </div>
+    )
+  }
+
+  // Active session UI (live)
+  if ((flowState === 'speaking' || flowState === 'listening') && !isConnecting) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: 'var(--bridge-canvas)' }}>
+        {/* Top bar */}
+        <div className="flex items-center justify-between px-6 py-4 border-b"
+          style={{ borderColor: 'var(--bridge-border)' }}>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-amber-400">
+              {SESSION_TYPE_LABELS[sessionData?.session_type]} · Intake
+            </p>
+            <p className="text-sm font-medium mt-0.5" style={{ color: 'var(--bridge-text)' }}>
+              Session with {mentorName}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-medium text-emerald-400">Live</span>
+          </div>
+        </div>
+
+        {/* Transcript area — scrollable */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3 max-w-2xl mx-auto w-full">
+          {transcriptItems.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-sm" style={{ color: 'var(--bridge-text-muted)' }}>
+                Your conversation will appear here...
+              </p>
+            </div>
+          ) : (
+            transcriptItems.map((item, i) => (
+              <div
+                key={i}
+                className={`flex ${item.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-xs lg:max-w-md px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                    item.role === 'user'
+                      ? 'bg-amber-500 text-white rounded-br-sm'
+                      : 'rounded-bl-sm'
+                  }`}
+                  style={item.role === 'assistant' ? {
+                    background: 'var(--bridge-surface)',
+                    border: '1px solid var(--bridge-border)',
+                    color: 'var(--bridge-text)'
+                  } : {}}
+                >
+                  {item.text}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Bottom bar — visualizer + controls */}
+        <div className="border-t px-6 py-5" style={{ borderColor: 'var(--bridge-border)', background: 'var(--bridge-surface)' }}>
+          {/* Orb visualizer */}
+          <div className="flex justify-center mb-4">
+            <div className="relative flex items-center justify-center">
+              {/* Outer glow rings */}
+              <div
+                className="absolute rounded-full"
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  background: 'radial-gradient(circle, rgba(251,191,36,0.15) 0%, transparent 70%)',
+                  animation: flowState === 'speaking'
+                    ? 'orbPulse 1.2s ease-in-out infinite alternate'
+                    : 'orbPulse 2.5s ease-in-out infinite alternate',
+                }}
+              />
+              <div
+                className="absolute rounded-full"
+                style={{
+                  width: '90px',
+                  height: '90px',
+                  background: 'radial-gradient(circle, rgba(251,191,36,0.2) 0%, transparent 70%)',
+                  animation: flowState === 'speaking'
+                    ? 'orbPulse 0.9s ease-in-out infinite alternate'
+                    : 'orbPulse 2s ease-in-out infinite alternate',
+                  animationDelay: '0.2s',
+                }}
+              />
+              {/* Core orb */}
+              <div
+                className="rounded-full"
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  background: flowState === 'speaking'
+                    ? 'radial-gradient(circle at 35% 35%, #fde68a, #f59e0b, #d97706)'
+                    : flowState === 'listening'
+                    ? 'radial-gradient(circle at 35% 35%, #6ee7b7, #10b981, #059669)'
+                    : 'radial-gradient(circle at 35% 35%, #fde68a, #f59e0b, #d97706)',
+                  animation: flowState === 'speaking'
+                    ? 'orbBreath 1s ease-in-out infinite alternate'
+                    : 'orbBreath 2.5s ease-in-out infinite alternate',
+                  boxShadow: flowState === 'speaking'
+                    ? '0 0 30px rgba(245,158,11,0.6), 0 0 60px rgba(245,158,11,0.3)'
+                    : flowState === 'listening'
+                    ? '0 0 30px rgba(16,185,129,0.6), 0 0 60px rgba(16,185,129,0.3)'
+                    : '0 0 20px rgba(245,158,11,0.4)',
+                }}
+              />
+            </div>
+          </div>
+          {/* Status + end button */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium" style={{ color: 'var(--bridge-text-muted)' }}>
+              {flowState === 'speaking' ? 'Bridge AI is speaking...' : 'Listening to you...'}
+            </p>
+            <button
+              onClick={endSessionAndSummarise}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-red-500/80 hover:bg-red-500 transition-colors"
+            >
+              <MicOff size={14} />
+              End Session
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Processing screen
+  if (flowState === 'processing') {
+    return (
+      <div className="min-h-screen flex items-center justify-center"
+        style={{ background: 'var(--bridge-canvas)' }}>
+        <div className="text-center">
+          <Loader2 size={36} className="animate-spin text-amber-400 mx-auto mb-4" />
+          <p className="text-sm font-medium" style={{ color: 'var(--bridge-text)' }}>
+            Generating mentor briefing...
+          </p>
+          <p className="text-xs mt-1" style={{ color: 'var(--bridge-text-muted)' }}>
+            This will just take a moment
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Idle card (flowState === 'idle' or 'error')
   return (
     <div className="min-h-screen" style={{ background: 'var(--bridge-canvas)' }}>
       {/* Hero */}
@@ -337,17 +619,21 @@ export default function IntakeCall() {
 
           {/* Mic button */}
           <div className="flex flex-col items-center gap-3 mb-6">
-            {isIdle ? (
+            {isConnecting ? (
+              <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ background: 'var(--bridge-border)' }}>
+                <Loader2 size={32} className="text-amber-400 animate-spin" />
+              </div>
+            ) : isIdle ? (
               <button
-                onClick={runIntakeFlow}
+                onClick={startRealtimeSession}
                 className="relative w-20 h-20 rounded-full flex items-center justify-center bg-amber-500 hover:bg-amber-400 shadow-lg transition-all"
               >
                 <Mic size={32} className="text-white" />
               </button>
-            ) : isListening ? (
+            ) : isLive ? (
               <button
-                onClick={() => recognitionRef.current?.stop()}
-                title="Tap to finish speaking"
+                onClick={endSessionAndSummarise}
+                title="Tap to end session"
                 className="relative w-20 h-20 rounded-full flex items-center justify-center bg-amber-500 shadow-lg shadow-amber-500/40"
               >
                 <span className="absolute inset-0 rounded-full bg-amber-400 animate-ping opacity-40" />
@@ -383,7 +669,7 @@ export default function IntakeCall() {
                 interimText
               ) : (
                 <span style={{ color: 'var(--bridge-text-muted)' }}>
-                  {isListening ? 'Waiting for speech…' : isBusy ? ' ' : ''}
+                  {isListening ? 'Waiting for speech…' : isBusy ? ' ' : ''}
                 </span>
               )}
             </div>

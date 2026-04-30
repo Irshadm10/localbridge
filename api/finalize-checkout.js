@@ -93,6 +93,7 @@ export default async function handler(req, res) {
             scheduled_date: meta.scheduledDate,
             status: 'pending',
             message: fullMessage,
+            mentee_name: meta.menteeName || null,
           })
           .select('id')
           .maybeSingle();

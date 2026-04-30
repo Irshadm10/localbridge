@@ -395,6 +395,7 @@ function ConfirmModal({ mentor, user, confirmation, onClose }) {
     try {
       const res = await createBookingCheckout({
         userId: user?.id, userEmail: user?.email,
+        menteeName: user?.user_metadata?.full_name ?? user?.email ?? 'Mentee',
         mentorId: mentor.id, mentorName: mentor.name,
         sessionTypeName: confirmation.sessionType.name,
         sessionTypeKey: confirmation.sessionType.key,

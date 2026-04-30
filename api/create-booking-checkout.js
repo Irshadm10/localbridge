@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   }
 
   const {
-    userId, userEmail, mentorId, mentorName,
+    userId, userEmail, menteeName, mentorId, mentorName,
     sessionType, sessionTypeKey, scheduledDate,
     sessionPrice, message,
   } = req.body;
@@ -58,6 +58,7 @@ export default async function handler(req, res) {
       metadata: {
         type: 'mentor_booking',
         userId: String(userId ?? ''),
+        menteeName: String(menteeName ?? '').slice(0, 500),
         mentorId: String(mentorId ?? ''),
         mentorName: String(mentorName ?? '').slice(0, 500),
         sessionTypeKey: String(typeKey ?? ''),
