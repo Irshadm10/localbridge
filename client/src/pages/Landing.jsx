@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
-import { motion, useMotionValue, useSpring, useMotionTemplate, useScroll, useTransform, AnimatePresence } from 'motion/react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useAuth } from '../context/useAuth';
@@ -60,59 +59,6 @@ const WHY_ROWS=[
   {label:'Real unfiltered reviews',dm:'No',coaching:'Curated only',bridge:'All reviews, unfiltered'},
   {label:'Commitment',dm:'None',coaching:'Multi-session pkg',bridge:'One session at a time'},
 ];
-
-/* ─── WebGL Mesh Gradient ───────────────────────────────────── */
-const VERT=`attribute vec2 a;void main(){gl_Position=vec4(a,0,1);}`;
-const FRAG=`precision mediump float;
-uniform float t;uniform vec2 res;uniform vec2 mouse;
-float h(vec2 p){p=fract(p*vec2(127.1,311.7));p+=dot(p,p+34.23);return fract(p.x*p.y);}
-float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
-  return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
-void main(){
-  vec2 uv=gl_FragCoord.xy/res;uv.y=1.-uv.y;
-  vec2 m=mouse/res;
-  float md=length(uv-m);
-  float v=n(uv*1.6+vec2(t*.07,t*.05))*.5+n(uv*3.1-vec2(t*.05,t*.08))*.28+n(uv*6.+vec2(t*.04,-t*.06))*.15;
-  v=v*.5+.5+smoothstep(.4,.0,md)*.32;
-  vec3 a=vec3(.03,.008,.006),b=vec3(.68,.2,.03),c=vec3(.94,.5,.07);
-  vec3 col=mix(a,b,smoothstep(.22,.62,v));col=mix(col,c,smoothstep(.58,.88,v)*.42);
-  float vig=1.-smoothstep(.3,1.1,length((uv-.5)*vec2(1.3,1.)));col*=vig*.9+.06;col*=.58;
-  gl_FragColor=vec4(col,1.);
-}`;
-
-function WebGLBg() {
-  const ref = useRef(null);
-  const mouse = useRef([0,0]);
-  useEffect(()=>{
-    const c=ref.current;if(!c)return;
-    const gl=c.getContext('webgl',{alpha:false,antialias:false,powerPreference:'low-power'});
-    if(!gl)return;
-    const mk=(type,src)=>{const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);return s;};
-    const prog=gl.createProgram();
-    gl.attachShader(prog,mk(gl.VERTEX_SHADER,VERT));
-    gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,FRAG));
-    gl.linkProgram(prog);gl.useProgram(prog);
-    const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-    gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
-    const loc=gl.getAttribLocation(prog,'a');gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    const uT=gl.getUniformLocation(prog,'t'),uR=gl.getUniformLocation(prog,'res'),uM=gl.getUniformLocation(prog,'mouse');
-    let W=0,H=0,id;
-    const resize=()=>{W=c.width=c.offsetWidth;H=c.height=c.offsetHeight;gl.viewport(0,0,W,H);};
-    resize();
-    const ro=new ResizeObserver(resize);ro.observe(c);
-    const onM=(e)=>{mouse.current=[e.clientX,e.clientY];};
-    window.addEventListener('mousemove',onM,{passive:true});
-    const draw=(now)=>{
-      id=requestAnimationFrame(draw);
-      gl.uniform1f(uT,now/1000);gl.uniform2f(uR,W,H);gl.uniform2f(uM,...mouse.current);
-      gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
-    };
-    id=requestAnimationFrame(draw);
-    return()=>{cancelAnimationFrame(id);ro.disconnect();window.removeEventListener('mousemove',onM);gl.deleteProgram(prog);};
-  },[]);
-  return <canvas ref={ref} className="absolute inset-0 w-full h-full" style={{display:'block'}} />;
-}
 
 /* ─── Hooks ─────────────────────────────────────────────────── */
 function useCountUp(target,duration=1200){
@@ -408,38 +354,6 @@ function ScrollProgressBar(){
   );
 }
 
-/* ─── Sticky CTA Bar — appears after hero ───────────────────── */
-function StickyCTABar({user}){
-  const[show,setShow]=useState(false);
-  const bRef=useFooterOffset(20);
-  useEffect(()=>{
-    const fn=()=>{const h=window.innerHeight;const y=window.scrollY;const max=document.documentElement.scrollHeight-h-300;setShow(y>h*0.9&&y<max);};
-    window.addEventListener('scroll',fn,{passive:true});fn();
-    return()=>window.removeEventListener('scroll',fn);
-  },[]);
-  return createPortal(
-    <div ref={bRef} className="pointer-events-none fixed inset-x-0 z-[9990] flex justify-center px-4"
-      style={{bottom:'88px',transform:`translateY(${show?'0':'120%'})`,opacity:show?1:0,transition:'transform 600ms cubic-bezier(0.16,1,0.3,1),opacity 400ms ease'}}>
-      <div className="pointer-events-auto flex items-center gap-3 rounded-2xl border border-orange-500/30 bg-[#0c0906]/95 px-3 py-2.5 shadow-[0_24px_70px_rgba(0,0,0,.6),0_0_60px_rgba(234,88,12,.25)] backdrop-blur-2xl">
-        <div className="flex -space-x-2 pl-1">
-          {['MC','JR','EV'].map((i,k)=>(
-            <div key={i} className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-[#0c0906] bg-gradient-to-br ${['from-amber-400 to-orange-500','from-orange-400 to-rose-500','from-rose-400 to-pink-500'][k]} text-[9px] font-bold text-white`}>{i}</div>
-          ))}
-        </div>
-        <div className="hidden sm:flex flex-col">
-          <p className="text-[11px] font-bold text-white/90 leading-tight">3 mentors available now</p>
-          <p className="text-[9px] text-white/40 leading-tight">Avg response: 11 min · 4.9 ★</p>
-        </div>
-        <Link to={user?'/mentors':'/register'} data-cursor="Book"
-          className="b-pulse inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-[12px] font-bold text-white shadow-[0_0_30px_rgba(234,88,12,.6)] hover:shadow-[0_0_50px_rgba(234,88,12,.85)] transition-all hover:scale-[1.03]">
-          Book a session
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.6"><path d="M5 12h14M12 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </Link>
-      </div>
-    </div>,document.body
-  );
-}
-
 /* ─── Brand Logo Strip ──────────────────────────────────────── */
 function BrandStrip(){
   return(
@@ -621,87 +535,6 @@ function MCard({m}){
         <span className="text-[10px] text-[var(--bridge-text-muted)]">★ {m.rating} · {m.sessions} sessions</span>
         <span className="text-[11px] font-bold text-orange-500">${m.rate}/hr</span>
       </div>
-    </div>
-  );
-}
-
-/* ─── App Preview Tabs ──────────────────────────────────────── */
-function AppPreview(){
-  const[s,setS]=useState(0);
-  useEffect(()=>{const id=setInterval(()=>setS(x=>(x+1)%3),3800);return()=>clearInterval(id);},[]);
-  const scenes=[
-    <div key="a" className="p-5 flex flex-col gap-3">
-      <p className="text-[9px] font-black uppercase tracking-[0.28em] text-orange-400">AI Mentor Match</p>
-      <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5">
-        <svg className="h-3.5 w-3.5 shrink-0 text-white/28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/></svg>
-        <span className="text-[11px] text-white/36">I want to become a PM at a Series B</span>
-        <span className="ml-auto h-3.5 w-px animate-pulse bg-orange-400"/>
-      </div>
-      <div className="space-y-1.5">
-        {[{ini:'MC',name:'Maya Chen',tag:'PM Strategy',match:98,tone:'amber'},{ini:'JR',name:'Jordan Reeves',tag:'Product Growth',match:94,tone:'orange'},{ini:'EV',name:'Elena Voss',tag:'Career Switch',match:91,tone:'rose'}].map((m,i)=>(
-          <div key={i} className="flex items-center gap-2.5 rounded-xl bg-white/[0.035] px-3 py-2 hover:bg-white/[0.065] transition-all">
-            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${AVATAR_GRAD[m.tone]} text-[9px] font-bold text-white`}>{m.ini}</div>
-            <div className="min-w-0 flex-1"><p className="text-[11px] font-semibold text-white">{m.name}</p><p className="text-[9px] text-white/30">{m.tag}</p></div>
-            <div className="flex items-center gap-1.5">
-              <div className="h-1 w-12 overflow-hidden rounded-full bg-white/[0.07]"><div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400" style={{width:`${m.match}%`}}/></div>
-              <span className="text-[10px] font-bold text-orange-400">{m.match}%</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>,
-    <div key="b" className="p-5 flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-sm font-bold text-white">MC</div>
-        <div><p className="text-sm font-semibold text-white">Maya Chen</p><p className="text-[11px] text-white/38">Director of Product · Linear</p></div>
-        <div className="ml-auto rounded-full bg-emerald-500/12 border border-emerald-500/18 px-2.5 py-1 text-[9px] font-bold text-emerald-400">● Available</div>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {[['4.9 ★','Rating'],['86','Sessions'],['$95/hr','Rate']].map(([v,l])=>(
-          <div key={l} className="rounded-xl bg-white/[0.04] px-2 py-2 text-center"><p className="text-sm font-bold text-white">{v}</p><p className="text-[9px] text-white/28">{l}</p></div>
-        ))}
-      </div>
-      <div className="space-y-1.5">
-        {['Career Advice','Interview Prep','Resume Review'].map(t=>(
-          <div key={t} className="flex items-center gap-2 rounded-xl border border-white/[0.05] px-3 py-2 text-[11px] text-white/48 transition hover:border-orange-500/28 hover:text-white/80 cursor-pointer">
-            <svg className="h-3 w-3 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" strokeLinecap="round"/></svg>{t}
-          </div>
-        ))}
-      </div>
-    </div>,
-    <div key="c" className="p-5 flex flex-col items-center gap-4 text-center">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 shadow-[0_0_60px_rgba(16,185,129,0.6)]">
-        <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/></svg>
-      </div>
-      <div><p className="text-base font-bold text-white">Session confirmed!</p><p className="mt-0.5 text-[11px] text-white/38">Tomorrow · 3:00 PM EST · 45 min</p></div>
-      <div className="w-full rounded-2xl border border-emerald-500/16 bg-emerald-500/[0.065] p-3">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-[10px] font-bold text-white">MC</div>
-          <div className="text-left"><p className="text-[11px] font-semibold text-white">Maya Chen</p><p className="text-[10px] text-white/30">Career Advice</p></div>
-          <div className="ml-auto flex items-center gap-1 rounded-full bg-white/[0.07] px-2 py-1 text-[9px] text-white/45">
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.361a1 1 0 0 1-1.447.894L15 14M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" strokeLinecap="round"/></svg>Live
-          </div>
-        </div>
-      </div>
-      <div className="flex w-full gap-2">
-        <div className="flex-1 rounded-xl bg-white/[0.05] py-2 text-[11px] font-medium text-white/40">Add to Calendar</div>
-        <div className="flex-1 rounded-xl bg-orange-500 py-2 text-[11px] font-bold text-white shadow-[0_0_28px_rgba(234,88,12,0.55)]">Join Room</div>
-      </div>
-    </div>,
-  ];
-  return(
-    <div className="bridge-shine-overlay relative overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b0906] shadow-[0_0_120px_rgba(234,88,12,0.2),0_48px_90px_rgba(0,0,0,0.55)]">
-      <div className="flex items-center gap-1.5 border-b border-white/[0.055] px-4 py-3">
-        <span className="h-2.5 w-2.5 rounded-full bg-red-500/65"/><span className="h-2.5 w-2.5 rounded-full bg-yellow-500/65"/><span className="h-2.5 w-2.5 rounded-full bg-green-500/65"/>
-        <span className="ml-auto text-[9px] text-white/14">bridge.app</span>
-      </div>
-      <div className="flex border-b border-white/[0.055]">
-        {['AI Match','Profile','Booked ✓'].map((tab,i)=>(
-          <button key={i} onClick={()=>setS(i)}
-            className={`flex-1 py-1.5 text-[9px] font-bold uppercase tracking-[0.16em] transition-all ${s===i?'border-b-2 border-orange-400 text-orange-400':'text-white/20 hover:text-white/45'}`}>{tab}</button>
-        ))}
-      </div>
-      <div key={s} style={{animation:'bAppear 320ms cubic-bezier(0.16,1,0.3,1)'}}>{scenes[s]}</div>
     </div>
   );
 }
@@ -1315,60 +1148,3 @@ export default function Landing(){
   );
 }
 
-/* ─── Hero Mentor Glass Card ───────────────────────────────── */
-function HeroMentorCard(){
-  const r=useRef(null);
-  const rXMV=useMotionValue(0),rYMV=useMotionValue(0);
-  const glX=useMotionValue(50),glY=useMotionValue(50);
-  const cfg={stiffness:130,damping:20,mass:0.55};
-  const rx=useSpring(rXMV,cfg),ry=useSpring(rYMV,cfg);
-  const lx=useSpring(glX,cfg),ly=useSpring(glY,cfg);
-  const bg=useMotionTemplate`radial-gradient(circle 230px at ${lx}% ${ly}%,rgba(234,88,12,.28) 0%,rgba(251,146,60,.1) 38%,transparent 62%)`;
-  const mm=useCallback(e=>{
-    const rect=r.current?.getBoundingClientRect();if(!rect)return;
-    const x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;
-    rXMV.set((y-.5)*-30);rYMV.set((x-.5)*30);glX.set(x*100);glY.set(y*100);
-  },[rXMV,rYMV,glX,glY]);
-  const ml=useCallback(()=>{rXMV.set(0);rYMV.set(0);glX.set(50);glY.set(50);},[rXMV,rYMV,glX,glY]);
-  return(
-    <div ref={r} style={{perspective:950}} onMouseMove={mm} onMouseLeave={ml} data-cursor="Drag">
-      <motion.div style={{rotateX:rx,rotateY:ry,transformStyle:'preserve-3d'}}
-        className="relative overflow-hidden rounded-2xl border border-white/[0.10] bg-white/[0.04] shadow-[0_40px_100px_rgba(0,0,0,.72),0_0_0_1px_rgba(255,255,255,.055)] backdrop-blur-2xl">
-        <motion.div className="pointer-events-none absolute inset-0 rounded-2xl" style={{background:bg}}/>
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/12 to-transparent"/>
-        <div className="bridge-shine-overlay pointer-events-none absolute inset-0 rounded-2xl"/>
-        <div className="relative p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-base font-bold text-white shadow-[0_6px_24px_rgba(234,88,12,.58)]">
-                MC
-                <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-[rgba(8,3,1,.9)]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-200 animate-pulse"/>
-                </span>
-              </div>
-              <div><p className="text-[13px] font-bold text-white/92">Maya Chen</p><p className="text-[11px] text-white/38">Director of Product</p></div>
-            </div>
-            <div className="rounded-full border border-orange-500/28 bg-orange-500/14 px-3 py-1 text-[9px] font-bold text-orange-300">Linear</div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {['PM Strategy','Promotion','Roadmapping','OKRs'].map(t=>(
-              <span key={t} className="rounded-full border border-white/[0.07] bg-white/[0.045] px-2.5 py-0.5 text-[9px] font-medium text-white/50">{t}</span>
-            ))}
-          </div>
-          <div className="mt-5 grid grid-cols-3 gap-2">
-            {[['4.9 ★','Rating'],['86','Sessions'],['$95/hr','Rate']].map(([v,l])=>(
-              <div key={l} className="rounded-xl border border-white/[0.055] bg-white/[0.03] px-3 py-2.5 text-center">
-                <p className="text-sm font-bold text-white/88">{v}</p><p className="text-[9px] text-white/26">{l}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-4 text-[11px] text-white/32 leading-relaxed">Former PM at Google → Linear. I help PMs at Series A–C nail their strategy and get promoted.</p>
-          <button data-cursor="Book" className="mt-5 w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3 text-[11px] font-bold text-white shadow-[0_0_36px_rgba(234,88,12,.52)] transition hover:shadow-[0_0_56px_rgba(234,88,12,.78)] hover:scale-[1.02]">
-            Book a session · $95
-          </button>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-orange-500/36 to-transparent"/>
-      </motion.div>
-    </div>
-  );
-}

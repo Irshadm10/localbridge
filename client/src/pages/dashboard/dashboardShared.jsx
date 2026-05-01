@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Calendar, ChevronRight, Clock, CalendarDays, ArrowUpRight,
-  Video, Sparkles, Check, X, Star,
+  Video, Sparkles, Check, X, Star, Search, CheckCircle2,
 } from 'lucide-react';
 import { focusRing } from '../../ui';
 import { SESSION_TYPE_MAP, getAvatarColor, getInitials, formatSessionDate } from './dashboardUtils';
@@ -161,7 +161,7 @@ function StatTrendInline({ current = 0, previous = 0, label = '30d' }) {
   return (
     <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${cls}`}>
       <span aria-hidden>{flat ? '·' : up ? '▲' : '▼'}</span>
-      <span className="tabular-nums">{up && delta > 0 ? '+' : ''}{delta}</span>
+      <span className="tabular-nums">{up ? '+' : ''}{delta}</span>
       <span className="font-medium opacity-70">{label}</span>
     </span>
   );
@@ -348,5 +348,76 @@ export function MentorCard({ mentor }) {
       </div>
       <ChevronRight className="relative h-4 w-4 shrink-0 text-[var(--bridge-text-faint)] transition-all duration-500 group-hover:translate-x-1 group-hover:text-orange-500" />
     </Link>
+  );
+}
+
+// ─── SearchBar ─────────────────────────────────────────────────────────────────
+export function SearchBar({ value, onChange, placeholder }) {
+  return (
+    <div className="relative max-w-xs flex-1 sm:min-w-[16rem]">
+      <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bridge-text-muted)] transition-colors peer-focus:text-orange-500" />
+      <input type="text" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)}
+        className="peer w-full rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] py-3 pl-11 pr-4 text-sm font-semibold text-[var(--bridge-text)] shadow-sm transition focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/25"
+      />
+      {value && (
+        <button type="button" onClick={() => onChange('')} aria-label="Clear"
+          className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[var(--bridge-text-muted)] transition hover:bg-[var(--bridge-surface-muted)] hover:text-[var(--bridge-text)]">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── NoMatch ───────────────────────────────────────────────────────────────────
+export function NoMatch() {
+  return (
+    <div className="flex flex-col items-center gap-2 py-10 text-center">
+      <Search className="h-5 w-5 text-[var(--bridge-text-faint)]" />
+      <p className="text-sm font-bold italic text-[var(--bridge-text-muted)]">No results match your search.</p>
+    </div>
+  );
+}
+
+// ─── ActivityFeed ──────────────────────────────────────────────────────────────
+export function ActivityFeed({ history, role, total, showAll, onToggle }) {
+  return (
+    <div className="bd-card-edge relative overflow-hidden rounded-3xl bg-[var(--bridge-surface)] p-5 shadow-sm ring-1 ring-[var(--bridge-border)]">
+      <div aria-hidden className="pointer-events-none absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-amber-400/12 blur-3xl" />
+      <div className="relative mb-4 flex items-center justify-between">
+        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">Recent activity</p>
+        <span className="text-[9px] font-bold text-[var(--bridge-text-faint)]">{total} total</span>
+      </div>
+      {history.length > 0 ? (
+        <div className="relative space-y-4">
+          <div aria-hidden className="absolute left-[0.6rem] top-2 bottom-2 w-px bg-gradient-to-b from-orange-400/40 via-[var(--bridge-border)] to-transparent" />
+          {history.map((s) => {
+            const done = s.status === 'completed';
+            const name = role === 'mentor' ? s.mentee_name : s.mentor_name;
+            return (
+              <div key={s.id} className="group relative flex items-start gap-3.5 pl-1">
+                <div className={`relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-2 ring-[var(--bridge-canvas)] transition-all duration-300 group-hover:scale-110 ${done ? 'bg-gradient-to-br from-emerald-500 to-teal-500 shadow-[0_0_14px_rgba(16,185,129,0.5)]' : 'bg-stone-300 dark:bg-stone-600'}`}>
+                  {done ? <CheckCircle2 className="h-3 w-3 text-white" /> : <Clock className="h-3 w-3 text-white" />}
+                </div>
+                <div className="min-w-0 pt-0.5">
+                  <p className="text-xs font-bold text-[var(--bridge-text)]">
+                    {done ? 'Session completed' : `Session ${s.status}`}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[var(--bridge-text-muted)]">with {name}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="relative text-xs italic text-[var(--bridge-text-muted)]">No recent activity yet.</p>
+      )}
+      {total > 5 && (
+        <button type="button" onClick={onToggle} data-cursor="hover"
+          className="relative mt-4 inline-flex items-center gap-1 text-xs font-black text-orange-600 transition hover:text-orange-700 dark:text-orange-400">
+          {showAll ? '↑ Show less' : `Show all ${total} →`}
+        </button>
+      )}
+    </div>
   );
 }

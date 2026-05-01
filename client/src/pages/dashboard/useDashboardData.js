@@ -79,7 +79,6 @@ export function useDashboardData(user, authLoading) {
               .select('id, calendar_connected, onboarding_complete')
               .eq('user_id', user.id)
               .maybeSingle();
-          console.log('[Dashboard] mentor profile query result:', { profileData, profileErr, userId: user.id });
           if (profileErr) throw profileErr;
           if (!profileData?.id) {
             setMentorProfileId(null);
