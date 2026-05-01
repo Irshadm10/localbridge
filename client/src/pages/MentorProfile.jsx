@@ -597,12 +597,14 @@ export default function MentorProfile() {
   }, [searchParams, setSearchParams]);
 
   const displayRating = useMemo(() => {
+    if (mentorReviews?.length > 0) {
+      const sum = mentorReviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+      return sum / mentorReviews.length;
+    }
     if (!profile?.mentor) return 0;
-    const fromReviews = profile.reviews?.average;
-    if (fromReviews != null && profile.reviews.count > 0) return Number(fromReviews);
     const r = profile.mentor.rating;
     return r != null ? Number(r) : 0;
-  }, [profile]);
+  }, [profile, mentorReviews]);
 
   const topReview = useMemo(() => {
     if (!mentorReviews?.length) return null;
