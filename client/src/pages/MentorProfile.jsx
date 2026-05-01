@@ -4,8 +4,7 @@ import EmbeddedCheckoutPanel from '../components/EmbeddedCheckoutPanel';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getMentorById } from '../api/mentors';
 import { getReviewsForMentor } from '../api/reviews';
-import { createSession } from '../api/sessions';
-import { getMentorAvailability, bookCalendarEvent } from '../api/calendar';
+import { getMentorAvailability } from '../api/calendar';
 import supabase from '../api/supabase';
 import { useAuth } from '../context/useAuth';
 import { isMentorAccount } from '../utils/accountRole';
@@ -23,8 +22,6 @@ import { createBookingCheckout } from '../api/stripe';
 import { finalizeCheckout } from '../api/stripe';
 import CustomCursor from '../components/CustomCursor.jsx';
 import { AuroraBg, KineticNumber, Tilt3D, Magnetic } from './dashboard/dashboardCinematic.jsx';
-
-const focusRingDark  = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
 const focusRingWhite = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-stone-900';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

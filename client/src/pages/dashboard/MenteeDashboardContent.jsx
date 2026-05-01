@@ -16,6 +16,7 @@ import { LiveCountdown, AddToCalendarButton, useSessionTrends, getRelativeSessio
 import { GoalRing, Sparkline, Tilt3D, Magnetic, useDailyActivity, useGoalProgress, KineticNumber } from './dashboardCinematic.jsx';
 import DashboardSettingsPanel from './DashboardSettingsPanel';
 import { useState, useEffect, useCallback } from 'react';
+import SessionCalendar from './SessionCalendar';
 import ReviewModal from '../../components/ReviewModal';
 import { getMyReviewedSessionIds } from '../../api/reviews';
 
@@ -242,6 +243,7 @@ export function MenteeDashboardContent({ dash, activeTab, setActiveTab, logout, 
       {/* ── Sessions tab ─────────────────────────────────────────────── */}
       {activeTab === 'sessions' && (
         <MenteeSessionsTab
+          sessions={sessions}
           upcomingSessions={upcomingSessions}
           historySessions={historySessions}
           mentorMap={mentorMap}
@@ -460,7 +462,7 @@ function ActivityFeed({ history, role, total, showAll, onToggle }) {
 
 // ─── MenteeSessionsTab ────────────────────────────────────────────────────────
 function MenteeSessionsTab({
-  upcomingSessions, historySessions, mentorMap, searchQuery, setSearchQuery,
+  sessions, upcomingSessions, historySessions, mentorMap, searchQuery, setSearchQuery,
   handleStatusUpdate, actionLoading, onReview, reviewedSessionIds = new Set(),
 }) {
   const match = (s) =>
@@ -480,6 +482,16 @@ function MenteeSessionsTab({
         </div>
         <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search by mentor or type…" />
       </div>
+
+      <SessionCalendar
+        sessions={sessions}
+        handleStatusUpdate={handleStatusUpdate}
+        actionLoading={actionLoading}
+        isMentor={false}
+        mentorMap={mentorMap}
+        onReview={onReview}
+        reviewedSessionIds={reviewedSessionIds}
+      />
 
       <section>
         <SectionHeading kicker="Coming up" count={upcomingSessions.filter(match).length}>Upcoming</SectionHeading>
