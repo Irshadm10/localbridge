@@ -13,7 +13,7 @@ export async function createReview({ sessionId, mentorId, rating, comment }) {
   if (userError) return { data: null, error: userError };
   if (!user) return { data: null, error: new Error('You must be signed in to leave a review.') };
 
-  return supabase
+  const result = await supabase
     .from('reviews')
     .insert({
       session_id: sessionId,
@@ -24,6 +24,23 @@ export async function createReview({ sessionId, mentorId, rating, comment }) {
     })
     .select()
     .single();
+
+  if (!result.error) {
+    // Recalculate and persist the average rating on the mentor profile
+    const { data: allReviews } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('mentor_id', mentorId);
+    if (allReviews?.length) {
+      const avg = allReviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / allReviews.length;
+      await supabase
+        .from('mentor_profiles')
+        .update({ rating: Math.round(avg * 100) / 100 })
+        .eq('id', mentorId);
+    }
+  }
+
+  return result;
 }
 
 export async function getReviewsForMentor(mentorId) {
