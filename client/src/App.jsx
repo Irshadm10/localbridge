@@ -4,7 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import ScrollProgress from './components/ScrollProgress';
 import MagneticPointer from './components/MagneticPointer';
-import Landing from './pages/Landing';
+import Landing from './pages/landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Mentors from './pages/Mentors';
