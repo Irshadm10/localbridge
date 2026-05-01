@@ -79,7 +79,6 @@ export function useDashboardData(user, authLoading) {
               .select('id, calendar_connected, onboarding_complete')
               .eq('user_id', user.id)
               .maybeSingle();
-          console.log('[Dashboard] mentor profile query result:', { profileData, profileErr, userId: user.id });
           if (profileErr) throw profileErr;
           if (!profileData?.id) {
             setMentorProfileId(null);
@@ -101,10 +100,30 @@ export function useDashboardData(user, authLoading) {
 
           if (sessErr) throw sessErr;
 
+          const menteeIds = [...new Set((data ?? []).map(s => s.mentee_id).filter(Boolean))];
+          let nameMap = {};
+          if (menteeIds.length > 0) {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              const token = session?.access_token;
+              if (token) {
+                const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? '';
+                const r = await fetch(`${SERVER_URL}/api/user-names`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ userIds: menteeIds }),
+                });
+                if (r.ok) nameMap = await r.json();
+              }
+            } catch {
+              // fall through — names will default to 'Mentee'
+            }
+          }
+
           setSessions(
             (data ?? []).map((s) => ({
               ...s,
-              mentee_name: s.mentee_name ?? 'Mentee',
+              mentee_name: nameMap[s.mentee_id] || s.mentee_name || 'Mentee',
             }))
           );
         } else {

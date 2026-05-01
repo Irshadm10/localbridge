@@ -225,6 +225,135 @@ router.get('/users', async (req, res) => {
   }
 });
 
+// ── GET /api/dev/cancellations ───────────────────────────────────────────────
+router.get('/cancellations', async (req, res) => {
+  try {
+    const sb = admin();
+    const { status } = req.query;
+
+    let query = sb
+      .from('cancellation_requests')
+      .select(`
+        id, session_id, requester_id, requester_role, reason, details,
+        status, reviewer_note, free_plan_granted, created_at, reviewed_at,
+        sessions!cancellation_requests_session_id_fkey(
+          id, status, session_type, scheduled_date, mentee_id, mentor_id,
+          mentor_profiles!sessions_mentor_id_fkey(name, email)
+        )
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (status) query = query.eq('status', status);
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    // Enrich with requester names
+    const requesterIds = [...new Set((data || []).map(r => r.requester_id))];
+    const nameMap = {};
+    await Promise.all(requesterIds.map(async id => {
+      try {
+        const { data: { user: u } } = await sb.auth.admin.getUserById(id);
+        nameMap[id] = u?.user_metadata?.full_name || u?.email || id;
+      } catch { nameMap[id] = id; }
+    }));
+
+    res.json((data || []).map(r => ({ ...r, requester_name: nameMap[r.requester_id] || r.requester_id })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /api/dev/cancellations/:id ────────────────────────────────────────
+// action: 'approve' | 'deny', reviewer_note: optional string
+router.patch('/cancellations/:id', async (req, res) => {
+  try {
+    const sb = admin();
+    const { action, reviewer_note } = req.body;
+
+    if (!['approve', 'deny'].includes(action)) {
+      return res.status(400).json({ error: 'action must be approve or deny' });
+    }
+
+    // Load the cancellation request
+    const { data: cr, error: crErr } = await sb
+      .from('cancellation_requests')
+      .select('id, session_id, requester_role, status')
+      .eq('id', req.params.id)
+      .single();
+    if (crErr || !cr) return res.status(404).json({ error: 'Request not found' });
+    if (cr.status !== 'pending') return res.status(400).json({ error: 'Request is not pending' });
+
+    const newStatus = action === 'approve' ? 'approved' : 'denied';
+
+    // Update the request
+    const { data: updated, error: updateErr } = await sb
+      .from('cancellation_requests')
+      .update({
+        status: newStatus,
+        reviewer_note: reviewer_note || null,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq('id', req.params.id)
+      .select()
+      .single();
+    if (updateErr) throw updateErr;
+
+    if (action === 'approve') {
+      // Cancel the session
+      await sb.from('sessions').update({ status: 'cancelled' }).eq('id', cr.session_id);
+
+      // If a mentor cancelled, grant the mentee 2 weeks of Pro plan
+      if (cr.requester_role === 'mentor') {
+        const { data: session } = await sb
+          .from('sessions')
+          .select('mentee_id')
+          .eq('id', cr.session_id)
+          .single();
+
+        if (session?.mentee_id) {
+          const expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 14);
+
+          // Upsert user_settings with free plan grant
+          const { data: existingSettings } = await sb
+            .from('user_settings')
+            .select('id, settings')
+            .eq('user_id', session.mentee_id)
+            .maybeSingle();
+
+          const grantData = {
+            active: true,
+            plan: 'pro',
+            expires_at: expiresAt.toISOString(),
+            reason: 'mentor_cancelled_session',
+            granted_at: new Date().toISOString(),
+            session_id: cr.session_id,
+          };
+
+          if (existingSettings) {
+            await sb.from('user_settings')
+              .update({ settings: { ...(existingSettings.settings || {}), free_plan_grant: grantData } })
+              .eq('id', existingSettings.id);
+          } else {
+            await sb.from('user_settings')
+              .insert({ user_id: session.mentee_id, settings: { free_plan_grant: grantData } });
+          }
+
+          // Mark as granted on the cancellation request
+          await sb.from('cancellation_requests').update({ free_plan_granted: true }).eq('id', req.params.id);
+          updated.free_plan_granted = true;
+        }
+      }
+    }
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── POST /api/dev/schedule-meeting ──────────────────────────────────────────
 // Sends an email to a mentor scheduling a developer meeting
 router.post('/schedule-meeting', async (req, res) => {

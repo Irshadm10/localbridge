@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { getStripe } from './_lib/stripeClient.js';
+import { getPublicOrigin } from './_lib/publicOrigin.js';
 
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL;
@@ -35,6 +36,7 @@ export default async function handler(req, res) {
     const supabase = getSupabaseAdmin();
     const meta = checkoutSession.metadata ?? {};
     let sync = { synced: false, error: 'Unknown type' };
+    let bridgeSessionId = null;
 
     if (meta.type === 'subscription' && supabase) {
       const { data: row } = await supabase
@@ -75,24 +77,54 @@ export default async function handler(req, res) {
         .like('message', `${marker}%`)
         .maybeSingle();
 
+      bridgeSessionId = existing?.id ?? null;
+
       if (existing?.id) {
         sync = { synced: true };
       } else {
         const userMessage = (meta.message || '').trim();
         const fullMessage = userMessage ? `${marker}\n\n${userMessage}` : marker;
-        const { error } = await supabase.from('sessions').insert({
-          mentee_id: meta.userId,
-          mentor_id: meta.mentorId,
-          session_type: meta.sessionTypeKey,
-          scheduled_date: meta.scheduledDate,
-          status: 'pending',
-          message: fullMessage,
-        });
+        const { data: inserted, error } = await supabase
+          .from('sessions')
+          .insert({
+            mentee_id: meta.userId,
+            mentor_id: meta.mentorId,
+            session_type: meta.sessionTypeKey,
+            scheduled_date: meta.scheduledDate,
+            status: 'pending',
+            message: fullMessage,
+            mentee_name: meta.menteeName || null,
+          })
+          .select('id')
+          .maybeSingle();
         sync = error ? { synced: false, error: error.message } : { synced: true };
+        if (!error && inserted?.id) bridgeSessionId = inserted.id;
+        console.log('[finalize-checkout] mentor_booking result:', {
+          error: error?.message ?? null,
+          insertedId: inserted?.id ?? null,
+          bridgeSessionId,
+          supabasePresent: !!getSupabaseAdmin(),
+        });
+      }
+
+      if (sync.synced) {
+        const baseUrl = getPublicOrigin();
+        fetch(`${baseUrl}/api/calendar-book`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mentor_profile_id: meta.mentorId,
+            mentee_email: checkoutSession.customer_email || undefined,
+            session_type: meta.sessionTypeKey,
+            scheduled_date: meta.scheduledDate,
+            duration_minutes: 60,
+            bridge_session_id: bridgeSessionId,
+          }),
+        }).catch((err) => console.error('calendar-book fire-and-forget failed:', err));
       }
     }
 
-    return res.json({ ok: true, type: meta.type ?? null, sessionId: checkoutSession.id, ...sync });
+    return res.json({ ok: true, type: meta.type ?? null, sessionId: checkoutSession.id, bridge_session_id: bridgeSessionId, ...sync });
   } catch (error) {
     console.error('Finalize checkout error:', error);
     res.status(500).json({ error: error?.message || 'Could not finalize checkout.' });

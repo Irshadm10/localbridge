@@ -31,6 +31,7 @@ import {
   getStoredAppearanceOverlay,
 } from '../../utils/appearance';
 import { toJsonbSafe } from '../../utils/jsonbSafe';
+import { Tilt3D, Magnetic } from './dashboardCinematic.jsx';
 
 const DEFAULTS = {
   appearance: { theme: 'light', font_size: 'medium', high_contrast: false, language: 'en', timezone: 'UTC' },
@@ -180,19 +181,22 @@ export default function DashboardSettingsPanel({ user, logout, isMentor, mentorP
 
   if (loading) {
     return (
-      <div className="py-20 text-center text-sm text-stone-500">Loading preferences…</div>
+      <div className="py-20 text-center text-sm font-bold text-stone-500">Loading preferences…</div>
     );
   }
 
   return (
     <div className="space-y-8 pb-12">
       <div>
-        <h1 className="font-display text-3xl font-bold text-[var(--bridge-text)]">Settings</h1>
-        <p className="mt-1 text-sm text-[var(--bridge-text-muted)]">Quick preferences — full settings live on the Settings page.</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-500">Quick preferences</p>
+        <h1 className="mt-2 font-display font-black tracking-[-0.025em] text-[var(--bridge-text)]" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', lineHeight: '1.02' }}>
+          <span className="text-gradient-bridge italic">Settings</span> at a glance
+        </h1>
+        <p className="mt-1.5 text-sm text-[var(--bridge-text-secondary)]">Tune appearance, notifications, and privacy. Full settings live on the Settings page.</p>
       </div>
 
       {tableMissing && (
-        <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+        <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-400/25 dark:bg-amber-500/10 dark:text-amber-200">
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <p className="text-sm leading-relaxed">
             <code className="rounded bg-amber-100/80 px-1.5 py-0.5 text-xs">public.user_settings</code> is not set up in your
@@ -203,79 +207,102 @@ export default function DashboardSettingsPanel({ user, logout, isMentor, mentorP
 
       {message && (
         <div
-          className={`flex items-center gap-3 rounded-xl p-4 ${
+          className={`flex items-center gap-3 rounded-2xl p-4 ${
             message.type === 'success'
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              : 'bg-red-50 text-red-700 border border-red-200'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-400/25'
+              : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-400/25'
           }`}
         >
           {message.type === 'success' ? <CheckCircle className="h-5 w-5 shrink-0" /> : <AlertTriangle className="h-5 w-5 shrink-0" />}
-          <p className="text-sm">{message.text}</p>
+          <p className="text-sm font-semibold">{message.text}</p>
         </div>
       )}
 
-      {/* Appearance */}
-      <section className="rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm">
-        <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-[var(--bridge-text)]">
-          <Sun className="h-5 w-5 text-orange-500" />
-          Appearance
-        </h2>
-        <div className="grid grid-cols-3 gap-3">
-          {themeOptions.map(({ value, label, Icon }) => {
-            const active = prefs.appearance.theme === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => update('appearance', 'theme', value)}
-                className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm font-semibold transition ${
-                  active
-                    ? 'border-orange-500 bg-orange-500/12 text-orange-800 shadow-sm dark:text-orange-100'
-                    : 'border-[var(--bridge-border)] bg-[var(--bridge-surface)] text-[var(--bridge-text-secondary)] hover:border-[var(--bridge-border-strong)]'
-                }`}
-              >
-                <Icon className={`h-5 w-5 ${active ? 'text-orange-500' : 'text-stone-400'}`} />
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
+      {/* Bento: Appearance + Notifications */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
 
-      {/* Notifications */}
-      <section className="rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm">
-        <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-[var(--bridge-text)]">
-          <Bell className="h-5 w-5 text-orange-500" />
-          Notifications
-        </h2>
-        <div className="space-y-3">
-          {[
-            { k: 'email_notifications', label: 'Email notifications', help: 'Booking confirmations and receipts' },
-            { k: 'session_reminders', label: 'Session reminders', help: 'Reminders before your upcoming sessions' },
-            { k: 'mentor_updates', label: isMentor ? 'Mentee updates' : 'Mentor updates', help: 'When the other side makes a change' },
-            { k: 'push_notifications', label: 'Push notifications', help: 'Browser push (when supported)' },
-            { k: 'marketing_emails', label: 'Product updates', help: 'Occasional product news — no spam' },
-          ].map(({ k, label, help }) => (
-            <ToggleRow
-              key={k}
-              label={label}
-              help={help}
-              checked={!!prefs.notifications[k]}
-              onChange={(v) => update('notifications', k, v)}
-            />
-          ))}
-        </div>
-      </section>
+        {/* Appearance */}
+        <Tilt3D max={2.5} className="rounded-3xl">
+          <section className="bd-card-edge relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm">
+            <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-orange-400/15 blur-3xl" />
+            <div className="relative">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">Appearance</p>
+              <h2 className="mt-1 flex items-center gap-2 font-display text-xl font-black tracking-tight text-[var(--bridge-text)]">
+                <Sun className="h-5 w-5 text-orange-500" />
+                Theme
+              </h2>
+            </div>
+            <div className="relative mt-5 grid grid-cols-3 gap-3">
+              {themeOptions.map(({ value, label, Icon }) => {
+                const active = prefs.appearance.theme === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => update('appearance', 'theme', value)}
+                    data-cursor={label}
+                    className={`group/theme relative flex flex-col items-center gap-2 overflow-hidden rounded-2xl border p-4 text-sm font-bold transition-all duration-300 ${
+                      active
+                        ? 'border-orange-500 bg-gradient-to-br from-orange-500/15 to-amber-500/8 text-orange-700 shadow-[0_8px_24px_-6px_rgba(234,88,12,0.4)] ring-1 ring-orange-400/40 dark:text-orange-100'
+                        : 'border-[var(--bridge-border)] bg-[var(--bridge-surface)] text-[var(--bridge-text-secondary)] hover:-translate-y-0.5 hover:border-[var(--bridge-border-strong)] hover:shadow-md'
+                    }`}
+                  >
+                    {active && <div aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-orange-400/20 blur-2xl" />}
+                    <Icon className={`relative h-5 w-5 transition-transform duration-300 group-hover/theme:scale-110 ${active ? 'text-orange-500' : 'text-stone-400'}`} />
+                    <span className="relative">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </Tilt3D>
+
+        {/* Notifications */}
+        <Tilt3D max={2.5} className="rounded-3xl">
+        <section className="bd-card-edge relative h-full overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm">
+          <div aria-hidden className="pointer-events-none absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-amber-400/15 blur-3xl" />
+          <div className="relative">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">Notifications</p>
+            <h2 className="mt-1 flex items-center gap-2 font-display text-xl font-black tracking-tight text-[var(--bridge-text)]">
+              <Bell className="h-5 w-5 text-orange-500" />
+              What we ping you about
+            </h2>
+          </div>
+          <div className="relative mt-5 space-y-2">
+            {[
+              { k: 'email_notifications', label: 'Email notifications', help: 'Booking confirmations and receipts' },
+              { k: 'session_reminders', label: 'Session reminders', help: 'Reminders before your upcoming sessions' },
+              { k: 'mentor_updates', label: isMentor ? 'Mentee updates' : 'Mentor updates', help: 'When the other side makes a change' },
+              { k: 'push_notifications', label: 'Push notifications', help: 'Browser push (when supported)' },
+              { k: 'marketing_emails', label: 'Product updates', help: 'Occasional product news — no spam' },
+            ].map(({ k, label, help }) => (
+              <ToggleRow
+                key={k}
+                label={label}
+                help={help}
+                checked={!!prefs.notifications[k]}
+                onChange={(v) => update('notifications', k, v)}
+              />
+            ))}
+          </div>
+        </section>
+        </Tilt3D>
+      </div>
 
       {/* Privacy */}
-      <section className="rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm">
-        <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-[var(--bridge-text)]">
-          <Eye className="h-5 w-5 text-orange-500" />
-          Privacy
-        </h2>
-        <div className="space-y-4">
+      <Tilt3D max={2.5} className="rounded-3xl">
+      <section className="bd-card-edge relative overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm">
+        <div aria-hidden className="pointer-events-none absolute -right-10 -bottom-10 h-36 w-36 rounded-full bg-violet-400/12 blur-3xl" />
+        <div className="relative">
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">Privacy</p>
+          <h2 className="mt-1 flex items-center gap-2 font-display text-xl font-black tracking-tight text-[var(--bridge-text)]">
+            <Eye className="h-5 w-5 text-orange-500" />
+            Who sees what
+          </h2>
+        </div>
+        <div className="relative mt-5 space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-semibold text-[var(--bridge-text)]">Profile visibility</label>
+            <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.18em] text-[var(--bridge-text-muted)]">Profile visibility</label>
             <div className="grid grid-cols-3 gap-2">
               {[
                 { v: 'public', l: 'Public', Icon: Eye },
@@ -288,13 +315,14 @@ export default function DashboardSettingsPanel({ user, logout, isMentor, mentorP
                     key={v}
                     type="button"
                     onClick={() => update('privacy', 'profile_visibility', v)}
-                    className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                    data-cursor={l}
+                    className={`group/vis flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold transition-all duration-300 ${
                       active
-                        ? 'border-orange-500 bg-orange-500/12 text-orange-800 dark:text-orange-100'
-                        : 'border-[var(--bridge-border)] bg-[var(--bridge-surface)] text-[var(--bridge-text-secondary)] hover:border-[var(--bridge-border-strong)]'
+                        ? 'border-orange-500 bg-gradient-to-br from-orange-500/12 to-amber-500/6 text-orange-700 shadow-[0_4px_18px_-4px_rgba(234,88,12,0.35)] ring-1 ring-orange-400/35 dark:text-orange-100'
+                        : 'border-[var(--bridge-border)] bg-[var(--bridge-surface)] text-[var(--bridge-text-secondary)] hover:-translate-y-0.5 hover:border-[var(--bridge-border-strong)]'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className={`h-4 w-4 transition-transform duration-300 group-hover/vis:scale-110 ${active ? 'text-orange-500' : ''}`} />
                     {l}
                   </button>
                 );
@@ -315,71 +343,94 @@ export default function DashboardSettingsPanel({ user, logout, isMentor, mentorP
           )}
         </div>
       </section>
+      </Tilt3D>
 
       {/* Calendar — mentor only */}
       {isMentor && (
-        <section className="rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-[var(--bridge-text)]">
-            <CalendarDays className="h-5 w-5 text-orange-500" />
-            Calendar
-          </h2>
-          <p className="mb-4 text-sm text-[var(--bridge-text-muted)]">
-            Connect Google Calendar so mentees can see your availability and sessions are added automatically.
-          </p>
-          <CalendarConnectButton mentorProfileId={mentorProfileId} isConnected={calendarConnected} />
-          {calendarConnected && (
-            <p className="mt-3 text-xs text-emerald-700 dark:text-emerald-400">
-              Your availability is visible on your public profile.
+        <Tilt3D max={2.5} className="rounded-3xl">
+        <section className="bd-card-edge relative overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm">
+          <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-sky-400/15 blur-3xl" />
+          <div className="relative">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">Calendar</p>
+            <h2 className="mt-1 flex items-center gap-2 font-display text-xl font-black tracking-tight text-[var(--bridge-text)]">
+              <CalendarDays className="h-5 w-5 text-orange-500" />
+              Sync the source of truth
+            </h2>
+            <p className="mt-2 text-sm text-[var(--bridge-text-muted)]">
+              Connect Google Calendar so mentees see your real availability and sessions are added automatically.
             </p>
-          )}
+          </div>
+          <div className="relative mt-4">
+            <CalendarConnectButton mentorProfileId={mentorProfileId} isConnected={calendarConnected} />
+            {calendarConnected && (
+              <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                <CheckCircle className="h-3 w-3" /> Visible on your public profile
+              </p>
+            )}
+          </div>
         </section>
+        </Tilt3D>
       )}
 
-      {/* Actions */}
-      <div className="flex flex-col gap-3 rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/profile"
-            className="inline-flex items-center gap-2 rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2 text-sm font-semibold text-[var(--bridge-text-secondary)] hover:bg-[color-mix(in_srgb,var(--bridge-surface-muted)_85%,transparent)]"
-          >
-            <UserRound className="h-4 w-4" />
-            Edit profile
-          </Link>
-          {isMentor && mentorProfileId && (
+      {/* Actions — magnetic save + glassy secondary buttons */}
+      <div className="bd-card-edge relative flex flex-col gap-4 overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div aria-hidden className="pointer-events-none absolute -left-10 -bottom-10 h-32 w-32 rounded-full bg-orange-400/12 blur-3xl" />
+        <div className="relative flex flex-wrap gap-2">
+          <Magnetic strength={0.14}>
             <Link
-              to={`/mentors/${mentorProfileId}`}
-              className="inline-flex items-center gap-2 rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2 text-sm font-semibold text-[var(--bridge-text-secondary)] hover:bg-[color-mix(in_srgb,var(--bridge-surface-muted)_85%,transparent)]"
+              to="/profile"
+              data-cursor="Profile"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2.5 text-sm font-bold text-[var(--bridge-text-secondary)] transition hover:-translate-y-0.5 hover:border-orange-400/50 hover:text-[var(--bridge-text)]"
             >
-              <ExternalLink className="h-4 w-4" />
-              View public profile
+              <UserRound className="h-4 w-4" />
+              Edit profile
             </Link>
+          </Magnetic>
+          {isMentor && mentorProfileId && (
+            <Magnetic strength={0.14}>
+              <Link
+                to={`/mentors/${mentorProfileId}`}
+                data-cursor="Public"
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2.5 text-sm font-bold text-[var(--bridge-text-secondary)] transition hover:-translate-y-0.5 hover:border-orange-400/50 hover:text-[var(--bridge-text)]"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Public profile
+              </Link>
+            </Magnetic>
           )}
-          <Link
-            to="/settings"
-            className="inline-flex items-center gap-2 rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2 text-sm font-semibold text-[var(--bridge-text-secondary)] hover:bg-[color-mix(in_srgb,var(--bridge-surface-muted)_85%,transparent)]"
-          >
-            <SettingsIcon className="h-4 w-4" />
-            Full settings
-          </Link>
+          <Magnetic strength={0.14}>
+            <Link
+              to="/settings"
+              data-cursor="More"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-4 py-2.5 text-sm font-bold text-[var(--bridge-text-secondary)] transition hover:-translate-y-0.5 hover:border-orange-400/50 hover:text-[var(--bridge-text)]"
+            >
+              <SettingsIcon className="h-4 w-4" />
+              Full settings
+            </Link>
+          </Magnetic>
         </div>
-        <div className="flex gap-2">
+        <div className="relative flex gap-2">
           <button
             type="button"
             onClick={logout}
-            className="inline-flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+            data-cursor="Sign out"
+            className="inline-flex items-center gap-2 rounded-full border border-red-300/60 bg-red-50/40 px-4 py-2.5 text-sm font-bold text-red-600 transition hover:-translate-y-0.5 hover:border-red-400 hover:bg-red-50 dark:border-red-400/30 dark:bg-red-500/8 dark:text-red-300 dark:hover:bg-red-500/15"
           >
             <LogOut className="h-4 w-4" />
             Sign out
           </button>
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-5 py-2 text-sm font-bold text-white shadow-md shadow-orange-600/30 transition hover:from-orange-500 hover:to-amber-400 disabled:opacity-50"
-          >
-            <Save className="h-4 w-4" />
-            {saving ? 'Saving…' : 'Save changes'}
-          </button>
+          <Magnetic strength={0.18}>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              data-cursor="Save"
+              className="btn-sheen inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 px-6 py-2.5 text-sm font-black text-white shadow-[0_8px_24px_-6px_rgba(234,88,12,0.65)] ring-1 ring-white/15 transition-all hover:-translate-y-0.5 hover:shadow-[0_14px_32px_-6px_rgba(234,88,12,0.85)] disabled:opacity-50"
+            >
+              <Save className="h-4 w-4" />
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
+          </Magnetic>
         </div>
       </div>
     </div>
@@ -388,9 +439,9 @@ export default function DashboardSettingsPanel({ user, logout, isMentor, mentorP
 
 function ToggleRow({ label, help, checked, onChange }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-transparent px-1 py-2 transition hover:border-[var(--bridge-border)] hover:bg-[color-mix(in_srgb,var(--bridge-surface-muted)_60%,transparent)]">
+    <label className="group/row flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-transparent px-3 py-2.5 transition-all duration-300 hover:border-[var(--bridge-border)] hover:bg-[color-mix(in_srgb,var(--bridge-surface-muted)_70%,transparent)]">
       <div>
-        <p className="text-sm font-semibold text-[var(--bridge-text)]">{label}</p>
+        <p className="text-sm font-bold text-[var(--bridge-text)]">{label}</p>
         {help && <p className="mt-0.5 text-xs text-[var(--bridge-text-muted)]">{help}</p>}
       </div>
       <button
@@ -398,12 +449,13 @@ function ToggleRow({ label, help, checked, onChange }) {
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
-          checked ? 'bg-orange-500' : 'bg-stone-300'
+        data-cursor="hover"
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-all duration-300 ${
+          checked ? 'bg-gradient-to-r from-orange-500 to-amber-500 shadow-[0_0_14px_rgba(234,88,12,0.45)]' : 'bg-stone-300 dark:bg-stone-600'
         }`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-300 ${
             checked ? 'translate-x-5' : ''
           }`}
         />

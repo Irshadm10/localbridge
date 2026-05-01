@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useId, useRef } from 'react';
+import CustomCursor from '../components/CustomCursor.jsx';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { getAllMentors } from '../api/mentors';
@@ -606,6 +607,7 @@ export default function Mentors() {
 
   return (
     <main className="relative isolate min-h-screen overflow-x-hidden">
+      <CustomCursor/>
 
       {/* Ambient background */}
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10"

@@ -1,6 +1,7 @@
 export async function createBookingCheckout({
   userId,
   userEmail,
+  menteeName,
   mentorId,
   mentorName,
   /** Display label for Stripe product text */
@@ -17,6 +18,7 @@ export async function createBookingCheckout({
     body: JSON.stringify({
       userId,
       userEmail,
+      menteeName,
       mentorId,
       mentorName,
       sessionType: sessionTypeName,

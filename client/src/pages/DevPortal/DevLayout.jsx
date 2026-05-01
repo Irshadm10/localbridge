@@ -3,16 +3,17 @@ import { devLogout } from './devAuth.js';
 import {
   LayoutDashboard, Users, CalendarDays, Star,
   ClipboardList, CalendarPlus, LogOut, ChevronRight,
-  Terminal, Bell,
+  Terminal, Bell, AlertTriangle,
 } from 'lucide-react';
 
 const NAV = [
-  { id: 'overview',  label: 'Overview',   icon: LayoutDashboard },
-  { id: 'mentors',   label: 'Mentors',     icon: Users           },
-  { id: 'sessions',  label: 'Sessions',    icon: CalendarDays    },
-  { id: 'reviews',   label: 'Reviews',     icon: Star            },
-  { id: 'users',     label: 'Users',       icon: ClipboardList   },
-  { id: 'schedule',  label: 'Schedule',    icon: CalendarPlus    },
+  { id: 'overview',      label: 'Overview',      icon: LayoutDashboard },
+  { id: 'mentors',       label: 'Mentors',        icon: Users           },
+  { id: 'sessions',      label: 'Sessions',       icon: CalendarDays    },
+  { id: 'reviews',       label: 'Reviews',        icon: Star            },
+  { id: 'users',         label: 'Users',          icon: ClipboardList   },
+  { id: 'schedule',      label: 'Schedule',       icon: CalendarPlus    },
+  { id: 'cancellations', label: 'Cancellations',  icon: AlertTriangle   },
 ];
 
 export default function DevLayout({ children, activeTab, setActiveTab }) {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Calendar, Save, Loader2 } from 'lucide-react';
 import supabase from '../../api/supabase';
 import {
@@ -86,9 +87,22 @@ export default function MentorAvailabilityModal({ open, onClose, mentorProfileId
     }
   };
 
-  if (!open) return null;
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') onClose?.(); };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, onClose]);
 
-  return (
+  if (!open) return null;
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-sm"
       role="dialog"
@@ -225,6 +239,7 @@ export default function MentorAvailabilityModal({ open, onClose, mentorProfileId
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

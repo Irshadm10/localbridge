@@ -5,7 +5,7 @@ import { COMPANY_EMAIL, mailtoHref } from '../config/contact';
 import { applyAppearance, APPEARANCE_STORAGE_KEY } from '../utils/appearance';
 
 const linkClass =
-  'text-sm text-stone-500 transition-colors duration-200 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 rounded-sm';
+  'text-sm text-white transition-colors duration-200 hover:text-orange-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 rounded-sm';
 
 function useCurrentTheme() {
   const [theme, setThemeState] = useState('light');
@@ -49,7 +49,7 @@ export default function Footer() {
           <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[1.05rem] font-bold text-stone-100 tracking-tight">Stay in the loop</p>
-              <p className="mt-1 text-sm text-stone-600">Mentor spotlights, career resources, product updates. No spam, ever.</p>
+              <p className="mt-1 text-sm text-stone-400">Mentor spotlights, career resources, product updates. No spam, ever.</p>
             </div>
             {subscribed ? (
               <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/22 bg-emerald-500/[0.09] px-5 py-3 text-sm font-medium text-emerald-400">
@@ -95,7 +95,7 @@ export default function Footer() {
               <span className="font-display text-xl font-semibold tracking-tight text-stone-50">Bridge</span>
             </Link>
 
-            <p className="max-w-xs text-sm leading-relaxed text-stone-500">
+            <p className="max-w-xs text-sm leading-relaxed text-stone-300">
               Book real practitioners by the hour — people who've already done the job you're trying to do.
             </p>
 
@@ -121,7 +121,7 @@ export default function Footer() {
               ].map((s) => (
                 <a
                   key={s.label} href={s.href} aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.055] bg-white/[0.03] text-stone-500 transition hover:border-orange-500/22 hover:bg-orange-500/[0.09] hover:text-amber-300"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.055] bg-white/[0.03] text-white transition hover:border-orange-500/22 hover:bg-orange-500/[0.09]"
                 >
                   {s.icon}
                 </a>
@@ -130,7 +130,7 @@ export default function Footer() {
 
             {/* Theme switcher */}
             <div className="pt-1">
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-stone-600">Display mode</p>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-white">Display mode</p>
               <div className="inline-flex items-center rounded-xl border border-white/[0.065] bg-white/[0.025] p-1 gap-0.5">
                 {[
                   { value: 'light',  label: 'Light',  Icon: Sun     },
@@ -144,7 +144,7 @@ export default function Footer() {
                     className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-semibold transition-all duration-200 ${
                       theme === value
                         ? 'bg-orange-500/18 text-orange-400 shadow-[inset_0_1px_0_rgba(251,146,60,0.12)]'
-                        : 'text-stone-600 hover:text-stone-300'
+                        : 'text-white hover:text-orange-200'
                     }`}
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -157,7 +157,7 @@ export default function Footer() {
 
           {/* ── Platform ── */}
           <div className="lg:col-span-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-200/65">Platform</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/65">Platform</p>
             <ul className="mt-4 space-y-3">
               {[
                 { label: 'Browse Mentors', to: '/mentors'   },
@@ -173,7 +173,7 @@ export default function Footer() {
 
           {/* ── Company ── */}
           <div className="lg:col-span-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-200/65">Company</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/65">Company</p>
             <ul className="mt-4 space-y-3">
               {[
                 { label: 'About',          to: '/about'     },
@@ -189,17 +189,17 @@ export default function Footer() {
 
           {/* ── Contact ── */}
           <div className="lg:col-span-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-200/65">Get in touch</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/65">Get in touch</p>
             <ul className="mt-4 space-y-4 text-sm">
-              <li className="flex items-start gap-3 text-stone-500">
+              <li className="flex items-start gap-3 text-stone-300">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-orange-400/65" aria-hidden />
-                <a href={mailtoHref()} className="transition-colors hover:text-amber-200">{COMPANY_EMAIL}</a>
+                <a href={mailtoHref()} className="transition-colors hover:text-white">{COMPANY_EMAIL}</a>
               </li>
-              <li className="flex items-start gap-3 text-stone-500">
+              <li className="flex items-start gap-3 text-stone-300">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-orange-400/65" aria-hidden />
                 <span>+1 (555) 123-4567</span>
               </li>
-              <li className="flex items-start gap-3 text-stone-500">
+              <li className="flex items-start gap-3 text-stone-300">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-orange-400/65" aria-hidden />
                 <span>San Francisco, CA</span>
               </li>
@@ -211,7 +211,7 @@ export default function Footer() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]" />
               </span>
-              <span className="text-[11px] font-semibold text-stone-500">All systems operational</span>
+              <span className="text-[11px] font-semibold text-stone-300">All systems operational</span>
             </div>
           </div>
         </div>
@@ -219,7 +219,7 @@ export default function Footer() {
 
       {/* ── Bottom bar ── */}
       <div className="relative border-t border-white/[0.045]">
-        <div className="mx-auto flex max-w-bridge flex-col items-center justify-between gap-4 px-4 py-5 text-xs text-stone-600 sm:flex-row sm:px-6 lg:px-8 xl:px-10">
+        <div className="mx-auto flex max-w-bridge flex-col items-center justify-between gap-4 px-4 py-5 text-xs text-white sm:flex-row sm:px-6 lg:px-8 xl:px-10">
           <p className="shrink-0">© {new Date().getFullYear()} Bridge. All rights reserved.</p>
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2">
             {[
@@ -229,7 +229,7 @@ export default function Footer() {
               { label: 'Help',    to: '/help'    },
               { label: 'Contact', to: '/contact' },
             ].map(({ label, to }) => (
-              <Link key={to} to={to} className="transition-colors hover:text-stone-300">{label}</Link>
+              <Link key={to} to={to} className="text-white transition-colors hover:text-orange-200">{label}</Link>
             ))}
           </div>
         </div>

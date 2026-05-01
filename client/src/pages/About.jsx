@@ -183,7 +183,7 @@ export default function About() {
               </h2>
             </div>
             <p className="text-sm text-[var(--bridge-text-muted)] sm:max-w-xs sm:text-right">
-              Mentors ourselves before we were founders. We use the product every week.
+              Mentorship from professionals helped us, as founders, get to where we are today.
             </p>
           </Reveal>
 

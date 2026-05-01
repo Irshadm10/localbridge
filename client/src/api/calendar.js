@@ -19,10 +19,12 @@ export async function getMentorAvailability(mentorProfileId, date) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mentor_profile_id: mentorProfileId, date }),
     });
-    if (!res.ok) return { busy: [] };
-    return res.json();
+    if (!res.ok) return { busy: [], notConnected: true };
+    const data = await res.json();
+    if (data.reason === 'Calendar not connected') return { busy: [], notConnected: true };
+    return data;
   } catch {
-    return { busy: [] };
+    return { busy: [], notConnected: true };
   }
 }
 

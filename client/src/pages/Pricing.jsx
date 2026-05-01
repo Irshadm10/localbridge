@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { isMentorAccount } from '../utils/accountRole';
@@ -6,6 +7,8 @@ import Reveal from '../components/Reveal';
 import { focusRing } from '../ui';
 import EmbeddedCheckoutPanel from '../components/EmbeddedCheckoutPanel';
 import { createSubscriptionCheckout, finalizeCheckout } from '../api/stripe';
+import CustomCursor from '../components/CustomCursor.jsx';
+import { AuroraBg, KineticNumber, Tilt3D, Magnetic } from './dashboard/dashboardCinematic.jsx';
 
 const ANNUAL_DISCOUNT = 0.2;
 
@@ -13,77 +16,76 @@ const MENTOR_TIERS = [
   {
     name: 'Rising',
     rateRange: '$40–$70',
-    experienceDesc: '0–4 years of experience · Early-career professionals and recent grads who have earned their first real wins.',
+    yearsRange: '0 – 4',
+    experienceDesc: 'Early-career professionals and recent grads who have earned their first real wins.',
     useCases: [
       'First job search and resume polish',
       'Breaking into competitive entry-level roles',
       'Building professional habits and early momentum',
     ],
-    cardClass: 'border-emerald-200/60 bg-emerald-50/40',
-    accentClass: 'bg-gradient-to-r from-emerald-500/70 via-emerald-400/50 to-emerald-500/70',
-    badgeClass: 'bg-emerald-100 text-emerald-800',
+    accent: 'emerald',
+    halo: 'rgba(16,185,129,0.30)',
+    badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300',
+    edgeClass: 'border-emerald-300/35 dark:border-emerald-400/25',
+    bgClass: 'bg-gradient-to-br from-emerald-50/40 via-[var(--bridge-surface)] to-emerald-50/20 dark:from-emerald-500/10 dark:via-[var(--bridge-surface)] dark:to-emerald-500/[0.04]',
+    accentBar: 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400',
   },
   {
     name: 'Established',
     rateRange: '$75–$120',
-    experienceDesc: '5–9 years · Mid-career contributors with a proven track record and a clear area of focus.',
+    yearsRange: '5 – 9',
+    experienceDesc: 'Mid-career contributors with a proven track record and a clear area of focus.',
     useCases: [
       'Mid-level to senior career transitions',
       'Navigating promotion cycles and leveling up',
       'Changing industries or switching functions',
     ],
-    cardClass: 'border-sky-200/60 bg-sky-50/40',
-    accentClass: 'bg-gradient-to-r from-sky-500/70 via-sky-400/50 to-sky-500/70',
-    badgeClass: 'bg-sky-100 text-sky-800',
+    accent: 'sky',
+    halo: 'rgba(14,165,233,0.30)',
+    badgeClass: 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300',
+    edgeClass: 'border-sky-300/35 dark:border-sky-400/25',
+    bgClass: 'bg-gradient-to-br from-sky-50/40 via-[var(--bridge-surface)] to-sky-50/20 dark:from-sky-500/10 dark:via-[var(--bridge-surface)] dark:to-sky-500/[0.04]',
+    accentBar: 'bg-gradient-to-r from-sky-500 via-sky-400 to-blue-400',
   },
   {
     name: 'Expert',
     rateRange: '$125–$175',
-    experienceDesc: '10–15 years · Senior leaders with deep functional expertise and meaningful organizational scope.',
+    yearsRange: '10 – 15',
+    experienceDesc: 'Senior leaders with deep functional expertise and meaningful organizational scope.',
     useCases: [
       'Senior or staff-level interview preparation',
       'Executive communication and cross-functional influence',
       'High-stakes career pivots and role expansions',
     ],
-    cardClass: 'border-violet-200/60 bg-violet-50/40',
-    accentClass: 'bg-gradient-to-r from-violet-500/70 via-violet-400/50 to-violet-500/70',
-    badgeClass: 'bg-violet-100 text-violet-800',
+    accent: 'violet',
+    halo: 'rgba(139,92,246,0.30)',
+    badgeClass: 'bg-violet-100 text-violet-800 dark:bg-violet-500/15 dark:text-violet-300',
+    edgeClass: 'border-violet-300/35 dark:border-violet-400/25',
+    bgClass: 'bg-gradient-to-br from-violet-50/40 via-[var(--bridge-surface)] to-violet-50/20 dark:from-violet-500/10 dark:via-[var(--bridge-surface)] dark:to-violet-500/[0.04]',
+    accentBar: 'bg-gradient-to-r from-violet-500 via-violet-400 to-purple-400',
   },
   {
     name: 'Elite',
     rateRange: '$180–$250',
-    experienceDesc: '15+ years · C-suite executives and industry-defining practitioners at the top of their fields.',
+    yearsRange: '15 +',
+    experienceDesc: 'C-suite executives and industry-defining practitioners at the top of their fields.',
     useCases: [
       'VP and C-suite transition coaching',
       'Board-level presence and strategic positioning',
       'Legacy career decisions, exits, and portfolio moves',
     ],
-    cardClass: 'border-amber-300/60 bg-amber-50/50',
-    accentClass: 'bg-gradient-to-r from-amber-600/80 via-orange-500/60 to-amber-600/80',
-    badgeClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm',
+    accent: 'amber',
+    halo: 'rgba(234,88,12,0.45)',
+    badgeClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_0_18px_rgba(234,88,12,0.45)]',
+    edgeClass: 'border-amber-400/45 ring-1 ring-amber-400/22',
+    bgClass: 'bg-gradient-to-br from-amber-50/55 via-[var(--bridge-surface)] to-orange-50/35 dark:from-amber-500/12 dark:via-[var(--bridge-surface)] dark:to-orange-500/8',
+    accentBar: 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500',
+    isElite: true,
   },
 ];
 
-function PricingBackdrop() {
-  return (
-      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -left-32 top-24 h-[28rem] w-[28rem] rounded-full bg-orange-400/[0.08] blur-3xl dark:bg-orange-500/[0.06]" />
-        <div className="absolute -right-20 top-[40%] h-[22rem] w-[22rem] rounded-full bg-amber-300/[0.1] blur-3xl dark:bg-amber-500/[0.05]" />
-        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-stone-400/[0.06] blur-3xl dark:bg-stone-600/[0.08]" />
-        <div
-            className="absolute inset-0 opacity-[0.12] dark:opacity-[0.045]"
-            style={{
-              backgroundImage:
-                  'url("data:image/svg+xml,%3Csvg width=\'56\' height=\'56\' viewBox=\'0 0 56 56\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Ccircle cx=\'2\' cy=\'2\' r=\'1\' fill=\'%23a8a29e\' fill-opacity=\'0.4\'/%3E%3C/svg%3E")',
-              backgroundSize: '56px 56px',
-            }}
-        />
-      </div>
-  );
-}
-
 function formatMoney(n) {
-  return n === 0 ? '$0' : `$${n}`;
+  return n === 0 ? '0' : `${n}`;
 }
 
 function tierMonthlyEquivalent(monthly, annual) {
@@ -95,23 +97,23 @@ function tierMonthlyEquivalent(monthly, annual) {
 function CheckCell({ included, highlight }) {
   if (included === true) {
     return (
-        <span
-            className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                highlight
-                    ? 'bg-orange-700/90 text-white shadow-sm'
-                    : 'bg-[var(--bridge-surface-raised)] text-[var(--bridge-text)] ring-1 ring-[var(--bridge-border)] dark:text-orange-100/90'
-            }`}
-            aria-label="Included"
-        >
+      <span
+        className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-black transition-transform duration-300 hover:scale-110 ${
+          highlight
+            ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-[0_0_14px_rgba(234,88,12,0.55)] ring-1 ring-white/15'
+            : 'bg-emerald-500/12 text-emerald-600 ring-1 ring-emerald-500/25 dark:text-emerald-300'
+        }`}
+        aria-label="Included"
+      >
         ✓
       </span>
     );
   }
   return (
-      <span
-          className="inline-flex h-7 w-7 items-center justify-center text-stone-300"
-          aria-label="Not included"
-      >
+    <span
+      className="inline-flex h-7 w-7 items-center justify-center rounded-full text-stone-300 dark:text-stone-600"
+      aria-label="Not included"
+    >
       —
     </span>
   );
@@ -119,43 +121,80 @@ function CheckCell({ included, highlight }) {
 
 function PricingFaq({ headingId, items }) {
   return (
+    <Tilt3D max={2.5} className="rounded-3xl">
       <section
-          className="relative overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-5 shadow-sm ring-1 ring-stone-900/[0.02] sm:p-6"
-          aria-labelledby={headingId}
+        className="bd-card-edge relative overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] p-6 shadow-bridge-card sm:p-7"
+        aria-labelledby={headingId}
       >
-        <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400/25 to-transparent"
-        />
+        <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-orange-400/12 blur-3xl bd-aurora" />
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400 to-transparent opacity-60" />
         <div className="relative flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-orange-700/70 shadow-sm" aria-hidden />
-          <h2 id={headingId} className="font-display text-lg font-semibold text-stone-900 sm:text-xl">
-            Common questions
-          </h2>
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-65" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
+          </span>
+          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-500">FAQ</p>
         </div>
-        <div className="relative mt-4 divide-y divide-[var(--bridge-border)] rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]">
+        <h2 id={headingId} className="relative mt-2 font-display font-black tracking-[-0.025em] text-[var(--bridge-text)]" style={{ fontSize: 'clamp(1.4rem, 2.4vw, 1.85rem)', lineHeight: '1.05' }}>
+          Common <span className="text-gradient-bridge italic">questions</span>
+        </h2>
+        <div className="relative mt-5 overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/60 divide-y divide-[var(--bridge-border)]">
           {items.map((item) => (
-              <details key={item.q} className="group px-3 py-0.5 sm:px-4">
-                <summary
-                    className={`cursor-pointer list-none py-3.5 pr-7 text-sm font-semibold text-stone-900 transition marker:content-none [&::-webkit-details-marker]:hidden ${focusRing} rounded-lg`}
-                >
-              <span className="flex items-start justify-between gap-3">
-                <span className="min-w-0">{item.q}</span>
-                <span
-                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] text-stone-500 transition group-open:rotate-180 group-open:border-orange-200/60 group-open:bg-orange-50/50 group-open:text-orange-900/90"
+            <details key={item.q} className="group px-3 py-0.5 sm:px-4">
+              <summary
+                data-cursor="hover"
+                className={`cursor-pointer list-none py-3.5 pr-7 text-sm font-bold text-[var(--bridge-text)] transition marker:content-none [&::-webkit-details-marker]:hidden ${focusRing} rounded-lg`}
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="min-w-0">{item.q}</span>
+                  <span
+                    className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] text-[var(--bridge-text-muted)] transition-all duration-300 group-open:rotate-180 group-open:border-orange-300/60 group-open:bg-gradient-to-br group-open:from-orange-500/15 group-open:to-amber-500/8 group-open:text-orange-600 dark:group-open:text-orange-300"
                     aria-hidden
-                >
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
                 </span>
-              </span>
-                </summary>
-                <p className="pb-3.5 text-sm leading-relaxed text-stone-600">{item.a}</p>
-              </details>
+              </summary>
+              <p className="pb-3.5 text-sm leading-relaxed text-[var(--bridge-text-secondary)]">{item.a}</p>
+            </details>
           ))}
         </div>
       </section>
+    </Tilt3D>
+  );
+}
+
+// ─── Sticky Pricing CTA bar (Pro plan) ──────────────────────────
+function StickyPricingBar({ onClick, equivalent, annual }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 520);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div className={`pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${show ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+      <div className="pointer-events-auto bd-card-edge relative flex w-full max-w-md items-center gap-3 overflow-hidden rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)]/92 px-3 py-2 shadow-[0_18px_44px_-12px_rgba(234,88,12,0.5)] backdrop-blur-xl">
+        <div aria-hidden className="pointer-events-none absolute -left-12 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-orange-400/22 blur-3xl" />
+        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-amber-500 text-[10px] font-black text-white shadow-[0_0_18px_rgba(234,88,12,0.55)]">PRO</div>
+        <div className="relative min-w-0 flex-1">
+          <p className="truncate text-[11px] font-black uppercase tracking-[0.16em] text-orange-500">Most popular plan</p>
+          <p className="truncate text-[12px] font-bold text-[var(--bridge-text)]">${equivalent}/mo · {annual ? 'billed annually' : 'cancel anytime'}</p>
+        </div>
+        <Magnetic strength={0.18}>
+          <button type="button" onClick={onClick} data-cursor="Choose"
+            className="btn-sheen relative inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-2 text-[12px] font-black text-white shadow-[0_8px_20px_-6px_rgba(234,88,12,0.7)] ring-1 ring-white/15 transition-all hover:-translate-y-0.5">
+            Choose Pro
+            <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+          </button>
+        </Magnetic>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -226,23 +265,23 @@ export default function Pricing() {
       tagline: asMentor ? 'Run sessions on Bridge' : 'Explore the platform',
       monthly: 0,
       blurb: asMentor
-          ? 'List your profile, receive mentee requests, and use the mentor dashboard at no platform fee. What mentees pay you per session is separate from Bridge subscriptions.'
-          : 'Browse mentors, read reviews, and use the platform at no cost. Mentor sessions are still paid separately during booking.',
+        ? 'List your profile, receive mentee requests, and use the mentor dashboard at no platform fee. What mentees pay you per session is separate from Bridge subscriptions.'
+        : 'Browse mentors, read reviews, and use the platform at no cost. Mentor sessions are still paid separately during booking.',
       features: asMentor
-          ? [
-              'Public mentor profile in the directory',
-              'Session requests in your dashboard',
-              'Accept, decline, and track sessions',
-              'Basic platform access',
-              'Per-session earnings paid to you when enabled',
-            ]
-          : [
-              'Browse mentor profiles',
-              'View ratings and reviews',
-              'Save up to 10 mentors',
-              'Basic platform access',
-              'Mentor sessions booked separately',
-            ],
+        ? [
+            'Public mentor profile in the directory',
+            'Session requests in your dashboard',
+            'Accept, decline, and track sessions',
+            'Basic platform access',
+            'Per-session earnings paid to you when enabled',
+          ]
+        : [
+            'Browse mentor profiles',
+            'View ratings and reviews',
+            'Save up to 10 mentors',
+            'Basic platform access',
+            'Mentor sessions booked separately',
+          ],
       cta: user ? 'Current plan' : 'Sign up free',
       href: user ? '/dashboard' : '/register',
       primary: false,
@@ -252,7 +291,7 @@ export default function Pricing() {
       tagline: 'Extra platform access',
       monthly: 12,
       blurb:
-          'For users who want more platform convenience and better account features while still paying mentors separately per session.',
+        'For users who want more platform convenience and better account features while still paying mentors separately per session.',
       features: [
         'Everything in Free',
         'Unlimited mentor favorites',
@@ -270,7 +309,7 @@ export default function Pricing() {
       tagline: 'Most active users',
       monthly: 19,
       blurb:
-          'Best for active users who want stronger matching, priority platform features, and a better booking experience.',
+        'Best for active users who want stronger matching, priority platform features, and a better booking experience.',
       features: [
         'Everything in Starter',
         'Priority mentor matching',
@@ -289,7 +328,7 @@ export default function Pricing() {
       tagline: 'Highest support level',
       monthly: 49,
       blurb:
-          'For users who want the strongest level of platform support and premium account benefits while booking mentor sessions separately.',
+        'For users who want the strongest level of platform support and premium account benefits while booking mentor sessions separately.',
       features: [
         'Everything in Pro',
         'Priority human support',
@@ -303,6 +342,8 @@ export default function Pricing() {
       primary: false,
     },
   ];
+
+  const proEquivalent = tierMonthlyEquivalent(19, annual);
 
   const comparisonRows = [
     { label: 'Browse directory & profiles', free: true, starter: true, pro: true, premium: true },
@@ -342,39 +383,45 @@ export default function Pricing() {
   ];
 
   return (
+    <>
+      <CustomCursor />
       <main
-          data-route-atmo="pricing"
-          className="relative isolate min-h-screen overflow-x-hidden"
-          aria-labelledby="pricing-heading"
+        data-route-atmo="pricing"
+        className="relative isolate min-h-screen overflow-x-hidden"
+        aria-labelledby="pricing-heading"
       >
-        <PricingBackdrop />
+        <AuroraBg />
+
         {paymentError ? (
-            <div className="relative z-[3] mx-auto mt-4 max-w-3xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              {paymentError}
-            </div>
+          <div className="relative z-[3] mx-auto mt-4 max-w-3xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800 dark:border-red-400/25 dark:bg-red-500/10 dark:text-red-300">
+            {paymentError}
+          </div>
         ) : null}
 
         <EmbeddedCheckoutPanel
-            clientSecret={checkoutClientSecret}
-            onClose={() => setCheckoutClientSecret(null)}
+          clientSecret={checkoutClientSecret}
+          onClose={() => setCheckoutClientSecret(null)}
         />
 
         {billingNote && (
           <div className="relative z-[3] mx-auto max-w-bridge px-4 pt-6 sm:px-6 lg:px-8">
-            <p className="rounded-2xl border border-amber-200/80 bg-amber-50/95 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-50">
+            <p className="rounded-2xl border border-emerald-300/60 bg-emerald-50/95 px-4 py-3 text-sm font-bold text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-500/10 dark:text-emerald-300">
               {billingNote}
             </p>
           </div>
         )}
 
-        <header className="relative z-[2] border-b border-[var(--bridge-border)] bg-[color-mix(in_srgb,var(--bridge-canvas)_82%,transparent)] backdrop-blur-xl supports-[backdrop-filter]:bg-[color-mix(in_srgb,var(--bridge-canvas)_72%,transparent)]">
-          <div className="relative mx-auto max-w-bridge px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-            <nav aria-label="Breadcrumb" className="mb-4">
-              <ol className="flex flex-wrap items-center gap-2 text-sm text-stone-500">
+        {/* ─── Header — editorial hero with magnetic billing toggle ─── */}
+        <header className="relative z-[2] border-b border-[var(--bridge-border)] bg-[color-mix(in_srgb,var(--bridge-canvas)_82%,transparent)] backdrop-blur-2xl supports-[backdrop-filter]:bg-[color-mix(in_srgb,var(--bridge-canvas)_72%,transparent)]">
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400 to-transparent opacity-60" />
+          <div className="relative mx-auto max-w-bridge px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+            <nav aria-label="Breadcrumb" className="mb-6">
+              <ol className="flex flex-wrap items-center gap-2 text-[12px] font-bold tracking-wide text-[var(--bridge-text-muted)]">
                 <li>
                   <Link
-                      to="/"
-                      className={`rounded-md font-medium text-stone-600 transition hover:text-orange-800 ${focusRing}`}
+                    to="/"
+                    data-cursor="hover"
+                    className={`rounded-md font-bold transition hover:text-orange-600 ${focusRing}`}
                   >
                     Home
                   </Link>
@@ -384,283 +431,332 @@ export default function Pricing() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m9 18 6-6-6-6" />
                   </svg>
                 </li>
-                <li className="font-medium text-stone-800">Pricing</li>
+                <li className="rounded-full bg-orange-500/8 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-[0.14em] text-orange-600 ring-1 ring-orange-500/20 dark:text-orange-300">Pricing</li>
               </ol>
             </nav>
 
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h1
+            <div className="flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
+              <Reveal>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.32em] text-orange-500">Pick your plan</p>
+                  <h1
                     id="pricing-heading"
-                    className="font-display text-balance text-3xl font-bold leading-tight tracking-tight text-stone-900 sm:text-[2.5rem] sm:leading-[1.08]"
-                >
-                  Simple <span className="text-gradient-bridge">pricing</span>, pick what fits
-                </h1>
-                <p className="mt-2 max-w-2xl text-base leading-relaxed text-stone-600 sm:text-lg">
-                  Subscription plans cover Bridge platform access and features. Mentor sessions are paid separately based on each mentor’s rate.
-                </p>
-              </div>
+                    className="mt-3 font-display font-black tracking-[-0.03em] text-[var(--bridge-text)]"
+                    style={{ fontSize: 'clamp(2.4rem, 6vw, 4.8rem)', lineHeight: '0.96' }}
+                  >
+                    Simple <span className="text-gradient-bridge italic">pricing</span>,<br className="hidden sm:block" /> pick what fits.
+                  </h1>
+                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--bridge-text-secondary)] sm:text-lg">
+                    Subscription plans cover Bridge platform access and features. Mentor sessions are paid separately based on each mentor’s rate.
+                  </p>
+                </div>
+              </Reveal>
 
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div
-                    className="relative inline-flex rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] p-1 shadow-inner backdrop-blur-md"
+              <Reveal delay={120}>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div
+                    className="bd-card-edge relative inline-flex rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] p-1 shadow-inner backdrop-blur-md"
                     role="group"
                     aria-label="Billing period"
-                >
-                  {/* Sliding pill indicator */}
-                  <span
-                    aria-hidden
-                    className={`pointer-events-none absolute inset-y-1 w-[calc(50%-4px)] rounded-full bg-gradient-to-r from-stone-900 to-stone-800 shadow-[0_8px_22px_-6px_rgba(28,25,23,0.5)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] dark:from-orange-500 dark:to-amber-500 dark:shadow-[0_8px_22px_-6px_rgba(234,88,12,0.55)] ${
-                      annual ? 'left-[calc(50%+0px)]' : 'left-1'
-                    }`}
-                  />
-                  <button
+                  >
+                    <span
+                      aria-hidden
+                      className={`pointer-events-none absolute inset-y-1 w-[calc(50%-4px)] rounded-full bg-gradient-to-r from-stone-900 to-stone-800 shadow-[0_8px_22px_-6px_rgba(28,25,23,0.5)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] dark:from-orange-500 dark:to-amber-500 dark:shadow-[0_8px_22px_-6px_rgba(234,88,12,0.55)] ${
+                        annual ? 'left-[calc(50%+0px)]' : 'left-1'
+                      }`}
+                    />
+                    <button
                       type="button"
                       onClick={() => setAnnual(false)}
-                      className={`relative z-[1] rounded-full px-5 py-1.5 text-sm font-semibold transition ${
-                          !annual ? 'text-white dark:text-stone-950' : 'text-[var(--bridge-text-secondary)] hover:text-[var(--bridge-text)]'
+                      data-cursor="hover"
+                      className={`relative z-[1] rounded-full px-5 py-1.5 text-sm font-black tracking-tight transition ${
+                        !annual ? 'text-white dark:text-stone-950' : 'text-[var(--bridge-text-secondary)] hover:text-[var(--bridge-text)]'
                       } ${focusRing}`}
-                  >
-                    Monthly
-                  </button>
-                  <button
+                    >
+                      Monthly
+                    </button>
+                    <button
                       type="button"
                       onClick={() => setAnnual(true)}
-                      className={`relative z-[1] rounded-full px-5 py-1.5 text-sm font-semibold transition ${
-                          annual ? 'text-white dark:text-stone-950' : 'text-[var(--bridge-text-secondary)] hover:text-[var(--bridge-text)]'
+                      data-cursor="hover"
+                      className={`relative z-[1] rounded-full px-5 py-1.5 text-sm font-black tracking-tight transition ${
+                        annual ? 'text-white dark:text-stone-950' : 'text-[var(--bridge-text-secondary)] hover:text-[var(--bridge-text)]'
                       } ${focusRing}`}
-                  >
-                    Annual
-                  </button>
+                    >
+                      Annual
+                    </button>
+                  </div>
+                  <span className="bd-status-shine relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-orange-300/55 bg-gradient-to-r from-orange-50 to-amber-50 px-3.5 py-1.5 text-xs font-black text-orange-900 shadow-sm dark:border-orange-400/30 dark:from-orange-500/15 dark:to-amber-500/10 dark:text-orange-200">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500" />
+                    </span>
+                    Save {Math.round(ANNUAL_DISCOUNT * 100)}% annual
+                  </span>
                 </div>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-300/50 bg-gradient-to-r from-orange-50 to-amber-50 px-3 py-1.5 text-xs font-bold text-orange-900 shadow-sm dark:border-orange-400/30 dark:from-orange-500/15 dark:to-amber-500/10 dark:text-orange-200">
-                  <span className="h-1.5 w-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(251,146,60,0.6)] animate-pulse-soft" aria-hidden />
-                  Save {Math.round(ANNUAL_DISCOUNT * 100)}% annual
-                </span>
-              </div>
+              </Reveal>
             </div>
+
+            {/* Trust strip */}
+            <Reveal delay={180}>
+              <div className="mt-8 flex flex-wrap items-center gap-3 text-[11px] font-bold text-[var(--bridge-text-muted)]">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-amber-700 dark:text-amber-300">
+                  <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292Z" /></svg>
+                  4.9 / 5 from <KineticNumber to={2400} ms={900} />+ users
+                </span>
+                <span className="h-1 w-1 rounded-full bg-[var(--bridge-border-strong)]" />
+                <span>No card for Free tier</span>
+                <span className="h-1 w-1 rounded-full bg-[var(--bridge-border-strong)]" />
+                <span>Cancel any time</span>
+                <span className="h-1 w-1 rounded-full bg-[var(--bridge-border-strong)]" />
+                <span>Stripe-secured checkout</span>
+              </div>
+            </Reveal>
           </div>
         </header>
 
-        <div className="relative z-[2] mx-auto max-w-bridge px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+        {/* ─── Tier cards ─── */}
+        <div className="relative z-[2] mx-auto max-w-bridge px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
           <div className="grid gap-4 md:grid-cols-2 md:gap-5 lg:grid-cols-4 lg:items-stretch">
             {tiers.map((tier, idx) => {
               const equiv = tierMonthlyEquivalent(tier.monthly, annual);
               const showAnnualNote = annual && tier.monthly > 0;
 
               return (
-                  <Reveal key={tier.name} delay={40 + idx * 40}>
+                <Reveal key={tier.name} delay={40 + idx * 60}>
+                  <Tilt3D max={tier.primary ? 4 : 3} className="h-full rounded-[1.75rem]">
                     <div
-                        className={`group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border p-6 shadow-bridge-tile transition-all duration-500 hover:-translate-y-1 hover:shadow-bridge-card sm:p-7 ${
-                            tier.primary
-                                ? 'border-transparent border-gradient-bridge animate-border-bridge bg-gradient-to-br from-[var(--bridge-surface)] via-[var(--bridge-surface)] to-orange-50/30 shadow-[0_24px_60px_-16px_rgba(234,88,12,0.4)] lg:scale-[1.04] lg:z-[1] dark:to-orange-500/[0.06]'
-                                : 'border-[var(--bridge-border)] bg-[var(--bridge-surface)] hover:border-orange-300/50'
-                        }`}
+                      className={`bd-card-edge group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border p-6 shadow-bridge-tile transition-all duration-500 hover:-translate-y-1 hover:shadow-xl sm:p-7 ${
+                        tier.primary
+                          ? 'border-transparent border-gradient-bridge animate-border-bridge bg-gradient-to-br from-[var(--bridge-surface)] via-[var(--bridge-surface)] to-orange-50/35 shadow-[0_24px_60px_-16px_rgba(234,88,12,0.45)] lg:scale-[1.04] lg:z-[1] dark:to-orange-500/[0.06]'
+                          : 'border-[var(--bridge-border)] bg-[var(--bridge-surface)] hover:border-orange-300/60'
+                      }`}
                     >
                       {tier.primary ? (
-                          <div
-                              aria-hidden
-                              className="pointer-events-none absolute -right-10 -top-10 h-56 w-56 rounded-full bg-gradient-to-br from-orange-400/30 via-amber-300/15 to-transparent blur-3xl"
-                          />
+                        <div
+                          aria-hidden
+                          className="pointer-events-none absolute -right-10 -top-10 h-60 w-60 rounded-full bg-gradient-to-br from-orange-400/35 via-amber-300/20 to-transparent blur-3xl bd-aurora"
+                        />
                       ) : null}
                       <div
-                          aria-hidden
-                          className={`absolute inset-x-0 top-0 z-[1] h-1 ${
-                              tier.primary
-                                  ? 'bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500'
-                                  : 'bg-[var(--bridge-border-strong)]'
-                          }`}
+                        aria-hidden
+                        className={`absolute inset-x-0 top-0 z-[1] h-1 ${
+                          tier.primary
+                            ? 'bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 shadow-[0_0_12px_rgba(234,88,12,0.55)]'
+                            : 'bg-[var(--bridge-border-strong)]'
+                        }`}
                       />
 
-                      {tier.badge ? (
-                          <span className="absolute right-4 top-4 z-[1] inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white shadow-[0_8px_22px_-4px_rgba(234,88,12,0.55)]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-white/90 animate-pulse-soft" />
+                      <div className="relative z-[1] flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h2 className="font-display text-xl font-black tracking-tight text-[var(--bridge-text)] sm:text-2xl">{tier.name}</h2>
+                          <p className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-orange-600 dark:text-orange-400">
+                            {tier.tagline}
+                          </p>
+                        </div>
+                        {tier.badge ? (
+                          <span className="bd-status-shine shrink-0 inline-flex items-center gap-1.5 overflow-hidden rounded-full bg-gradient-to-r from-orange-600 to-amber-500 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white shadow-[0_8px_22px_-4px_rgba(234,88,12,0.55)]">
+                            <span className="h-1.5 w-1.5 rounded-full bg-white/95 animate-pulse-soft" />
                             {tier.badge}
                           </span>
-                      ) : null}
-
+                        ) : null}
+                      </div>
                       <div className="relative z-[1]">
-                        <h2 className="font-display text-lg font-semibold text-stone-900 sm:text-xl">{tier.name}</h2>
-                        <p className="mt-0.5 text-xs font-medium uppercase tracking-wider text-orange-900/70">
-                          {tier.tagline}
-                        </p>
 
-                        <p className="mt-4 flex flex-wrap items-baseline gap-x-1.5">
-                      <span className="font-display text-[2.4rem] font-semibold tabular-nums tracking-tight text-stone-900">
-                        {formatMoney(equiv)}
-                      </span>
-                          <span className="text-sm text-stone-500">/month</span>
+                        <p className="mt-5 flex flex-wrap items-baseline gap-x-1.5">
+                          <span className="font-display text-[3rem] font-black tabular-nums tracking-[-0.03em] leading-none text-[var(--bridge-text)]">
+                            ${tier.monthly === 0 ? '0' : <KineticNumber to={equiv} ms={900} />}
+                          </span>
+                          <span className="text-sm font-bold text-[var(--bridge-text-muted)]">/month</span>
                         </p>
-                        <p className="mt-1 min-h-[1.25rem] text-xs font-medium text-stone-500">
+                        <p className="mt-1.5 min-h-[1.25rem] text-[11px] font-bold text-[var(--bridge-text-muted)]">
                           {showAnnualNote
-                              ? `Billed annually · save ${Math.round(ANNUAL_DISCOUNT * 100)}%`
-                              : tier.monthly === 0
-                                  ? 'Forever · no card required'
-                                  : 'Billed monthly · cancel anytime'}
+                            ? `Billed annually · save ${Math.round(ANNUAL_DISCOUNT * 100)}%`
+                            : tier.monthly === 0
+                            ? 'Forever · no card required'
+                            : 'Billed monthly · cancel anytime'}
                         </p>
 
-                        <p className="mt-4 text-sm leading-relaxed text-stone-600">{tier.blurb}</p>
+                        <p className="mt-4 text-[13px] leading-relaxed text-[var(--bridge-text-secondary)]">{tier.blurb}</p>
                       </div>
 
-                      <ul className="relative z-[1] mt-5 flex flex-1 flex-col gap-2.5 text-sm text-stone-700">
+                      <ul className="relative z-[1] mt-5 flex flex-1 flex-col gap-2.5 text-[13px] text-[var(--bridge-text)]">
                         {tier.features.map((f) => (
-                            <li key={f} className="flex gap-2.5">
-                        <span
-                            className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                          <li key={f} className="flex gap-2.5">
+                            <span
+                              className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-black ring-1 ${
                                 tier.primary
-                                    ? 'bg-orange-700/85 text-white'
-                                    : 'bg-stone-300/60 text-orange-950/90 ring-1 ring-stone-400/40'
-                            }`}
-                            aria-hidden
-                        >
-                          ✓
-                        </span>
-                              <span className="leading-snug">{f}</span>
-                            </li>
+                                  ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white ring-white/15 shadow-[0_0_10px_rgba(234,88,12,0.4)]'
+                                  : 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/22 dark:text-emerald-300'
+                              }`}
+                              aria-hidden
+                            >
+                              ✓
+                            </span>
+                            <span className="leading-snug">{f}</span>
+                          </li>
                         ))}
                       </ul>
 
-                      <p className="relative z-[1] mt-5 text-xs leading-relaxed text-stone-500">
+                      <p className="relative z-[1] mt-5 text-[11px] font-semibold text-[var(--bridge-text-faint)]">
                         Mentor sessions are not included in the subscription price.
                       </p>
 
-                      {tier.href ? (
+                      <div className="relative z-[1] mt-7">
+                        {tier.href ? (
                           <Link
-                              to={tier.href}
-                              className={`relative z-[1] mt-7 block w-full rounded-full py-3 text-center text-sm font-semibold transition ${
-                                  tier.primary
-                                      ? 'btn-sheen bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white shadow-[0_12px_32px_-6px_rgba(234,88,12,0.55)] hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-8px_rgba(234,88,12,0.7)]'
-                                      : user
-                                          ? 'border-2 border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-muted)] text-[var(--bridge-text-secondary)] hover:-translate-y-0.5 hover:border-orange-300/70 hover:bg-[var(--bridge-surface-raised)]'
-                                          : 'border-2 border-[var(--bridge-border)] bg-[var(--bridge-surface-raised)] text-[var(--bridge-text)] hover:-translate-y-0.5 hover:border-orange-400/60 hover:shadow-md'
-                              } ${focusRing}`}
+                            to={tier.href}
+                            data-cursor={tier.cta}
+                            className={`block w-full rounded-full py-3 text-center text-sm font-black transition-all duration-200 ${
+                              tier.primary
+                                ? 'btn-sheen bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white shadow-[0_12px_32px_-6px_rgba(234,88,12,0.6)] ring-1 ring-white/15 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-8px_rgba(234,88,12,0.8)]'
+                                : 'border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-raised)] text-[var(--bridge-text-secondary)] hover:border-orange-500/50 hover:text-[var(--bridge-text)] hover:bg-[var(--bridge-surface-raised)] hover:-translate-y-0.5'
+                            } ${focusRing}`}
                           >
                             {tier.cta}
                           </Link>
-                      ) : (
+                        ) : (
                           <button
-                              type="button"
-                              onClick={tier.onClick}
-                              className={`relative z-[1] mt-7 w-full rounded-full py-3 text-sm font-semibold transition ${
-                                  tier.primary
-                                      ? 'btn-sheen bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white shadow-[0_12px_32px_-6px_rgba(234,88,12,0.55)] hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-8px_rgba(234,88,12,0.7)]'
-                                      : 'border-2 border-[var(--bridge-border)] bg-[var(--bridge-surface-raised)] text-[var(--bridge-text)] hover:-translate-y-0.5 hover:border-orange-400/60 hover:shadow-md'
-                              } ${focusRing}`}
+                            type="button"
+                            onClick={tier.onClick}
+                            data-cursor={tier.cta}
+                            className={`w-full rounded-full py-3 text-sm font-black transition-all duration-200 ${
+                              tier.primary
+                                ? 'btn-sheen bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 text-white shadow-[0_12px_32px_-6px_rgba(234,88,12,0.6)] ring-1 ring-white/15 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-8px_rgba(234,88,12,0.8)]'
+                                : 'border border-[var(--bridge-border-strong)] bg-[var(--bridge-surface-raised)] text-[var(--bridge-text-secondary)] hover:border-orange-500/50 hover:text-[var(--bridge-text)] hover:-translate-y-0.5'
+                            } ${focusRing}`}
                           >
                             {tier.cta}
                           </button>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </Reveal>
+                  </Tilt3D>
+                </Reveal>
               );
             })}
           </div>
 
-          <p className="mt-6 text-center text-sm text-stone-500">
+          <p className="mt-6 text-center text-[11px] font-bold text-[var(--bridge-text-muted)]">
             Mentor sessions are paid separately during booking based on each mentor’s rate.
           </p>
 
-          <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start lg:gap-10">
+          {/* ─── Compare plans + FAQ ─── */}
+          <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-start lg:gap-10">
             <Reveal delay={60} className="lg:col-span-8">
-              <div className="overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] shadow-sm ring-1 ring-stone-900/[0.02]">
-                <div className="border-b border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)] px-6 py-5 sm:px-8">
-                  <h2 className="font-display text-lg font-semibold text-stone-900 sm:text-xl">Compare plans</h2>
-                  <p className="mt-1 text-sm text-stone-600">Bridge platform features, side by side.</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
-                    <thead>
-                    <tr className="border-b border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]">
-                      <th scope="col" className="px-4 py-3.5 font-semibold text-stone-900 sm:px-6">
-                        Feature
-                      </th>
-                      <th scope="col" className="px-2 py-3.5 text-center font-semibold text-stone-800 sm:px-3">
-                        Free
-                      </th>
-                      <th scope="col" className="px-2 py-3.5 text-center font-semibold text-stone-800 sm:px-3">
-                        Starter
-                      </th>
-                      <th scope="col" className="px-2 py-3.5 text-center font-semibold text-orange-950/90 sm:px-3">
-                        Pro
-                      </th>
-                      <th scope="col" className="px-2 py-3.5 text-center font-semibold text-stone-800 sm:px-3">
-                        Premium
-                      </th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {comparisonRows.map((row, rIdx) => (
-                        <tr
-                            key={row.label}
-                            className={`border-b border-[var(--bridge-border)] last:border-0 ${rIdx % 2 === 1 ? 'bg-[var(--bridge-surface-muted)]/65' : 'bg-[var(--bridge-canvas)]/40'}`}
-                        >
-                          <th scope="row" className="max-w-[12rem] px-4 py-3.5 font-normal text-stone-700 sm:max-w-none sm:px-6">
-                            {row.label}
+              <Tilt3D max={2} className="rounded-3xl">
+                <div className="bd-card-edge relative overflow-hidden rounded-3xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] shadow-bridge-card">
+                  <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-48 w-48 rounded-full bg-orange-400/12 blur-3xl bd-aurora" />
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-400 to-transparent opacity-50" />
+                  <div className="relative border-b border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/70 px-6 py-5 sm:px-8">
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-500">Side-by-side</p>
+                    <h2 className="mt-1 font-display font-black tracking-[-0.025em] text-[var(--bridge-text)]" style={{ fontSize: 'clamp(1.4rem, 2.4vw, 1.9rem)', lineHeight: '1.05' }}>
+                      Compare <span className="text-gradient-bridge italic">plans</span>
+                    </h2>
+                    <p className="mt-1 text-sm text-[var(--bridge-text-secondary)]">Bridge platform features, side by side.</p>
+                  </div>
+                  <div className="relative overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b-2 border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/50">
+                          <th scope="col" className="px-4 py-4 font-black text-[var(--bridge-text)] sm:px-6">
+                            Feature
                           </th>
-                          <td className="px-2 py-3.5 text-center sm:px-3">
-                            {typeof row.free === 'boolean' ? (
+                          <th scope="col" className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-[0.14em] text-[var(--bridge-text-muted)] sm:px-3">
+                            Free
+                          </th>
+                          <th scope="col" className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-[0.14em] text-[var(--bridge-text-muted)] sm:px-3">
+                            Starter
+                          </th>
+                          <th scope="col" className="bg-orange-500/[0.05] px-2 py-4 text-center font-black sm:px-3">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-[12px] font-black text-orange-600 tracking-tight dark:text-orange-300">Pro</span>
+                              <span className="bd-status-shine relative overflow-hidden rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-white">Best</span>
+                            </div>
+                          </th>
+                          <th scope="col" className="px-2 py-4 text-center text-[11px] font-black uppercase tracking-[0.14em] text-[var(--bridge-text-muted)] sm:px-3">
+                            Premium
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {comparisonRows.map((row, rIdx) => (
+                          <tr
+                            key={row.label}
+                            className={`group/row border-b border-[var(--bridge-border)]/55 last:border-0 transition-colors duration-300 hover:bg-[var(--bridge-surface-muted)]/40 ${rIdx % 2 === 1 ? 'bg-[var(--bridge-surface-muted)]/55' : 'bg-[var(--bridge-canvas)]/40'}`}
+                          >
+                            <th scope="row" className="max-w-[12rem] px-4 py-4 font-bold text-[var(--bridge-text)] sm:max-w-none sm:px-6">
+                              {row.label}
+                            </th>
+                            <td className="px-2 py-4 text-center sm:px-3">
+                              {typeof row.free === 'boolean' ? (
                                 <div className="flex justify-center">
                                   <CheckCell included={row.free} highlight={false} />
                                 </div>
-                            ) : (
-                                <span className="font-medium text-stone-800">{row.free}</span>
-                            )}
-                          </td>
-                          <td className="px-2 py-3.5 text-center sm:px-3">
-                            {typeof row.starter === 'boolean' ? (
+                              ) : (
+                                <span className="font-bold text-[var(--bridge-text-secondary)]">{row.free}</span>
+                              )}
+                            </td>
+                            <td className="px-2 py-4 text-center sm:px-3">
+                              {typeof row.starter === 'boolean' ? (
                                 <div className="flex justify-center">
                                   <CheckCell included={row.starter} highlight={false} />
                                 </div>
-                            ) : (
-                                <span className="font-medium text-stone-800">{row.starter}</span>
-                            )}
-                          </td>
-                          <td className="bg-[color-mix(in_srgb,var(--bridge-accent)_16%,var(--bridge-surface))] px-2 py-3.5 text-center sm:px-3">
-                            {typeof row.pro === 'boolean' ? (
+                              ) : (
+                                <span className="font-bold text-[var(--bridge-text-secondary)]">{row.starter}</span>
+                              )}
+                            </td>
+                            <td className="bg-orange-500/[0.05] px-2 py-4 text-center sm:px-3">
+                              {typeof row.pro === 'boolean' ? (
                                 <div className="flex justify-center">
                                   <CheckCell included={row.pro} highlight />
                                 </div>
-                            ) : (
-                                <span className="font-semibold text-stone-900">{row.pro}</span>
-                            )}
-                          </td>
-                          <td className="px-2 py-3.5 text-center sm:px-3">
-                            {typeof row.premium === 'boolean' ? (
+                              ) : (
+                                <span className="font-black text-orange-600 dark:text-orange-300">{row.pro}</span>
+                              )}
+                            </td>
+                            <td className="px-2 py-4 text-center sm:px-3">
+                              {typeof row.premium === 'boolean' ? (
                                 <div className="flex justify-center">
                                   <CheckCell included={row.premium} highlight={false} />
                                 </div>
-                            ) : (
-                                <span className="font-medium text-stone-800">{row.premium}</span>
-                            )}
-                          </td>
-                        </tr>
-                    ))}
-                    </tbody>
-                  </table>
+                              ) : (
+                                <span className="font-bold text-[var(--bridge-text-secondary)]">{row.premium}</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              </Tilt3D>
             </Reveal>
 
-            <Reveal delay={100} className="lg:col-span-4 lg:sticky lg:top-24">
+            <Reveal delay={120} className="lg:col-span-4 lg:sticky lg:top-24">
               <PricingFaq headingId="pricing-faq-heading" items={faq} />
             </Reveal>
           </div>
 
-          {/* Mentor tiers — separate from mentee subscription plans above */}
-          <div className="mt-16 border-t border-[var(--bridge-border)] pt-14">
+          {/* ─── Mentor tiers ─── */}
+          <div className="mt-20 border-t border-[var(--bridge-border)] pt-16">
             <Reveal delay={60}>
-              <div className="mb-8 text-center">
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-200/70 bg-orange-50/70 px-3 py-1.5 text-xs font-semibold text-orange-900">
-                  <span className="h-1.5 w-1.5 rounded-full bg-orange-600" aria-hidden />
+              <div className="mb-10 text-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-300/55 bg-orange-50/70 px-3.5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-orange-700 dark:border-orange-400/30 dark:bg-orange-500/10 dark:text-orange-300">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-65" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-orange-500" />
+                  </span>
                   How Bridge categorizes mentors
                 </span>
                 <h2
-                    id="mentor-tiers-heading"
-                    className="mt-4 font-display text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl"
+                  id="mentor-tiers-heading"
+                  className="mt-4 font-display font-black tracking-[-0.03em] text-[var(--bridge-text)]"
+                  style={{ fontSize: 'clamp(2rem, 4.5vw, 3.4rem)', lineHeight: '1' }}
                 >
-                  Mentor tiers
+                  Mentor <span className="text-gradient-bridge italic">tiers</span>
                 </h2>
-                <p className="mx-auto mt-2 max-w-xl text-base leading-relaxed text-stone-600">
+                <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-[var(--bridge-text-secondary)]">
                   Each mentor is placed in a tier based on their experience and seniority. Session rates are set by each mentor individually and shown on their profile — not by Bridge.
                 </p>
               </div>
@@ -668,44 +764,73 @@ export default function Pricing() {
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-labelledby="mentor-tiers-heading">
               {MENTOR_TIERS.map((tier, idx) => (
-                  <Reveal key={tier.name} delay={40 + idx * 40}>
+                <Reveal key={tier.name} delay={40 + idx * 60}>
+                  <Tilt3D max={4} className="h-full rounded-[1.75rem]">
                     <div
-                        className={`group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border p-6 shadow-bridge-tile backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-bridge-card ${tier.cardClass}`}
+                      className={`bd-card-edge group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border p-6 shadow-bridge-tile backdrop-blur-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-xl ${tier.edgeClass} ${tier.bgClass}`}
                     >
-                      <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/40 opacity-0 blur-2xl transition group-hover:opacity-100 dark:bg-white/5" />
-                      <div
-                          aria-hidden
-                          className={`absolute inset-x-0 top-0 h-1 ${tier.accentClass}`}
-                      />
-                      <div className="relative">
+                      <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full opacity-30 blur-3xl bd-aurora" style={{ background: `radial-gradient(circle, ${tier.halo} 0%, transparent 70%)` }} />
+                      <div aria-hidden className={`absolute inset-x-0 top-0 h-1 ${tier.accentBar} ${tier.isElite ? 'shadow-[0_0_14px_rgba(234,88,12,0.6)]' : ''}`} />
+
+                      <div className="relative flex flex-col gap-3">
                         <span
-                            className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold uppercase tracking-wide ${tier.badgeClass}`}
+                          className={`bd-status-shine relative inline-flex w-fit items-center gap-1 self-start overflow-hidden rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ${tier.badgeClass}`}
                         >
                           {tier.name}
                         </span>
-                        <p className="mt-3 font-display text-xl font-semibold text-stone-900">{tier.rateRange}</p>
-                        <p className="text-xs text-stone-500">typical rate per session</p>
-                        <p className="mt-3 text-sm leading-snug text-stone-700">{tier.experienceDesc}</p>
-                        <ul className="mt-4 flex flex-col gap-2">
+
+                        <div className="flex items-baseline gap-2">
+                          <p className="font-display text-[2.1rem] font-black tabular-nums leading-none tracking-[-0.025em] text-[var(--bridge-text)]">{tier.rateRange}</p>
+                        </div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--bridge-text-muted)]">typical rate per session</p>
+
+                        <div className="mt-1 flex items-baseline gap-2 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)]/70 px-3 py-2">
+                          <p className="font-display text-base font-black tabular-nums tracking-tight text-[var(--bridge-text)]">{tier.yearsRange}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--bridge-text-muted)]">years of experience</p>
+                        </div>
+
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--bridge-text-secondary)]">{tier.experienceDesc}</p>
+
+                        <ul className="mt-3 flex flex-col gap-2">
                           {tier.useCases.map((uc) => (
-                              <li key={uc} className="flex items-start gap-2 text-sm text-stone-600">
-                                <span
-                                    className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-stone-200/70 text-[10px] font-bold text-orange-950/90 ring-1 ring-stone-400/40"
-                                    aria-hidden
-                                >
-                                  ✓
-                                </span>
-                                <span className="leading-snug">{uc}</span>
-                              </li>
+                            <li key={uc} className="flex items-start gap-2 text-[13px] text-[var(--bridge-text)]">
+                              <span
+                                className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/12 text-[10px] font-black text-emerald-600 ring-1 ring-emerald-500/25 dark:text-emerald-300"
+                                aria-hidden
+                              >
+                                ✓
+                              </span>
+                              <span className="leading-snug">{uc}</span>
+                            </li>
                           ))}
                         </ul>
                       </div>
                     </div>
-                  </Reveal>
+                  </Tilt3D>
+                </Reveal>
               ))}
             </div>
+
+            {/* Final CTA — magnetic mentors browse */}
+            <Reveal delay={160}>
+              <div className="mt-12 flex justify-center">
+                <Magnetic strength={0.16}>
+                  <Link
+                    to="/mentors"
+                    data-cursor="Browse"
+                    className={`btn-sheen relative inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-orange-600 via-orange-500 to-amber-500 px-8 py-3.5 text-sm font-black text-white shadow-[0_14px_36px_-6px_rgba(234,88,12,0.65)] ring-1 ring-white/15 transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-6px_rgba(234,88,12,0.85)] ${focusRing}`}
+                  >
+                    Browse mentors by tier
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                  </Link>
+                </Magnetic>
+              </div>
+            </Reveal>
           </div>
         </div>
       </main>
+
+      <StickyPricingBar onClick={() => handlePaidClick('Pro')} equivalent={proEquivalent} annual={annual} />
+    </>
   );
 }

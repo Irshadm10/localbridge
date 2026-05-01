@@ -5,17 +5,24 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar, Clock, CalendarDays, CheckCircle2, ArrowUpRight,
-  Search, Users, Video, Check, X, Plus, Zap,
+  Users, Video, Check, X, Plus, Zap,
   TrendingUp,
 } from 'lucide-react';
 import {
-  StatCard, EmptyState, SessionCard, SectionHeading,
+  StatCard, EmptyState, SessionCard, SectionHeading, canJoinSession,
+  SearchBar, NoMatch, ActivityFeed,
 } from './dashboardShared';
 import { formatSessionDate, getAvatarColor, getInitials } from './dashboardUtils';
+import { LiveCountdown, AddToCalendarButton, UrgencyBadge, useSessionTrends } from './dashboardLive.jsx';
+import { GoalRing, Sparkline, Tilt3D, Magnetic, useDailyActivity, useGoalProgress, KineticNumber } from './dashboardCinematic.jsx';
 import DashboardSettingsPanel from './DashboardSettingsPanel';
 import MentorAvailabilityModal from './MentorAvailabilityModal';
+import IntakeSummaryModal from './IntakeSummaryModal';
 import CalendarConnectButton from '../../components/CalendarConnectButton';
 import { useState, useEffect } from 'react';
+import SessionCalendar from './SessionCalendar';
+import CancellationModal from '../../components/CancellationModal';
+import { getMyCancellationRequests } from '../../api/cancellations';
 
 export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, user }) {
   const navigate = useNavigate();
@@ -23,6 +30,10 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
   const [heroHint, setHeroHint] = useState(null);
   const [calendarBanner, setCalendarBanner] = useState(null);
+  const [intakeOpen, setIntakeOpen] = useState(false);
+  const [intakeData, setIntakeData] = useState({ summary: '', menteeName: '' });
+  const [cancellationModal, setCancellationModal] = useState(null);
+  const [cancellationBanners, setCancellationBanners] = useState([]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -35,6 +46,22 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!user?.id) return;
+    const SEEN_KEY = `bridge_cancel_seen_mentor_${user.id}`;
+    const seenIds = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]');
+    getMyCancellationRequests().then(({ data }) => {
+      if (!data) return;
+      const unseen = data.filter(r =>
+        ['approved', 'denied'].includes(r.status) && !seenIds.includes(r.id)
+      );
+      if (unseen.length) {
+        setCancellationBanners(unseen);
+        localStorage.setItem(SEEN_KEY, JSON.stringify([...seenIds, ...unseen.map(r => r.id)]));
+      }
+    });
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const {
     sessions, mentorProfileId, calendarConnected, refetch, actionLoading,
     searchQuery, setSearchQuery, showAllHistory, setShowAllHistory,
@@ -43,6 +70,13 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
   } = dash;
 
   const pendingSessions = upcomingSessions.filter(s => s.status === 'pending');
+
+  // 30-day session trends — pure derivation.
+  const trends = useSessionTrends(sessions);
+  const completedTotal = sessions.filter(s => s.status === 'completed').length;
+  const daily = useDailyActivity(sessions, 14);
+  const dailyTotal = daily.reduce((a, b) => a + b, 0);
+  const goal = useGoalProgress(sessions, 10);
 
   return (
     <>
@@ -53,9 +87,36 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
         onSaved={() => refetch?.()}
       />
 
+      {cancellationModal && (
+        <CancellationModal
+          session={cancellationModal.session}
+          isMentor
+          onClose={() => setCancellationModal(null)}
+          onSuccess={() => { setCancellationModal(null); refetch?.(); }}
+        />
+      )}
+
       {/* ── Overview tab ─────────────────────────────────────────────── */}
       {activeTab === 'overview' && (
         <div className="space-y-8 pb-12">
+
+          {/* Cancellation outcome banners */}
+          {cancellationBanners.map(r => (
+            <div key={r.id} className={`flex items-start gap-3 rounded-2xl px-5 py-4 text-sm ring-1 ${
+              r.status === 'approved'
+                ? 'bg-emerald-500/8 text-emerald-700 ring-emerald-500/20 dark:text-emerald-300'
+                : 'bg-red-500/8 text-red-600 ring-red-500/20 dark:text-red-400'
+            }`}>
+              <span className="mt-0.5 text-base shrink-0">{r.status === 'approved' ? '✓' : '⚠'}</span>
+              <div className="min-w-0">
+                {r.status === 'approved'
+                  ? <p className="font-semibold">Your cancellation request was approved. The session has been cancelled.</p>
+                  : <p className="font-semibold">Your cancellation request was denied.{r.reviewer_note ? ` Reason: ${r.reviewer_note}` : ' Please contact your mentee to reschedule.'}</p>}
+              </div>
+              <button type="button" onClick={() => setCancellationBanners(b => b.filter(x => x.id !== r.id))}
+                className="ml-auto shrink-0 opacity-60 hover:opacity-100"><X className="h-4 w-4" /></button>
+            </div>
+          ))}
 
           {/* Calendar banners */}
           {calendarBanner === 'connected' && (
@@ -69,12 +130,59 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
             </div>
           )}
 
-          {/* Stats */}
+          {/* Stats — kinetic counters + 30d trend deltas */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-            <StatCard label="Total Sessions"  value={sessions.length}                                       icon={CalendarDays}  gradient="from-orange-500 to-amber-500" />
-            <StatCard label="Upcoming"        value={upcomingSessions.length}                               icon={Clock}         gradient="from-sky-500 to-blue-500" />
-            <StatCard label="Completed"       value={sessions.filter(s => s.status === 'completed').length} icon={CheckCircle2}  gradient="from-emerald-500 to-teal-500" />
-            <StatCard label="Active Mentees"  value={menteeCards.length}                                    icon={Users}         gradient="from-violet-500 to-purple-500" />
+            <StatCard label="Total Sessions" value={sessions.length}
+              icon={CalendarDays} gradient="from-orange-500 to-amber-500"
+              trend={{ current: trends.bookedLast30, previous: trends.bookedPrior30, label: '30d' }} />
+            <StatCard label="Upcoming" value={upcomingSessions.length}
+              icon={Clock} gradient="from-sky-500 to-blue-500" />
+            <StatCard label="Completed" value={completedTotal}
+              icon={CheckCircle2} gradient="from-emerald-500 to-teal-500"
+              trend={{ current: trends.completedLast30, previous: trends.completedPrior30, label: '30d' }} />
+            <StatCard label="Active Mentees" value={menteeCards.length}
+              icon={Users} gradient="from-violet-500 to-purple-500" />
+          </div>
+
+          {/* Pulse — monthly goal ring + 14-day demand sparkline */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4">
+            <Tilt3D max={4} className="rounded-3xl">
+              <div className="bd-card-edge relative flex h-full items-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--bridge-surface)] via-[var(--bridge-surface)] to-orange-500/[0.04] p-6 ring-1 ring-[var(--bridge-border)] shadow-sm">
+                <div aria-hidden className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-orange-500/15 blur-3xl" />
+                <GoalRing value={goal.completed} max={goal.target} label="Monthly" sub={`${goal.completed} / ${goal.target}`} />
+                <div className="relative">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-500">Monthly target</p>
+                  <h3 className="mt-1 font-display text-lg font-black tracking-tight text-[var(--bridge-text)]">
+                    {goal.completed >= goal.target ? 'Target hit. Lift it next month.' : `${goal.target - goal.completed} more to reach target.`}
+                  </h3>
+                  <p className="mt-1 text-[12px] text-[var(--bridge-text-muted)]">Each completed session strengthens your acceptance signal.</p>
+                </div>
+              </div>
+            </Tilt3D>
+            <Tilt3D max={4} className="rounded-3xl lg:col-span-2">
+              <div className="bd-card-edge relative flex h-full flex-col overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--bridge-surface)] to-[var(--bridge-surface-muted)]/40 p-6 ring-1 ring-[var(--bridge-border)] shadow-sm">
+                <div aria-hidden className="pointer-events-none absolute -bottom-12 -left-8 h-44 w-44 rounded-full bg-amber-400/12 blur-3xl" />
+                <div className="relative flex flex-wrap items-baseline justify-between gap-2">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-500">Demand · last 14 days</p>
+                    <h3 className="mt-1 flex items-baseline gap-2 font-display text-2xl font-black tracking-tight text-[var(--bridge-text)]">
+                      <KineticNumber to={dailyTotal} ms={900} />
+                      <span className="text-sm font-bold text-[var(--bridge-text-muted)]">incoming</span>
+                    </h3>
+                  </div>
+                  <span className="rounded-full border border-[var(--bridge-border)] bg-[var(--bridge-surface)] px-2.5 py-1 text-[10px] font-bold text-[var(--bridge-text-secondary)]">
+                    {dailyTotal === 0 ? 'Quiet stretch' : 'On the move'}
+                  </span>
+                </div>
+                <div className="relative mt-5 flex-1">
+                  <Sparkline data={daily} height={84} />
+                  <div className="mt-2 flex justify-between text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--bridge-text-faint)]">
+                    <span>14d ago</span>
+                    <span>Today</span>
+                  </div>
+                </div>
+              </div>
+            </Tilt3D>
           </div>
 
           {/* Pending requests — highest priority for mentors */}
@@ -86,17 +194,19 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
             />
           )}
 
-          {/* Hero: next session */}
+          {/* Hero: next session — cinematic 3D tilt */}
           {nextSession ? (
-            <MentorNextSessionHero
-              session={nextSession}
-              heroHint={heroHint}
-              setHeroHint={setHeroHint}
-              handleStatusUpdate={handleStatusUpdate}
-              actionLoading={actionLoading}
-              setActiveTab={setActiveTab}
-              navigate={navigate}
-            />
+            <Tilt3D max={3} className="rounded-[2rem]">
+              <MentorNextSessionHero
+                session={nextSession}
+                heroHint={heroHint}
+                setHeroHint={setHeroHint}
+                handleStatusUpdate={handleStatusUpdate}
+                actionLoading={actionLoading}
+                setActiveTab={setActiveTab}
+                navigate={navigate}
+              />
+            </Tilt3D>
           ) : (
             <NoSessionCTA onSettings={() => setActiveTab('settings')} />
           )}
@@ -126,6 +236,8 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
                     onAccept={(id) => handleStatusUpdate(id, 'accepted')}
                     onDecline={(id) => handleStatusUpdate(id, 'declined')}
                     actionLoading={actionLoading}
+                    intakeSummary={s.intake_summary}
+                    onViewIntake={(_, text) => { setIntakeData({ summary: text, menteeName: s.mentee_name ?? 'Mentee' }); setIntakeOpen(true); }}
                   />
                 ))}
                 {upcomingSessions.filter(s => s.status !== 'pending').length === 0 && (
@@ -137,35 +249,35 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
             {/* Right sidebar */}
             <div className="space-y-5">
 
-              {/* Quick actions */}
-              <div className="rounded-2xl bg-[var(--bridge-surface)] p-5 shadow-sm ring-1 ring-[var(--bridge-border)]">
-                <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-[var(--bridge-text-muted)]">Quick Actions</h3>
-                <div className="space-y-2">
-                  <button type="button"
-                    onClick={() => mentorProfileId ? setAvailabilityOpen(true) : setActiveTab('settings')}
-                    className="group flex w-full items-center gap-3 rounded-xl p-3 transition-all hover:bg-orange-50 dark:hover:bg-orange-500/10">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 text-white shadow-sm">
-                      <Calendar className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--bridge-text)] text-left">Update Availability</p>
-                      <p className="text-xs text-[var(--bridge-text-muted)] text-left">Set your open time slots</p>
-                    </div>
-                    <ArrowUpRight className="ml-auto h-4 w-4 text-[var(--bridge-text-faint)] transition group-hover:text-orange-500" />
-                  </button>
-                  <button type="button" onClick={() => setActiveTab('connections')}
-                    className="group flex w-full items-center gap-3 rounded-xl p-3 transition-all hover:bg-violet-50 dark:hover:bg-violet-500/10">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-sm">
-                      <Users className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--bridge-text)] text-left">My Mentees</p>
-                      <p className="text-xs text-[var(--bridge-text-muted)] text-left">{menteeCards.length} connection{menteeCards.length !== 1 ? 's' : ''}</p>
-                    </div>
-                    <ArrowUpRight className="ml-auto h-4 w-4 text-[var(--bridge-text-faint)] transition group-hover:text-violet-500" />
-                  </button>
+              {/* Quick actions — cinematic bento */}
+              <div className="bd-card-edge relative overflow-hidden rounded-3xl bg-[var(--bridge-surface)] p-5 shadow-sm ring-1 ring-[var(--bridge-border)]">
+                <div aria-hidden className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-orange-400/15 blur-3xl" />
+                <div className="relative mb-4 flex items-center justify-between">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-500">Quick actions</p>
+                  <span className="text-[9px] font-bold text-[var(--bridge-text-faint)]">Tap to jump</span>
+                </div>
+                <div className="relative space-y-1.5">
+                  {[
+                    { onClick: () => mentorProfileId ? setAvailabilityOpen(true) : setActiveTab('settings'), icon: Calendar, title: 'Update Availability', sub: 'Set your open time slots', g: 'from-orange-500 to-amber-500', hover: 'hover:bg-orange-500/8', cursor: 'Edit' },
+                    { onClick: () => setActiveTab('connections'), icon: Users, title: 'My Mentees', sub: `${menteeCards.length} connection${menteeCards.length !== 1 ? 's' : ''}`, g: 'from-violet-500 to-purple-500', hover: 'hover:bg-violet-500/8', cursor: 'Mentees' },
+                  ].map((q, i) => {
+                    const Icon = q.icon;
+                    return (
+                      <button key={i} type="button" onClick={q.onClick} data-cursor={q.cursor}
+                        className={`group flex w-full items-center gap-3 rounded-2xl p-3 transition-all duration-300 ${q.hover}`}>
+                        <div className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${q.g} text-white shadow-[0_8px_22px_-6px_rgba(234,88,12,0.45)] ring-1 ring-white/15 transition-all duration-300 group-hover:scale-110 group-hover:rotate-[-4deg]`}>
+                          <Icon className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1 text-left">
+                          <p className="text-sm font-bold text-[var(--bridge-text)]">{q.title}</p>
+                          <p className="text-xs text-[var(--bridge-text-muted)]">{q.sub}</p>
+                        </div>
+                        <ArrowUpRight className="ml-auto h-4 w-4 text-[var(--bridge-text-faint)] transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-orange-500" />
+                      </button>
+                    );
+                  })}
                   {mentorProfileId && (
-                    <div className="pt-1">
+                    <div className="pt-2">
                       <CalendarConnectButton isConnected={!!calendarConnected} mentorProfileId={mentorProfileId} />
                     </div>
                   )}
@@ -182,12 +294,15 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
       {/* ── Sessions tab ─────────────────────────────────────────────── */}
       {activeTab === 'sessions' && (
         <MentorSessionsTab
+          sessions={sessions}
           upcomingSessions={upcomingSessions}
           historySessions={historySessions}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           handleStatusUpdate={handleStatusUpdate}
           actionLoading={actionLoading}
+          onViewIntake={(s, text) => { setIntakeData({ summary: text, menteeName: s.mentee_name ?? 'Mentee' }); setIntakeOpen(true); }}
+          onCancel={(session) => setCancellationModal({ session })}
         />
       )}
 
@@ -204,6 +319,12 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
       {activeTab === 'settings' && (
         <DashboardSettingsPanel user={user} logout={logout} isMentor mentorProfileId={mentorProfileId} calendarConnected={calendarConnected} />
       )}
+      <IntakeSummaryModal
+        open={intakeOpen}
+        onClose={() => setIntakeOpen(false)}
+        summary={intakeData.summary}
+        menteeName={intakeData.menteeName}
+      />
     </>
   );
 }
@@ -211,31 +332,30 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
 // ─── PendingRequestsSection ──────────────────────────────────────────────────
 function PendingRequestsSection({ pendingSessions, handleStatusUpdate, actionLoading }) {
   return (
-    <div className="rounded-2xl bg-[var(--bridge-surface)] shadow-sm ring-1 ring-amber-300/50 dark:ring-amber-400/25 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 border-b border-[var(--bridge-border)] bg-amber-50/80 px-5 py-4 dark:bg-amber-500/10">
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm">
+    <div className="bd-card-edge relative overflow-hidden rounded-3xl bg-[var(--bridge-surface)] shadow-sm ring-1 ring-amber-400/35 dark:ring-amber-400/30">
+      <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 h-44 w-44 rounded-full bg-amber-400/20 blur-3xl bd-aurora" />
+      <div className="relative flex items-center gap-3 border-b border-amber-300/40 bg-gradient-to-r from-amber-50/90 to-orange-50/40 px-5 py-4 dark:from-amber-500/12 dark:to-orange-500/6">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-[0_8px_22px_-6px_rgba(245,158,11,0.6)] ring-1 ring-white/15">
           <Zap className="h-4 w-4" />
         </div>
-        <div>
-          <p className="font-bold text-[var(--bridge-text)]">
+        <div className="flex-1">
+          <p className="flex items-center gap-2 font-display text-base font-black tracking-tight text-[var(--bridge-text)]">
             Pending Requests
-            <span className="ml-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
+            <span className="inline-flex h-5 min-w-[1.4rem] items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-500 px-1.5 text-[10px] font-black text-white shadow-[0_0_12px_rgba(245,158,11,0.55)]">
               {pendingSessions.length}
             </span>
           </p>
-          <p className="text-xs text-[var(--bridge-text-secondary)]">Respond within 24 hours to keep your acceptance rate up.</p>
+          <p className="text-xs text-[var(--bridge-text-secondary)]">Respond within 24 hours to keep your acceptance rate strong.</p>
         </div>
       </div>
 
-      {/* Cards — horizontal scroll on mobile, wrap on desktop */}
-      <div className="flex gap-3 overflow-x-auto p-4 sm:flex-wrap sm:overflow-visible sm:p-5">
+      <div className="relative flex gap-3 overflow-x-auto p-4 sm:flex-wrap sm:overflow-visible sm:p-5">
         {pendingSessions.map((s) => (
           <PendingRequestCard
             key={s.id} session={s}
             onAccept={() => handleStatusUpdate(s.id, 'accepted')}
             onDecline={() => handleStatusUpdate(s.id, 'declined')}
-            loading={actionLoading === s.id}
+            actionLoading={actionLoading}
           />
         ))}
       </div>
@@ -243,38 +363,47 @@ function PendingRequestsSection({ pendingSessions, handleStatusUpdate, actionLoa
   );
 }
 
-function PendingRequestCard({ session, onAccept, onDecline, loading }) {
+function PendingRequestCard({ session, onAccept, onDecline, actionLoading }) {
   const color = getAvatarColor(session.mentee_name ?? '');
   const inits = getInitials(session.mentee_name ?? '');
   const [date, time] = (formatSessionDate(session.scheduled_date) || ' · ').split(' · ');
+  const busy = actionLoading === session.id;
 
   return (
-    <div className="flex w-[14rem] shrink-0 flex-col gap-3 rounded-2xl border border-[var(--bridge-border)] bg-[var(--bridge-surface-muted)]/60 p-4 sm:w-auto sm:min-w-[13rem] sm:max-w-[16rem]">
-      <div className="flex items-center gap-3">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ring-2 ring-[var(--bridge-canvas)] ${color}`} aria-hidden>
-          {inits}
+    <Tilt3D max={4} className="rounded-2xl shrink-0 sm:shrink">
+      <div className="bd-card-edge relative flex w-[15rem] flex-col gap-3 overflow-hidden rounded-2xl border border-[var(--bridge-border)] bg-gradient-to-br from-[var(--bridge-surface-muted)]/70 to-[var(--bridge-surface)]/90 p-4 transition-shadow duration-500 hover:shadow-xl sm:w-auto sm:min-w-[14rem] sm:max-w-[17rem]">
+        <div aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-amber-400/0 blur-2xl transition-all duration-500 hover:bg-amber-400/25" />
+        <div className="relative flex items-center gap-3">
+          <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-black ring-2 ring-[var(--bridge-canvas)] ${color}`} aria-hidden>
+            {inits}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-[var(--bridge-text)]">{session.mentee_name ?? 'Mentee'}</p>
+            <p className="truncate text-[11px] text-[var(--bridge-text-muted)]">{date}{time ? ` · ${time}` : ''}</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold text-[var(--bridge-text)]">{session.mentee_name ?? 'Mentee'}</p>
-          <p className="truncate text-[11px] text-[var(--bridge-text-muted)]">{date}</p>
+        <div className="relative flex flex-wrap items-center gap-1.5">
+          {session.session_type && (
+            <span className="rounded-full bg-[var(--bridge-surface)] px-2.5 py-0.5 text-[10px] font-bold text-[var(--bridge-text-secondary)] ring-1 ring-[var(--bridge-border)] capitalize">
+              {session.session_type.replace('_', ' ')}
+            </span>
+          )}
+          <UrgencyBadge createdAt={session.created_at} />
+        </div>
+        <div className="relative flex gap-2">
+          <Magnetic strength={0.16} className="flex-1">
+            <button type="button" onClick={onAccept} disabled={busy} data-cursor="Accept"
+              className="flex w-full items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 py-2.5 text-xs font-black text-white shadow-[0_6px_18px_-4px_rgba(16,185,129,0.55)] ring-1 ring-white/15 transition hover:shadow-[0_10px_24px_-4px_rgba(16,185,129,0.7)] disabled:opacity-50">
+              <Check className="h-3.5 w-3.5" />Accept
+            </button>
+          </Magnetic>
+          <button type="button" onClick={onDecline} disabled={busy} data-cursor="Decline"
+            className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-[var(--bridge-border)] py-2.5 text-xs font-black text-[var(--bridge-text-secondary)] transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-500/10 dark:hover:text-red-300">
+            <X className="h-3.5 w-3.5" />Decline
+          </button>
         </div>
       </div>
-      {session.session_type && (
-        <span className="self-start rounded-full bg-[var(--bridge-surface)] px-2.5 py-0.5 text-[10px] font-semibold text-[var(--bridge-text-secondary)] ring-1 ring-[var(--bridge-border)] capitalize">
-          {session.session_type.replace('_', ' ')}
-        </span>
-      )}
-      <div className="flex gap-2">
-        <button type="button" onClick={onAccept} disabled={loading}
-          className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-emerald-500 py-2 text-xs font-bold text-white transition hover:bg-emerald-400 disabled:opacity-50">
-          <Check className="h-3.5 w-3.5" />Accept
-        </button>
-        <button type="button" onClick={onDecline} disabled={loading}
-          className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-[var(--bridge-border)] py-2 text-xs font-bold text-[var(--bridge-text-secondary)] transition hover:border-red-300 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:hover:bg-red-500/10 dark:hover:text-red-300">
-          <X className="h-3.5 w-3.5" />Decline
-        </button>
-      </div>
-    </div>
+    </Tilt3D>
   );
 }
 
@@ -284,6 +413,7 @@ function MentorNextSessionHero({ session, heroHint, setHeroHint, handleStatusUpd
   const isPending  = session.status === 'pending';
   const isAccepted = session.status === 'accepted';
   const mentee = session.mentee_name ?? 'Your mentee';
+  const canJoin = canJoinSession(session.scheduled_date);
 
   return (
     <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-stone-950 via-stone-900 to-orange-950 p-7 text-white shadow-[0_24px_60px_-16px_rgba(234,88,12,0.35)] sm:p-8">
@@ -309,6 +439,9 @@ function MentorNextSessionHero({ session, heroHint, setHeroHint, handleStatusUpd
               Confirmed
             </span>
           )}
+          <span className="ml-auto">
+            <LiveCountdown targetIso={session.scheduled_date} tone={isAccepted ? 'emerald' : 'amber'} />
+          </span>
         </div>
 
         <h3 className="mt-4 font-display text-2xl font-bold sm:text-3xl">Session with {mentee}</h3>
@@ -339,18 +472,29 @@ function MentorNextSessionHero({ session, heroHint, setHeroHint, handleStatusUpd
             </>
           ) : (
             <>
-              <button type="button"
-                onClick={() => {
-                  if (session.video_room_url) { setHeroHint(null); navigate(`/session/${session.id}/video`); }
-                  else setHeroHint('Video link is still preparing — try again in a few seconds.');
-                }}
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-2.5 text-sm font-bold text-stone-900 transition hover:bg-orange-50">
-                <Video className="h-4 w-4" />Join Meeting
-              </button>
-              <button type="button" onClick={() => setActiveTab('connections')}
-                className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20">
-                View Mentees
-              </button>
+              {canJoin ? (
+                <Magnetic strength={0.18}>
+                  <button type="button" data-cursor="Join"
+                    onClick={() => {
+                      if (session.video_room_url) { setHeroHint(null); navigate(`/session/${session.id}/video`); }
+                      else setHeroHint('Video link is still preparing — try again in a few seconds.');
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-black text-stone-900 shadow-[0_8px_24px_-6px_rgba(255,255,255,0.5)] transition hover:bg-orange-50 hover:shadow-[0_12px_32px_-8px_rgba(255,255,255,0.65)]">
+                    <Video className="h-4 w-4" />Join Meeting
+                  </button>
+                </Magnetic>
+              ) : (
+                <div className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-6 py-3 text-sm font-black text-white/40 ring-1 ring-white/10 cursor-not-allowed" title="Available 3 hours before the session">
+                  <Video className="h-4 w-4" />Join Meeting
+                </div>
+              )}
+              <Magnetic strength={0.14}>
+                <button type="button" onClick={() => setActiveTab('connections')} data-cursor="Mentees"
+                  className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-6 py-3 text-sm font-bold text-white ring-1 ring-white/15 backdrop-blur-sm transition hover:bg-white/20">
+                  View Mentees
+                </button>
+              </Magnetic>
+              {isAccepted && <AddToCalendarButton session={session} label="Add to calendar" />}
             </>
           )}
         </div>
@@ -372,71 +516,37 @@ function MentorNextSessionHero({ session, heroHint, setHeroHint, handleStatusUpd
 // ─── NoSessionCTA ─────────────────────────────────────────────────────────────
 function NoSessionCTA({ onSettings }) {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] p-7 sm:p-8"
-      style={{ background: 'linear-gradient(135deg, #f97316 0%, #f59e0b 50%, #ea580c 100%)' }}>
-      <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40' fill='%23000' fill-opacity='1'/%3E%3C/svg%3E\")" }}
-      />
-      <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/15 blur-2xl" />
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/90">
-            <Plus className="h-3 w-3" />Getting started
-          </p>
-          <h3 className="mt-2 font-display text-2xl font-bold text-white sm:text-3xl">No sessions yet.</h3>
-          <p className="mt-1.5 text-sm text-orange-50/90">Make sure your profile is visible and your availability is set.</p>
+    <Tilt3D max={4} className="rounded-[2rem]">
+      <div className="relative overflow-hidden rounded-[2rem] p-7 sm:p-9"
+        style={{ background: 'linear-gradient(135deg, #f97316 0%, #f59e0b 45%, #ea580c 100%)' }}>
+        <div aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.08]"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40' fill='%23000' fill-opacity='1'/%3E%3C/svg%3E\")" }}
+        />
+        <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/22 blur-3xl bd-aurora" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-amber-200/30 blur-3xl bd-aurora" style={{ animationDelay: '-8s' }} />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/95 ring-1 ring-white/20">
+              <Plus className="h-3 w-3" />Getting started
+            </p>
+            <h3 className="mt-3 font-display text-3xl font-black tracking-[-0.025em] text-white sm:text-[2.4rem] sm:leading-[1.05]">No sessions yet.<br/><span className="italic">Open your calendar.</span></h3>
+            <p className="mt-2 text-sm text-orange-50/95">Make sure your profile is visible and your availability is set.</p>
+          </div>
+          <Magnetic strength={0.2}>
+            <button type="button" onClick={onSettings} data-cursor="Settings"
+              className="btn-sheen inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-black text-orange-700 shadow-[0_18px_40px_-10px_rgba(0,0,0,0.4)] ring-1 ring-white/40 transition-all hover:-translate-y-0.5 hover:bg-orange-50">
+              Set Availability
+              <ArrowUpRight className="h-4 w-4" />
+            </button>
+          </Magnetic>
         </div>
-        <button type="button" onClick={onSettings}
-          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-orange-700 shadow-lg transition hover:bg-orange-50">
-          Set Availability
-          <ArrowUpRight className="h-4 w-4" />
-        </button>
       </div>
-    </div>
-  );
-}
-
-// ─── ActivityFeed ─────────────────────────────────────────────────────────────
-function ActivityFeed({ history, role, total, showAll, onToggle }) {
-  return (
-    <div className="rounded-2xl bg-[var(--bridge-surface)] p-5 shadow-sm ring-1 ring-[var(--bridge-border)]">
-      <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.14em] text-[var(--bridge-text-muted)]">Recent Activity</h3>
-      {history.length > 0 ? (
-        <div className="relative space-y-4">
-          <div aria-hidden className="absolute left-[1.1rem] top-2 bottom-2 w-px bg-[var(--bridge-border)]" />
-          {history.map((s) => {
-            const done = s.status === 'completed';
-            const name = role === 'mentor' ? s.mentee_name : s.mentor_name;
-            return (
-              <div key={s.id} className="flex items-start gap-3.5 pl-1">
-                <div className={`relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-2 ring-[var(--bridge-canvas)] ${done ? 'bg-emerald-500' : 'bg-stone-300 dark:bg-stone-600'}`}>
-                  {done ? <CheckCircle2 className="h-3 w-3 text-white" /> : <Clock className="h-3 w-3 text-white" />}
-                </div>
-                <div className="min-w-0 pt-0.5">
-                  <p className="text-xs font-semibold text-[var(--bridge-text)]">
-                    {done ? 'Session completed' : `Session ${s.status}`}
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-[var(--bridge-text-muted)]">with {name}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="text-xs italic text-[var(--bridge-text-muted)]">No recent activity yet.</p>
-      )}
-      {total > 5 && (
-        <button type="button" onClick={onToggle}
-          className="mt-4 text-xs font-semibold text-orange-600 transition hover:text-orange-700 dark:text-orange-400">
-          {showAll ? '↑ Show less' : `Show all ${total} →`}
-        </button>
-      )}
-    </div>
+    </Tilt3D>
   );
 }
 
 // ─── MentorSessionsTab ────────────────────────────────────────────────────────
-function MentorSessionsTab({ upcomingSessions, historySessions, searchQuery, setSearchQuery, handleStatusUpdate, actionLoading }) {
+function MentorSessionsTab({ sessions, upcomingSessions, historySessions, searchQuery, setSearchQuery, handleStatusUpdate, actionLoading, onViewIntake, onCancel }) {
   const match = (s) =>
     s.mentee_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.session_type?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -445,20 +555,35 @@ function MentorSessionsTab({ upcomingSessions, historySessions, searchQuery, set
     <div className="space-y-8 pb-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-display text-2xl font-bold text-[var(--bridge-text)] sm:text-3xl">Sessions</h2>
-          <p className="mt-1 text-sm text-[var(--bridge-text-secondary)]">Manage incoming requests and view session history.</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-500">Your inbox</p>
+          <h2 className="mt-2 font-display font-black tracking-[-0.025em] text-[var(--bridge-text)]" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', lineHeight: '1.02' }}>
+            Sessions <span className="text-gradient-bridge italic">incoming</span>
+          </h2>
+          <p className="mt-1.5 text-sm text-[var(--bridge-text-secondary)]">Manage incoming requests and view session history.</p>
         </div>
         <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search by mentee or type…" />
       </div>
 
+      <SessionCalendar
+        sessions={sessions}
+        handleStatusUpdate={handleStatusUpdate}
+        actionLoading={actionLoading}
+        isMentor
+        onViewIntake={onViewIntake}
+        onCancel={onCancel}
+      />
+
       <section>
-        <SectionHeading count={upcomingSessions.filter(match).length}>Upcoming</SectionHeading>
+        <SectionHeading kicker="Coming up" count={upcomingSessions.filter(match).length}>Upcoming</SectionHeading>
         <div className="space-y-3">
           {upcomingSessions.filter(match).map((s) => (
             <SessionCard key={s.id} session={s} isMentor
               onAccept={(id) => handleStatusUpdate(id, 'accepted')}
               onDecline={(id) => handleStatusUpdate(id, 'declined')}
+              onCancel={onCancel}
               actionLoading={actionLoading}
+              intakeSummary={s.intake_summary}
+              onViewIntake={(_, text) => onViewIntake(s, text)}
             />
           ))}
           {upcomingSessions.length === 0 && <EmptyState message="No upcoming sessions yet." />}
@@ -467,10 +592,13 @@ function MentorSessionsTab({ upcomingSessions, historySessions, searchQuery, set
       </section>
 
       <section>
-        <SectionHeading count={historySessions.filter(match).length}>History</SectionHeading>
+        <SectionHeading kicker="Already done" count={historySessions.filter(match).length}>History</SectionHeading>
         <div className="space-y-3">
           {historySessions.filter(match).map((s) => (
-            <SessionCard key={s.id} session={s} isMentor />
+            <SessionCard key={s.id} session={s} isMentor
+              intakeSummary={s.intake_summary}
+              onViewIntake={(_, text) => onViewIntake(s, text)}
+            />
           ))}
           {historySessions.length === 0 && <EmptyState message="No past sessions yet." />}
           {historySessions.length > 0 && historySessions.filter(match).length === 0 && <NoMatch />}
@@ -488,24 +616,32 @@ function MentorConnectionsTab({ menteeCards, searchQuery, setSearchQuery }) {
     <div className="space-y-8 pb-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-display text-2xl font-bold text-[var(--bridge-text)] sm:text-3xl">Mentees</h2>
-          <p className="mt-1 text-sm text-[var(--bridge-text-secondary)]">Everyone you've worked with on Bridge.</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-500">Your circle</p>
+          <h2 className="mt-2 font-display font-black tracking-[-0.025em] text-[var(--bridge-text)]" style={{ fontSize: 'clamp(1.8rem, 4vw, 3rem)', lineHeight: '1.02' }}>
+            <span className="text-gradient-bridge italic">Mentees</span>
+          </h2>
+          <p className="mt-1.5 text-sm text-[var(--bridge-text-secondary)]">Everyone you've worked with on Bridge.</p>
         </div>
         <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search by name…" />
       </div>
 
       {menteeCards.length > 0 && (
-        <div className="rounded-2xl bg-[var(--bridge-surface)] p-4 ring-1 ring-[var(--bridge-border)] sm:p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-sm">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-[var(--bridge-text)]">{menteeCards.length} mentee{menteeCards.length !== 1 ? 's' : ''} so far</p>
-              <p className="text-xs text-[var(--bridge-text-muted)]">Keep your availability up to attract more</p>
+        <Tilt3D max={3} className="rounded-3xl">
+          <div className="bd-card-edge relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--bridge-surface)] via-[var(--bridge-surface)] to-violet-500/[0.04] p-5 ring-1 ring-[var(--bridge-border)] shadow-sm sm:p-6">
+            <div aria-hidden className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-violet-400/15 blur-3xl" />
+            <div className="relative flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-[0_8px_24px_-6px_rgba(139,92,246,0.55)] ring-1 ring-white/15">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-display text-lg font-black tracking-tight text-[var(--bridge-text)]">
+                  {menteeCards.length} mentee{menteeCards.length !== 1 ? 's' : ''} so far
+                </p>
+                <p className="text-xs text-[var(--bridge-text-muted)]">Keep your availability up to attract more</p>
+              </div>
             </div>
           </div>
-        </div>
+        </Tilt3D>
       )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -513,18 +649,20 @@ function MentorConnectionsTab({ menteeCards, searchQuery, setSearchQuery }) {
           const color = getAvatarColor(m.name ?? '');
           const inits = getInitials(m.name ?? '');
           return (
-            <div key={m.id}
-              className="group flex items-center gap-4 rounded-2xl bg-[var(--bridge-surface)] p-4 shadow-sm ring-1 ring-[var(--bridge-border)] transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-[var(--bridge-border-strong)] sm:p-5">
-              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-bold ring-2 ring-[var(--bridge-canvas)] ${color}`} aria-hidden>
-                {inits}
+            <Tilt3D key={m.id} max={4} className="rounded-2xl">
+              <div className="bd-card-edge group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-[var(--bridge-surface)] p-4 shadow-sm ring-1 ring-[var(--bridge-border)] transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:ring-violet-400/50 sm:p-5">
+                <div aria-hidden className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-violet-400/0 blur-2xl transition-all duration-500 group-hover:bg-violet-400/25" />
+                <div className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-sm font-black ring-2 ring-[var(--bridge-canvas)] transition-transform duration-500 group-hover:scale-105 ${color}`} aria-hidden>
+                  {inits}
+                </div>
+                <div className="relative min-w-0 flex-1">
+                  <p className="truncate text-[15px] font-bold text-[var(--bridge-text)]">{m.name}</p>
+                  <p className="mt-0.5 text-xs text-[var(--bridge-text-muted)]">
+                    {m.count} {m.count === 1 ? 'session' : 'sessions'} together
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold text-[var(--bridge-text)]">{m.name}</p>
-                <p className="mt-0.5 text-xs text-[var(--bridge-text-muted)]">
-                  {m.count} {m.count === 1 ? 'session' : 'sessions'} together
-                </p>
-              </div>
-            </div>
+            </Tilt3D>
           );
         })}
         {menteeCards.length === 0 && (
@@ -540,18 +678,3 @@ function MentorConnectionsTab({ menteeCards, searchQuery, setSearchQuery }) {
   );
 }
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-function SearchBar({ value, onChange, placeholder }) {
-  return (
-    <div className="relative max-w-xs flex-1 sm:min-w-[14rem]">
-      <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--bridge-text-muted)]" />
-      <input type="text" placeholder={placeholder} value={value} onChange={e => onChange(e.target.value)}
-        className="w-full rounded-xl border border-[var(--bridge-border)] bg-[var(--bridge-surface)] py-2.5 pl-10 pr-4 text-sm transition focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
-      />
-    </div>
-  );
-}
-
-function NoMatch() {
-  return <p className="py-8 text-center text-sm italic text-[var(--bridge-text-muted)]">No results match your search.</p>;
-}

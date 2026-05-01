@@ -29,15 +29,17 @@ import Terms from './pages/footer/Terms.jsx';
 import Cookies from './pages/footer/Cookies.jsx';
 import FeedbackFAB from './components/FeedbackFAB';
 import VideoCall from './pages/VideoCall';
+import IntakeCall from './pages/IntakeCall';
 import MentorOnboarding from './pages/MentorOnboarding';
 import DevPortal from './pages/DevPortal/index.jsx';
 
 function AppContent() {
   const location = useLocation();
+  const isVideoCall = location.pathname.includes('/video');
   const hideFooter =
     location.pathname.startsWith('/profile') ||
     location.pathname.startsWith('/settings') ||
-    location.pathname.includes('/video');
+    isVideoCall;
 
   // Scroll to top on route change, but don't fight in-page anchor scrolling.
   useEffect(() => {
@@ -48,9 +50,9 @@ function AppContent() {
   return (
     <div className="relative isolate min-h-screen bg-bridge-page text-stone-900 font-sans antialiased flex flex-col">
       <BridgeGlobalAtmosphere />
-      <ScrollProgress />
-      <MagneticPointer />
-      <Navbar />
+      {!isVideoCall && <ScrollProgress />}
+      {!isVideoCall && <MagneticPointer />}
+      {!isVideoCall && <Navbar />}
       <div key={location.pathname} className="relative z-10 flex-1 flex flex-col animate-page-enter">
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -63,6 +65,7 @@ function AppContent() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/session/:sessionId/video" element={<VideoCall />} />
+          <Route path="/intake/:sessionId" element={<IntakeCall />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/resume" element={<ResumeReview />} />
           <Route path="/about" element={<About />} />
