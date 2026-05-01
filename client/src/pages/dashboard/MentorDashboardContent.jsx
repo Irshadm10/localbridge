@@ -19,6 +19,7 @@ import MentorAvailabilityModal from './MentorAvailabilityModal';
 import IntakeSummaryModal from './IntakeSummaryModal';
 import CalendarConnectButton from '../../components/CalendarConnectButton';
 import { useState, useEffect } from 'react';
+import SessionCalendar from './SessionCalendar';
 
 export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, user }) {
   const navigate = useNavigate();
@@ -246,6 +247,7 @@ export function MentorDashboardContent({ dash, activeTab, setActiveTab, logout, 
       {/* ── Sessions tab ─────────────────────────────────────────────── */}
       {activeTab === 'sessions' && (
         <MentorSessionsTab
+          sessions={sessions}
           upcomingSessions={upcomingSessions}
           historySessions={historySessions}
           searchQuery={searchQuery}
@@ -532,7 +534,7 @@ function ActivityFeed({ history, role, total, showAll, onToggle }) {
 }
 
 // ─── MentorSessionsTab ────────────────────────────────────────────────────────
-function MentorSessionsTab({ upcomingSessions, historySessions, searchQuery, setSearchQuery, handleStatusUpdate, actionLoading, onViewIntake }) {
+function MentorSessionsTab({ sessions, upcomingSessions, historySessions, searchQuery, setSearchQuery, handleStatusUpdate, actionLoading, onViewIntake }) {
   const match = (s) =>
     s.mentee_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.session_type?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -549,6 +551,14 @@ function MentorSessionsTab({ upcomingSessions, historySessions, searchQuery, set
         </div>
         <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search by mentee or type…" />
       </div>
+
+      <SessionCalendar
+        sessions={sessions}
+        handleStatusUpdate={handleStatusUpdate}
+        actionLoading={actionLoading}
+        isMentor
+        onViewIntake={onViewIntake}
+      />
 
       <section>
         <SectionHeading kicker="Coming up" count={upcomingSessions.filter(match).length}>Upcoming</SectionHeading>

@@ -104,15 +104,20 @@ export function useDashboardData(user, authLoading) {
           const menteeIds = [...new Set((data ?? []).map(s => s.mentee_id).filter(Boolean))];
           let nameMap = {};
           if (menteeIds.length > 0) {
-            const { data: profiles } = await supabase
-              .from('user_profiles')
-              .select('user_id, personal_info')
-              .in('user_id', menteeIds);
-            if (profiles) {
-              profiles.forEach(p => {
-                const name = p.personal_info?.full_name;
-                if (name) nameMap[p.user_id] = name;
-              });
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              const token = session?.access_token;
+              if (token) {
+                const SERVER_URL = import.meta.env.VITE_SERVER_URL ?? '';
+                const r = await fetch(`${SERVER_URL}/api/user-names`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ userIds: menteeIds }),
+                });
+                if (r.ok) nameMap = await r.json();
+              }
+            } catch {
+              // fall through — names will default to 'Mentee'
             }
           }
 
