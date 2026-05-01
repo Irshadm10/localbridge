@@ -619,6 +619,7 @@ export default function VideoCall() {
   const localRef       = useRef(null);
   const remoteRef      = useRef(null);
   const localStream    = useRef(null);
+  const remoteStream   = useRef(null);
   const screenTrack    = useRef(null);
   const pc             = useRef(null);
   const channel        = useRef(null);
@@ -690,10 +691,8 @@ export default function VideoCall() {
     let didCleanup = false;
     let restartTimer = null;
 
-    const otherUserId = session.mentor?.user_id === user.id
-      ? session.mentee_id
-      : session.mentor?.user_id;
-    const isOfferer = otherUserId ? user.id < otherUserId : !isMentor;
+    // Mentor is always the offerer (caller) per architecture spec.
+    const isOfferer = isMentor;
 
     function send(payload) {
       channel.current?.send({ type: 'broadcast', event: 'signal', payload });
@@ -728,12 +727,32 @@ export default function VideoCall() {
     function buildPC() {
       const conn = new RTCPeerConnection({ iceServers: ICE_SERVERS });
       pc.current = conn;
+      // Fresh MediaStream for this connection's incoming tracks
+      remoteStream.current = new MediaStream();
 
       localStream.current?.getTracks().forEach((t) => conn.addTrack(t, localStream.current));
 
-      conn.ontrack = ({ streams }) => {
+      conn.ontrack = (event) => {
         if (cancelled) return;
-        if (remoteRef.current) remoteRef.current.srcObject = streams[0];
+        // Some browsers fire ontrack with an empty streams array; handle both cases.
+        const inboundStream = event.streams[0];
+        if (inboundStream) {
+          // Add any new tracks from the provided stream into our persistent remote stream.
+          inboundStream.getTracks().forEach((t) => {
+            if (!remoteStream.current.getTrackById(t.id)) remoteStream.current.addTrack(t);
+          });
+        } else {
+          if (!remoteStream.current.getTrackById(event.track.id)) {
+            remoteStream.current.addTrack(event.track);
+          }
+        }
+        if (remoteRef.current) {
+          if (remoteRef.current.srcObject !== remoteStream.current) {
+            remoteRef.current.srcObject = remoteStream.current;
+          }
+          // Explicit play() is required — autoPlay alone can be blocked by browser policy.
+          remoteRef.current.play().catch(() => {});
+        }
         setRemoteActive(true);
         setCallStatus('connected');
         startTimer();
@@ -854,6 +873,17 @@ export default function VideoCall() {
           return;
         }
 
+        // ── Peer-ready handshake: answerer notifies offerer it is ready for an offer.
+        // This handles the race where the first offer broadcast arrived before the
+        // answerer's channel finished subscribing.
+        if (type === 'peer-ready' && isOfferer) {
+          const conn = pc.current;
+          if (!conn) { buildPC(); void negotiate(pc.current); return; }
+          const s = conn.signalingState;
+          if (s === 'stable') void negotiate(conn);
+          return;
+        }
+
         // ── Call control
         if (type === 'hangup' && !isMentor) {
           setCallStatus('ended');
@@ -871,6 +901,7 @@ export default function VideoCall() {
           // Close old PC, go back to waiting so we're ready when mentee rejoins
           try { conn?.close(); } catch { /* noop */ }
           pc.current = null;
+          remoteStream.current = null;
           setRemoteActive(false);
           if (remoteRef.current) remoteRef.current.srcObject = null;
           clearInterval(timerInterval.current);
@@ -941,6 +972,10 @@ export default function VideoCall() {
             if (pc.current.signalingState === 'stable') void negotiate(pc.current);
           } else {
             setCallStatus((prev) => prev === 'connected' ? prev : 'connecting');
+            // Tell the offerer we are ready — it will (re)send the offer.
+            // This is the reliable trigger: presence guarantees both sides are subscribed
+            // before this fires, so the broadcast won't be dropped.
+            send({ type: 'peer-ready' });
           }
         } else {
           setCallStatus((prev) => prev === 'connected' ? prev : 'waiting');
@@ -1010,6 +1045,13 @@ export default function VideoCall() {
   useEffect(() => {
     if (remoteRef.current) remoteRef.current.muted = !speakerOn;
   }, [speakerOn]);
+
+  // ── Ensure remote video plays when stream becomes active ──────────────────
+  useEffect(() => {
+    if (remoteActive && remoteRef.current) {
+      remoteRef.current.play().catch(() => {});
+    }
+  }, [remoteActive]);
 
   // ── Audio output device routing ────────────────────────────────────────────
   function setOutputDevice(deviceId) {

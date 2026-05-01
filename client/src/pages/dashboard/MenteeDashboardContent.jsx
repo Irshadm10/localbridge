@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Calendar, Clock, CalendarDays, CheckCircle2, ArrowUpRight,
   Users, Star, Zap, TrendingUp, BookOpen,
-  Video, X,
+  Video, X, Search,
 } from 'lucide-react';
 import {
   StatCard, EmptyState, SessionCard, MentorCard, SectionHeading, canJoinSession,
